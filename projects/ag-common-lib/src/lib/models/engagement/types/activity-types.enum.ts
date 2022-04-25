@@ -1,0 +1,10 @@
+export enum ACTIVITY_TYPE {
+  PACKAGE,
+  EMAIL,
+  CALL,
+  TEXT,
+  NOTE,
+  TASK,
+  MEETING,
+  OTHER
+}

@@ -1,0 +1,88 @@
+/*
+ * Public API Surface of ag-common-lib
+ */
+
+export * from './lib/config/firebase-config.model'
+
+export * from './lib/dao/CommonFireStoreDao.dao'
+
+export * from './lib/lists/agency-type.enum'
+export * from './lib/lists/agent-status.enum'
+export * from './lib/lists/agent-type.enum'
+export * from './lib/lists/application_entities.enum'
+export * from './lib/lists/application-events.enum'
+export * from './lib/lists/countries.list'
+export * from './lib/lists/languages.list'
+export * from './lib/lists/prospect-disposition.enum'
+export * from './lib/lists/prospect-priority.enum'
+export * from './lib/lists/prospect-status.enum'
+export * from './lib/lists/roles.enum'
+export * from './lib/lists/states.list'
+export * from './lib/lists/task-priority.enum'
+export * from './lib/lists/task-status.enum'
+export * from './lib/lists/association-type.enum'
+
+export * from './lib/models/base.model'
+export * from './lib/models/domain/agent.model'
+export * from './lib/models/domain/agency.model'
+export * from './lib/models/domain/carrier.model'
+export * from './lib/models/domain/prospect.model'
+
+export * from './lib/models/crm/appointment.model'
+export * from './lib/models/crm/crm-record.model'
+export * from './lib/models/crm/crm-user.model'
+export * from './lib/models/crm/distribution-list.model'
+export * from './lib/models/crm/entry.model'
+export * from './lib/models/crm/grid-view.model'
+export * from './lib/models/crm/notes.model'
+export * from './lib/models/crm/phone-call.model'
+export * from './lib/models/crm/task-list.model'
+export * from './lib/models/crm/task.model'
+
+export * from './lib/models/email/email-connection.model'
+export * from './lib/models/email/email-person.model'
+export * from './lib/models/email/email-template.model'
+export * from './lib/models/email/email.model'
+export * from './lib/models/email/email.request.model'
+
+export * from './lib/models/engagement/engagement.model'
+export * from './lib/models/engagement/activity/activity.model'
+export * from './lib/models/engagement/status/status-email.enum'
+export * from './lib/models/engagement/status/status-engagement.enum'
+export * from './lib/models/engagement/types/activity-types.enum'
+export * from './lib/models/engagement/types/contact-types.enum'
+export * from './lib/models/engagement/types/target-types.enum'
+
+export * from './lib/models/registration/conference.model'
+export * from './lib/models/registration/contest.model'
+export * from './lib/models/registration/registrant-field.model'
+export * from './lib/models/registration/registrants.model'
+export * from './lib/models/registration/webinar.model'
+
+export * from './lib/models/ui/button.model'
+export * from './lib/models/ui/filter.model'
+export * from './lib/models/ui/tab.model'
+
+export * from './lib/models/utils/address.model'
+export * from './lib/lists/business_personal_type.enum'
+export * from './lib/models/utils/contact-group.model'
+export * from './lib/models/utils/email-address.model'
+export * from './lib/models/utils/favorite.model'
+export * from './lib/models/utils/goal.model'
+export * from './lib/models/utils/log-message.model'
+export * from './lib/models/utils/phone-number.model'
+export * from './lib/models/utils/social.model'
+export * from './lib/models/utils/summary.model'
+export * from './lib/models/utils/website.model'
+export * from './lib/models/utils/association.model'
+export * from './lib/models/utils/agent-carrier.model'
+export * from './lib/models/utils/state-license.model'
+
+export * from './lib/managers/list-manager.service'
+
+export * from './lib/services/agent.service'
+export * from './lib/services/agency.service'
+export * from './lib/services/carrier.service'
+export * from './lib/services/prospect.service'
+
+export * from './lib/ag-common-lib.module'

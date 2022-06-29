@@ -1,0 +1,12 @@
+{
+  "name": "ag-common-svc",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "^12.2.0",
+    "@angular/core": "^12.2.0",
+    "ag-common-lib": "file:../../../ag-common-lib/dist/ag-common-lib"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}

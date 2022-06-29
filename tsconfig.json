@@ -4,7 +4,7 @@
   "compilerOptions": {
     "paths": {
       "ag-common-lib": [
-        "dist/ag-common-lib/ag-common-lib"
+        "dist/ag-common-svc/ag-common-svc"
       ]
     },
     "baseUrl": "./",

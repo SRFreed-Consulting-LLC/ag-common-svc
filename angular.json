@@ -3,23 +3,23 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "ag-common-lib": {
+    "ag-common-svc": {
       "projectType": "library",
-      "root": "projects/ag-common-lib",
-      "sourceRoot": "projects/ag-common-lib/src",
+      "root": "projects/ag-common-svc",
+      "sourceRoot": "projects/ag-common-svc/src",
       "prefix": "lib",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "project": "projects/ag-common-lib/ng-package.json"
+            "project": "projects/ag-common-svc/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/ag-common-lib/tsconfig.lib.prod.json"
+              "tsConfig": "projects/ag-common-svc/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "projects/ag-common-lib/tsconfig.lib.json"
+              "tsConfig": "projects/ag-common-svc/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
@@ -27,13 +27,13 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "main": "projects/ag-common-lib/src/test.ts",
-            "tsConfig": "projects/ag-common-lib/tsconfig.spec.json",
-            "karmaConfig": "projects/ag-common-lib/karma.conf.js"
+            "main": "projects/ag-common-svc/src/test.ts",
+            "tsConfig": "projects/ag-common-svc/tsconfig.spec.json",
+            "karmaConfig": "projects/ag-common-svc/karma.conf.js"
           }
         }
       }
     }
   },
-  "defaultProject": "ag-common-lib"
+  "defaultProject": "ag-common-svc"
 }

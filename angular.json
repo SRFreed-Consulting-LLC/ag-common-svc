@@ -33,6 +33,20 @@
           }
         }
       }
+    },
+    "ag-common-lib": {
+      "projectType": "library",
+      "root": "ag-common-lib",
+      "sourceRoot": "ag-common-lib/projects/ag-common-lib/src",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "ag-common-lib/projects/ag-common-lib/tsconfig.lib.json",
+            "project": "ag-common-lib/projects/ag-common-lib/ng-package.json"
+          }
+        }
+      }
     }
   },
   "defaultProject": "ag-common-svc"

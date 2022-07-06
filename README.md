@@ -2,6 +2,11 @@
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.2.13.
 
+## Installation
+
+Run `npm run build-libs` to prepare submodules and install all required dependencies;
+This command should be executed after each submodules update.
+
 ## Development server
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.

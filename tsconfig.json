@@ -21,7 +21,7 @@
       "dom"
     ],
     "paths": {
-      "ag-common-lib/*": ["ag-common-lib/dist/ag-common-lib/*"]
+      "ag-common-lib/*": ["ag-common-lib/projects/ag-common-lib/src*"]
     },
   },
   "angularCompilerOptions": {

@@ -1,17 +1,16 @@
 import { Injectable } from '@angular/core';
-import { BaseModel } from 'ag-common-lib';
+import { BaseModel } from 'ag-common-lib/public-api';
 import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 
 @Injectable({
   providedIn: 'root'
 })
-export class DataService<T extends BaseModel > {
-
+export class DataService<T extends BaseModel> {
   public fsDao: CommonFireStoreDao<T>;
-  
-  constructor() { }
 
-  public collection: string
+  constructor() {}
+
+  public collection: string;
 
   public getById(id: any): Promise<T> {
     return this.fsDao.getById(this.collection, id);
@@ -25,19 +24,19 @@ export class DataService<T extends BaseModel > {
     return this.fsDao.getAll(this.collection, sortField);
   }
 
-  public create(value: T){
+  public create(value: T) {
     return this.fsDao.create(value, this.collection);
   }
 
-  public createWithId(value: T){
+  public createWithId(value: T) {
     return this.fsDao.createWithId(value, value.dbId, this.collection);
   }
-  
-  public update(value: T){
+
+  public update(value: T) {
     return this.fsDao.update(value, value.dbId, this.collection);
   }
 
-  public delete(id: any){
+  public delete(id: any) {
     return this.fsDao.delete(id, this.collection);
   }
 }

@@ -1,5 +1,5 @@
-import { Agent } from 'ag-common-lib//public-api';
-import { CommonFireStoreDao } from 'ag-common-svc/public-api';
+import { Agent } from 'ag-common-lib/public-api';
+import { CommonFireStoreDao } from '../../public-api';
 import { DataService } from './data.service';
 
 export class AgentService extends DataService<Agent> {

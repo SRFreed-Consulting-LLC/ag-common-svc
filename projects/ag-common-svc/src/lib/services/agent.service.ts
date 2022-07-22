@@ -1,18 +1,11 @@
-import { Injectable } from '@angular/core';
 import { Agent } from 'ag-common-lib//public-api';
-import { CommonFireStoreDao } from '../dao/CommonFireStoreDao.dao';
+import { CommonFireStoreDao } from 'ag-common-svc/public-api';
 import { DataService } from './data.service';
 
-@Injectable({
-  providedIn: 'root'
-})
 export class AgentService extends DataService<Agent> {
-  constructor() {
+  constructor(fsDao: CommonFireStoreDao<Agent>) {
     super();
     super.collection = 'agents';
-  }
-
-  initialize(fsDao: CommonFireStoreDao<Agent>) {
     super.fsDao = fsDao;
   }
 }

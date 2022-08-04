@@ -13,14 +13,17 @@ import {
   orderBy,
   limit,
   QueryConstraint,
-  Firestore
+  Firestore,
+  FirestoreDataConverter
 } from 'firebase/firestore';
 
 export class CommonFireStoreDao<T> {
-  public readonly db: Firestore;
+  private readonly db: Firestore;
+  private readonly converter: FirestoreDataConverter<T> = null;
 
-  constructor(fireBaseApp: FirebaseApp) {
+  constructor(fireBaseApp: FirebaseApp, converter?: FirestoreDataConverter<T>) {
     this.db = getFirestore(fireBaseApp);
+    this.converter = converter;
   }
 
   public createWithId(value: T, uid: string, table: string): Promise<T> {
@@ -56,13 +59,12 @@ export class CommonFireStoreDao<T> {
   public async getAll(table: string, sortField?: string): Promise<T[]> {
     let records: T[] = [];
 
-    const ref = collection(this.db, table);
+    const ref = collection(this.db, table); /* .withConverter(converter); */
 
     const snap = await getDocs(ref);
 
     snap.forEach((doc) => {
-      let data = doc.data();
-      data.dbId = doc.id;
+      const data = this.extendWithDbId(doc);
       records.push(data as T);
     });
 
@@ -81,8 +83,7 @@ export class CommonFireStoreDao<T> {
     const snap = await getDocs(ref);
 
     snap.forEach((doc) => {
-      let data = doc.data();
-      data.dbId = doc.id;
+      const data = this.extendWithDbId(doc);
       records.push(data as T);
     });
 
@@ -99,8 +100,7 @@ export class CommonFireStoreDao<T> {
     const snap = await getDocs(q);
 
     snap.forEach((doc) => {
-      let data = doc.data();
-      data.dbId = doc.id;
+      const data = this.extendWithDbId(doc);
       records.push(data as T);
     });
 
@@ -117,8 +117,7 @@ export class CommonFireStoreDao<T> {
     const snap = await getDocs(q);
 
     snap.forEach((doc) => {
-      let data = doc.data();
-      data.dbId = doc.id;
+      const data = this.extendWithDbId(doc);
       records.push(data as T);
     });
 
@@ -126,7 +125,7 @@ export class CommonFireStoreDao<T> {
   }
 
   public async getById(table: string, id: string): Promise<T> {
-    const ref = doc(this.db, table, id);
+    const ref = doc(this.db, table, id).withConverter(this.converter);
 
     const snap = await getDoc(ref);
 
@@ -148,15 +147,14 @@ export class CommonFireStoreDao<T> {
   ): Promise<T[]> {
     let records: T[] = [];
 
-    const ref = collection(this.db, table);
+    const ref = collection(this.db, table).withConverter(this.converter);
 
     const q = query(ref, orderBy(order, 'asc'), where(field, operation, value));
 
     const snap = await getDocs(q);
 
     snap.forEach((doc) => {
-      let data = doc.data();
-      data.dbId = doc.id;
+      const data = this.extendWithDbId(doc);
       records.push(data as T);
     });
 
@@ -169,18 +167,18 @@ export class CommonFireStoreDao<T> {
     return deleteDoc(ref);
   }
 
-  public update(value: T, id: string, table: string): Promise<void> {
+  public async update(value: T, id: string, table: string): Promise<T> {
     const ref = doc(this.db, table, id);
 
-    const snap = setDoc(ref, value);
+    await setDoc(ref, value);
 
-    return Promise.resolve(snap);
+    return this.getById(table, id);
   }
 
   public async getAllByQValue(table: string, queries: QueryParam[], sortField?: string): Promise<T[]> {
     let records: T[] = [];
 
-    const ref = collection(this.db, table);
+    const ref = collection(this.db, table).withConverter(this.converter);
 
     let restraints: QueryConstraint[] = [];
 
@@ -193,8 +191,7 @@ export class CommonFireStoreDao<T> {
     const snap = await getDocs(q);
 
     snap.forEach((doc) => {
-      let data = doc.data();
-      data.dbId = doc.id;
+      const data = this.extendWithDbId(doc);
       records.push(data as T);
     });
 
@@ -227,8 +224,7 @@ export class CommonFireStoreDao<T> {
     const snap = await getDocs(q);
 
     snap.forEach((doc) => {
-      let data = doc.data();
-      data.dbId = doc.id;
+      const data = this.extendWithDbId(doc);
       records.push(data as T);
     });
 
@@ -260,6 +256,14 @@ export class CommonFireStoreDao<T> {
 
     return deleteDoc(ref);
   }
+
+  private extendWithDbId = (doc) => {
+    const data = doc.data();
+
+    Object.assign(data, { dbId: doc.id });
+
+    return data;
+  };
 }
 
 export enum WhereFilterOperandKeys {

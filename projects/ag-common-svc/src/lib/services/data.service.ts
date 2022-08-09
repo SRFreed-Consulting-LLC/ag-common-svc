@@ -1,14 +1,14 @@
-import { Injectable } from '@angular/core';
 import { BaseModel } from 'ag-common-lib/public-api';
+import { FirestoreDataConverter } from 'firebase/firestore';
 import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
+import { FirebaseApp } from 'firebase/app';
 
-@Injectable({
-  providedIn: 'root'
-})
 export class DataService<T extends BaseModel> {
-  public fsDao: CommonFireStoreDao<T>;
+  public readonly fsDao: CommonFireStoreDao<T>;
 
-  constructor() {}
+  constructor(fireBaseApp: FirebaseApp, converter?: FirestoreDataConverter<T>) {
+    this.fsDao = new CommonFireStoreDao<T>(fireBaseApp, converter);
+  }
 
   public collection: string;
 

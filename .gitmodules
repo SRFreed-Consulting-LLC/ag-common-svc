@@ -1,0 +1,4 @@
+[submodule "ag-common-lib"]
+	path = ag-common-lib
+	url = https://github.com/sfreed/ag-common-lib.git
+

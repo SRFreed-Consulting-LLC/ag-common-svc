@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "init-git-submodules": "git submodule update --init --recursive && git submodule update --remote --recursive",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -18,25 +19,26 @@
     "@angular/platform-browser": "~13.2.0",
     "@angular/platform-browser-dynamic": "~13.2.0",
     "@angular/router": "~13.2.0",
-    "ag-common-lib": "file:../ag-common-lib/dist/ag-common-lib",
-    "firebase": "^9.6.10",
-    "ng-packagr": "^13.3.1",
+    "firebase": "^9.9.0",
     "rxjs": "~6.6.0",
-    "tslib": "^2.3.0",
-    "zone.js": "~0.11.4"
+    "tslib": "^2.4.0",
+    "zone.js": "^0.11.6"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~13.2.0",
+    "@angular-devkit/build-ng-packagr": "^0.1002.0",
     "@angular/cli": "~13.2.0",
     "@angular/compiler-cli": "~13.2.0",
     "@types/jasmine": "~3.8.0",
-    "@types/node": "^12.11.1",
+    "@types/node": "^12.20.55",
     "jasmine-core": "~3.8.0",
-    "karma": "~6.3.0",
+    "karma": "^6.3.20",
     "karma-chrome-launcher": "~3.1.0",
     "karma-coverage": "~2.0.3",
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "~1.7.0",
+    "ng-packagr": "^13.3.1",
+    "tsickle": "^0.46.3",
     "typescript": "~4.5.5"
   }
 }

@@ -1,18 +1,15 @@
-import { Injectable } from '@angular/core';
-import { Carrier } from 'ag-common-lib';
-import { CommonFireStoreDao } from '../dao/CommonFireStoreDao.dao';
+import { Inject, Injectable } from '@angular/core';
+import { Carrier } from 'ag-common-lib/public-api';
+import { FirebaseApp } from 'firebase/app';
+import { FIREBASE_APP } from '../injections/firebase-app';
 import { DataService } from './data.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CarrierService extends DataService<Carrier> {
-  constructor() {
-    super();
+  constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp) {
+    super(fireBaseApp);
     super.collection = 'carriers';
-  }
-
-  initialize(fsDao: CommonFireStoreDao<Carrier>){
-    super.fsDao = fsDao;
   }
 }

@@ -1,13 +1,12 @@
 import { BaseModel } from 'ag-common-lib/public-api';
-import { FirestoreDataConverter } from 'firebase/firestore';
 import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { FirebaseApp } from 'firebase/app';
 
 export class DataService<T extends BaseModel> {
   public readonly fsDao: CommonFireStoreDao<T>;
 
-  constructor(fireBaseApp: FirebaseApp, converter?: FirestoreDataConverter<T>) {
-    this.fsDao = new CommonFireStoreDao<T>(fireBaseApp, converter);
+  constructor(fireBaseApp: FirebaseApp, fromFirestore?: (data: Partial<T>) => T) {
+    this.fsDao = new CommonFireStoreDao<T>(fireBaseApp, fromFirestore);
   }
 
   public collection: string;

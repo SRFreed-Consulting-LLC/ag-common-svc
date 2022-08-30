@@ -1,4 +1,5 @@
 import { FirebaseApp } from '@firebase/app';
+import { BaseModelKeys } from 'ag-common-lib/public-api';
 import {
   addDoc,
   doc,
@@ -14,128 +15,137 @@ import {
   limit,
   QueryConstraint,
   Firestore,
-  FirestoreDataConverter
+  DocumentData,
+  QueryDocumentSnapshot,
+  SnapshotOptions,
+  Timestamp
 } from 'firebase/firestore';
+import { fromUnixTime, isDate, isValid } from 'date-fns';
 
 export class CommonFireStoreDao<T> {
   private readonly db: Firestore;
-  private readonly converter: FirestoreDataConverter<T> = null;
+  private fromFirestore: (documentData: DocumentData) => T;
 
-  constructor(fireBaseApp: FirebaseApp, converter?: FirestoreDataConverter<T>) {
+  constructor(fireBaseApp: FirebaseApp, fromFirestore?: (data: Partial<T>) => T) {
     this.db = getFirestore(fireBaseApp);
-    this.converter = converter;
+
+    this.fromFirestore = fromFirestore ?? null;
   }
 
-  public createWithId(value: T, uid: string, table: string): Promise<T> {
-    const ref = doc(this.db, table, uid);
-
-    const snap = setDoc(ref, value);
-
-    return snap.then((ref) => {
-      return this.getById(table, uid);
+  public async createWithId(value: T, uid: string, table: string): Promise<T> {
+    const ref = doc(this.db, table, uid).withConverter({
+      fromFirestore: null,
+      toFirestore: (item: T): DocumentData => {
+        return Object.assign(item, {
+          [BaseModelKeys.createdDate]: new Date()
+        });
+      }
     });
+
+    await setDoc(ref, value);
+
+    return this.getById(table, uid);
   }
 
-  public create(value: T, table: string): Promise<T> {
-    const ref = collection(this.db, table);
-
-    const snap = addDoc(ref, value);
-
-    return snap.then((ref) => {
-      return this.getById(table, ref.id);
+  public async create(value: T, table: string): Promise<T> {
+    const ref = collection(this.db, table).withConverter({
+      fromFirestore: null,
+      toFirestore: (item: T): DocumentData => {
+        return Object.assign(item, {
+          [BaseModelKeys.createdDate]: new Date()
+        });
+      }
     });
+
+    const snap = await addDoc(ref, value);
+
+    return this.getById(table, snap.id);
   }
 
-  public createInSubcollection(value: T, table: string, record_id: string, subcollection: string): Promise<T> {
-    const ref = collection(this.db, table, record_id, subcollection);
-
-    const snap = addDoc(ref, value);
-
-    return snap.then((ref) => {
-      return this.getById(table, ref.id);
+  public async createInSubcollection(value: T, table: string, record_id: string, subcollection: string): Promise<T> {
+    const ref = collection(this.db, table, record_id, subcollection).withConverter({
+      fromFirestore: null,
+      toFirestore: (item: T): DocumentData => {
+        return Object.assign(item, {
+          [BaseModelKeys.createdDate]: new Date()
+        });
+      }
     });
+
+    const snap = await addDoc(ref, value);
+
+    return this.getById(table, snap.id);
   }
 
   public async getAll(table: string, sortField?: string): Promise<T[]> {
-    let records: T[] = [];
+    const queryConstraints: QueryConstraint[] = [sortField && orderBy(sortField)].filter(Boolean);
 
-    const ref = collection(this.db, table); /* .withConverter(converter); */
-
-    const snap = await getDocs(ref);
-
-    snap.forEach((doc) => {
-      const data = this.extendWithDbId(doc);
-      records.push(data as T);
+    const collectionRef = collection(this.db, table).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
     });
 
-    if (sortField) {
-      records = records.sort((a, b) => (a[sortField] < b[sortField] ? -1 : a[sortField] > b[sortField] ? 1 : 0));
-    }
+    const documentQuery = query(collectionRef, ...queryConstraints);
+    const querySnapshot = await getDocs(documentQuery);
 
-    return Promise.resolve(records);
+    const docsData = querySnapshot.docs.map((item) => (item.exists() ? item.data() : null));
+
+    return docsData;
   }
 
   public async getAllFromSubCollection(table: string, record_id: string, subcollection: string): Promise<T[]> {
-    let records: T[] = [];
-
-    const ref = collection(this.db, table, record_id, subcollection);
+    const ref = collection(this.db, table, record_id, subcollection).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
+    });
 
     const snap = await getDocs(ref);
 
-    snap.forEach((doc) => {
-      const data = this.extendWithDbId(doc);
-      records.push(data as T);
-    });
+    const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
 
-    return Promise.resolve(records);
+    return docsData;
   }
 
   public async getAllOrderBy(table: string, order: string): Promise<T[]> {
-    let records: T[] = [];
-
-    const ref = collection(this.db, table);
+    const ref = collection(this.db, table).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
+    });
 
     const q = query(ref, orderBy(order, 'asc'));
 
     const snap = await getDocs(q);
 
-    snap.forEach((doc) => {
-      const data = this.extendWithDbId(doc);
-      records.push(data as T);
-    });
+    const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
 
-    return Promise.resolve(records);
+    return docsData;
   }
 
   public async getMostRecentOrderBy(table: string, order: string): Promise<T[]> {
-    let records: T[] = [];
-
-    const ref = collection(this.db, table);
+    const ref = collection(this.db, table).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
+    });
 
     const q = query(ref, orderBy(order, 'desc'), limit(1));
 
     const snap = await getDocs(q);
 
-    snap.forEach((doc) => {
-      const data = this.extendWithDbId(doc);
-      records.push(data as T);
-    });
+    const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
 
-    return Promise.resolve(records);
+    return docsData;
   }
 
   public async getById(table: string, id: string): Promise<T> {
-    const ref = doc(this.db, table, id).withConverter(this.converter);
+    const ref = doc(this.db, table, id).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
+    });
 
     const snap = await getDoc(ref);
+    const isExist = snap?.exists();
 
-    let retval: T = snap.data() as T;
-
-    if (retval) {
-      retval['dbId'] = snap.id;
-    }
-
-    return Promise.resolve(retval);
+    return isExist ? (snap?.data() as T) : null;
   }
 
   public async getAllByValueOrderBy(
@@ -145,20 +155,17 @@ export class CommonFireStoreDao<T> {
     operation: WhereFilterOperandKeys,
     order: string
   ): Promise<T[]> {
-    let records: T[] = [];
-
-    const ref = collection(this.db, table).withConverter(this.converter);
-
+    const ref = collection(this.db, table).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
+    });
     const q = query(ref, orderBy(order, 'asc'), where(field, operation, value));
 
     const snap = await getDocs(q);
 
-    snap.forEach((doc) => {
-      const data = this.extendWithDbId(doc);
-      records.push(data as T);
-    });
+    const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
 
-    return Promise.resolve(records);
+    return docsData;
   }
 
   public delete(id: string, table: string): Promise<void> {
@@ -168,7 +175,14 @@ export class CommonFireStoreDao<T> {
   }
 
   public async update(value: T, id: string, table: string): Promise<T> {
-    const ref = doc(this.db, table, id);
+    const ref = doc(this.db, table, id).withConverter({
+      fromFirestore: null,
+      toFirestore(item: T): DocumentData {
+        return Object.assign(item, {
+          [BaseModelKeys.updatedDate]: new Date()
+        });
+      }
+    });
 
     await setDoc(ref, value);
 
@@ -176,30 +190,23 @@ export class CommonFireStoreDao<T> {
   }
 
   public async getAllByQValue(table: string, queries: QueryParam[], sortField?: string): Promise<T[]> {
-    let records: T[] = [];
+    const queryConstraints: QueryConstraint[] = [
+      ...queries.map((query) => where(query.field, query.operation, query.value)),
+      sortField && orderBy(sortField)
+    ].filter(Boolean);
 
-    const ref = collection(this.db, table).withConverter(this.converter);
-
-    let restraints: QueryConstraint[] = [];
-
-    queries.forEach((q) => {
-      restraints.push(where(q.field, q.operation, q.value));
+    const ref = collection(this.db, table).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
     });
 
-    const q = query(ref, ...restraints);
+    const documentQuery = query(ref, ...queryConstraints);
 
-    const snap = await getDocs(q);
+    const snap = await getDocs(documentQuery);
 
-    snap.forEach((doc) => {
-      const data = this.extendWithDbId(doc);
-      records.push(data as T);
-    });
+    const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
 
-    if (sortField) {
-      records = records.sort((a, b) => (a[sortField] < b[sortField] ? -1 : a[sortField] > b[sortField] ? 1 : 0));
-    }
-
-    return Promise.resolve(records);
+    return docsData;
   }
 
   public async getAllInSubCollectionByQValue(
@@ -209,46 +216,44 @@ export class CommonFireStoreDao<T> {
     queries: QueryParam[],
     sortField?: string
   ): Promise<T[]> {
-    let records: T[] = [];
+    const queryConstraints: QueryConstraint[] = [
+      ...queries.map((query) => where(query.field, query.operation, query.value)),
+      orderBy(sortField)
+    ].filter(Boolean);
 
-    const ref = collection(this.db, table, record_id, subcollection);
-
-    let restraints: QueryConstraint[] = [];
-
-    queries.forEach((q) => {
-      restraints.push(where(q.field, q.operation, q.value));
+    const ref = collection(this.db, table, record_id, subcollection).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
     });
 
-    const q = query(ref, ...restraints);
+    const documentQuery = query(ref, ...queryConstraints);
 
-    const snap = await getDocs(q);
+    const snap = await getDocs(documentQuery);
 
-    snap.forEach((doc) => {
-      const data = this.extendWithDbId(doc);
-      records.push(data as T);
-    });
+    const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
 
-    if (sortField) {
-      records = records.sort((a, b) => (a[sortField] < b[sortField] ? -1 : a[sortField] > b[sortField] ? 1 : 0));
-    }
-
-    return Promise.resolve(records);
+    return docsData;
   }
 
-  public updateInSubcollection(
+  public async updateInSubcollection(
     value: T,
     table: string,
     record_id: string,
     subcollection: string,
     id: string
   ): Promise<T> {
-    const ref = doc(this.db, table, record_id, subcollection, id);
-
-    const snap = setDoc(ref, value);
-
-    return snap.then((ref) => {
-      return this.getById(table, id);
+    const ref = doc(this.db, table, record_id, subcollection, id).withConverter({
+      fromFirestore: null,
+      toFirestore(item: T): DocumentData {
+        return Object.assign(item, {
+          [BaseModelKeys.updatedDate]: new Date()
+        });
+      }
     });
+
+    await setDoc(ref, value);
+
+    return this.getById(table, id);
   }
 
   public deleteFromSubcollection(table: string, record_id: string, subcollection: string, id: string): Promise<void> {
@@ -257,12 +262,38 @@ export class CommonFireStoreDao<T> {
     return deleteDoc(ref);
   }
 
-  private extendWithDbId = (doc) => {
-    const data = doc.data();
+  private convertResponse = (snapshot: QueryDocumentSnapshot, options: SnapshotOptions): any => {
+    const isExist = snapshot.exists();
+    if (!isExist) {
+      return;
+    }
+    const data = snapshot.data(options);
 
-    Object.assign(data, { dbId: doc.id });
+    const normalizedData = Object.assign({}, data, {
+      dbId: snapshot.id,
+      [BaseModelKeys.createdDate]: this.dateFromTimestamp(data[BaseModelKeys.createdDate]),
+      [BaseModelKeys.updatedDate]: this.dateFromTimestamp(data[BaseModelKeys.createdDate])
+    });
 
-    return data;
+    return this.fromFirestore ? this.fromFirestore(normalizedData) : normalizedData;
+  };
+
+  private dateFromTimestamp = (item: Timestamp) => {
+    if (!item) {
+      return null;
+    }
+
+    if (isDate(item)) {
+      return item;
+    }
+
+    let normalizedDate;
+
+    if (item?.seconds) {
+      normalizedDate = fromUnixTime(item.seconds);
+    }
+
+    return isValid(normalizedDate) ? normalizedDate : null;
   };
 }
 

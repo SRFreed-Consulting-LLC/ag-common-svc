@@ -11,17 +11,22 @@ import {
   getDocs,
   setDoc,
   deleteDoc,
-  orderBy,
   limit,
   QueryConstraint,
   Firestore,
   DocumentData,
   QueryDocumentSnapshot,
   SnapshotOptions,
-  Timestamp
+  Timestamp,
+  orderBy
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
 
+const localeCompareOptions = {
+  numeric: true,
+  sensitivity: 'base',
+  ignorePunctuation: true
+};
 export class CommonFireStoreDao<T> {
   private readonly db: Firestore;
   private fromFirestore: (documentData: DocumentData) => T;
@@ -78,17 +83,20 @@ export class CommonFireStoreDao<T> {
   }
 
   public async getAll(table: string, sortField?: string): Promise<T[]> {
-    const queryConstraints: QueryConstraint[] = [sortField && orderBy(sortField)].filter(Boolean);
-
     const collectionRef = collection(this.db, table).withConverter({
       toFirestore: null,
       fromFirestore: this.convertResponse
     });
 
-    const documentQuery = query(collectionRef, ...queryConstraints);
-    const querySnapshot = await getDocs(documentQuery);
+    const querySnapshot = await getDocs(collectionRef);
 
     const docsData = querySnapshot.docs.map((item) => (item.exists() ? item.data() : null));
+
+    if (sortField) {
+      docsData.sort((left, right) =>
+        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions)
+      );
+    }
 
     return docsData;
   }
@@ -112,11 +120,13 @@ export class CommonFireStoreDao<T> {
       fromFirestore: this.convertResponse
     });
 
-    const q = query(ref, orderBy(order, 'asc'));
-
-    const snap = await getDocs(q);
+    const snap = await getDocs(ref);
 
     const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
+
+    if (order) {
+      docsData.sort((left, right) => String(left[order]).localeCompare(String(right), 'en', localeCompareOptions));
+    }
 
     return docsData;
   }
@@ -132,6 +142,12 @@ export class CommonFireStoreDao<T> {
     const snap = await getDocs(q);
 
     const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
+
+    if (order) {
+      docsData.sort((left, right) =>
+        String(left[order]).localeCompare(String(right[order]), 'en', localeCompareOptions)
+      );
+    }
 
     return docsData;
   }
@@ -159,11 +175,17 @@ export class CommonFireStoreDao<T> {
       toFirestore: null,
       fromFirestore: this.convertResponse
     });
-    const q = query(ref, orderBy(order, 'asc'), where(field, operation, value));
+    const q = query(ref, where(field, operation, value));
 
     const snap = await getDocs(q);
 
     const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
+
+    if (order) {
+      docsData.sort((left, right) =>
+        String(left[order]).localeCompare(String(right[order]), 'en', localeCompareOptions)
+      );
+    }
 
     return docsData;
   }
@@ -190,10 +212,9 @@ export class CommonFireStoreDao<T> {
   }
 
   public async getAllByQValue(table: string, queries: QueryParam[], sortField?: string): Promise<T[]> {
-    const queryConstraints: QueryConstraint[] = [
-      ...queries.map((query) => where(query.field, query.operation, query.value)),
-      sortField && orderBy(sortField)
-    ].filter(Boolean);
+    const queryConstraints: QueryConstraint[] = queries.map((query) =>
+      where(query.field, query.operation, query.value)
+    );
 
     const ref = collection(this.db, table).withConverter({
       toFirestore: null,
@@ -206,6 +227,12 @@ export class CommonFireStoreDao<T> {
 
     const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
 
+    if (sortField) {
+      docsData.sort((left, right) =>
+        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions)
+      );
+    }
+
     return docsData;
   }
 
@@ -216,10 +243,9 @@ export class CommonFireStoreDao<T> {
     queries: QueryParam[],
     sortField?: string
   ): Promise<T[]> {
-    const queryConstraints: QueryConstraint[] = [
-      ...queries.map((query) => where(query.field, query.operation, query.value)),
-      orderBy(sortField)
-    ].filter(Boolean);
+    const queryConstraints: QueryConstraint[] = queries.map((query) =>
+      where(query.field, query.operation, query.value)
+    );
 
     const ref = collection(this.db, table, record_id, subcollection).withConverter({
       toFirestore: null,
@@ -231,6 +257,12 @@ export class CommonFireStoreDao<T> {
     const snap = await getDocs(documentQuery);
 
     const docsData = snap.docs.map((item) => (item.exists() ? item.data() : null));
+
+    if (sortField) {
+      docsData.sort((left, right) =>
+        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions)
+      );
+    }
 
     return docsData;
   }

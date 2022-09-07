@@ -30,18 +30,24 @@ const localeCompareOptions = {
 export class CommonFireStoreDao<T> {
   private readonly db: Firestore;
   private fromFirestore: (documentData: DocumentData) => T;
+  private toFirestore: (item: T) => T;
 
-  constructor(fireBaseApp: FirebaseApp, fromFirestore?: (data: Partial<T>) => T) {
+  constructor(
+    fireBaseApp: FirebaseApp,
+    fromFirestore: (data: Partial<T>) => T = null,
+    toFirestore: (item: T) => T = null
+  ) {
     this.db = getFirestore(fireBaseApp);
 
     this.fromFirestore = fromFirestore ?? null;
+    this.toFirestore = toFirestore ?? null;
   }
 
   public async createWithId(value: T, uid: string, table: string): Promise<T> {
     const ref = doc(this.db, table, uid).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {
-        return Object.assign(item, {
+        return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.createdDate]: new Date()
         });
       }
@@ -56,7 +62,7 @@ export class CommonFireStoreDao<T> {
     const ref = collection(this.db, table).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {
-        return Object.assign(item, {
+        return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.createdDate]: new Date()
         });
       }
@@ -71,7 +77,7 @@ export class CommonFireStoreDao<T> {
     const ref = collection(this.db, table, record_id, subcollection).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {
-        return Object.assign(item, {
+        return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.createdDate]: new Date()
         });
       }
@@ -199,8 +205,8 @@ export class CommonFireStoreDao<T> {
   public async update(value: T, id: string, table: string): Promise<T> {
     const ref = doc(this.db, table, id).withConverter({
       fromFirestore: null,
-      toFirestore(item: T): DocumentData {
-        return Object.assign(item, {
+      toFirestore: (item: T): DocumentData => {
+        return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.updatedDate]: new Date()
         });
       }
@@ -276,8 +282,8 @@ export class CommonFireStoreDao<T> {
   ): Promise<T> {
     const ref = doc(this.db, table, record_id, subcollection, id).withConverter({
       fromFirestore: null,
-      toFirestore(item: T): DocumentData {
-        return Object.assign(item, {
+      toFirestore: (item: T): DocumentData => {
+        return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.updatedDate]: new Date()
         });
       }

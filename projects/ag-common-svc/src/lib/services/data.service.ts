@@ -5,8 +5,12 @@ import { FirebaseApp } from 'firebase/app';
 export class DataService<T extends BaseModel> {
   public readonly fsDao: CommonFireStoreDao<T>;
 
-  constructor(fireBaseApp: FirebaseApp, fromFirestore?: (data: Partial<T>) => T) {
-    this.fsDao = new CommonFireStoreDao<T>(fireBaseApp, fromFirestore);
+  constructor(
+    fireBaseApp: FirebaseApp,
+    fromFirestore: (data: Partial<T>) => T = null,
+    toFirestore: (item: T) => T = null
+  ) {
+    this.fsDao = new CommonFireStoreDao<T>(fireBaseApp, fromFirestore, toFirestore);
   }
 
   public collection: string;

@@ -8,6 +8,7 @@ import {
   ASSOCIATION_TYPE,
   BUSINESS_PERSONAL_TYPE,
   EmailAddress,
+  Goal,
   PhoneNumber,
   Registrant,
   Role
@@ -21,18 +22,45 @@ export class DomainService {
 
   importAgentsFile(file: File, messages: string[], createdBy: string): Promise<Agent[]> {
     return new Promise((resolve) => {
+      this.importAgentsFileToString(file).then (text => {
+        let agents = this.createAgentArray(text, messages, createdBy);
+        resolve(agents);
+      })
+    })
+  }
+
+  importAgentsFileToString(file: File): Promise<string | ArrayBuffer> {
+    return new Promise((resolve) => {
       try {
         const reader = new FileReader();
         reader.readAsText(file);
         reader.onload = () => {
           let text = reader.result;
-          let agents = this.createAgentArray(text, messages, createdBy);
-          resolve(agents);
+          resolve(text);
         };
       } catch (err) {
         console.error(err);
       }
     });
+  }
+
+  createAgentDataMap(csvText): Map<string, string>[]{
+    let retval: Map<string, string>[] = [];
+
+    let lines: string[] = csvText.split('\n');
+    let headers: string[] = lines[0].split(',');
+
+    for (var i = 1; i < lines.length - 1; i++) {
+      let data: Map<string, string> = new Map<string, string>();
+
+      for (var j = 0; j < headers.length; j++) {
+        data.set(headers[j], lines[i].split(',')[j]);
+      }
+
+      retval.push(data);
+    }
+
+    return retval;
   }
 
   createAgentArray(csvText, messages: string[], createdBy: string): Agent[] {
@@ -93,6 +121,12 @@ export class DomainService {
         splitVals.set(field, data);
       }
     });
+
+    agent.conference_goals = [];
+    let goal: Goal = { ...new Goal() };
+    goal.year = new Date().getFullYear();
+    goal.amount = 90000;
+    agent.conference_goals.push(goal);
 
     agent.addresses = this.extractAddresses(splitVals);
     agent.email_addresses = this.extractEmailAddresses(splitVals);

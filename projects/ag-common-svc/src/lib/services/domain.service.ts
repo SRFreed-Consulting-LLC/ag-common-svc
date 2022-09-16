@@ -4,14 +4,21 @@ import {
   Address,
   Agent,
   AGENT_STATUS,
+  AGENT_TYPE,
   Association,
   ASSOCIATION_TYPE,
   BUSINESS_PERSONAL_TYPE,
   EmailAddress,
   Goal,
   PhoneNumber,
+  PROSPECT_DISPOSITION,
+  PROSPECT_PRIORITY,
+  PROSPECT_STATUS,
   Registrant,
-  Role
+  Role,
+  Social,
+  SOCIAL_MEDIA,
+  Website
 } from 'ag-common-lib/public-api';
 
 @Injectable({
@@ -92,50 +99,140 @@ export class DomainService {
       let splitfields = field.split('.');
 
       if (splitfields.length == 1) {
-        let k: string[] = Object.getOwnPropertyNames(agent);
-        let s: string[] = k.filter((key) => key == field);
+        if(line_data.has('p_agent_id')){agent.p_agent_id = line_data.get('p_agent_id');}
+        if(line_data.has('p_external_agent_id')){agent.p_external_agent_id = line_data.get('p_external_agent_id');}
+        if(line_data.has('p_agent_first_name')){agent.p_agent_first_name = line_data.get('p_agent_first_name');}
+        if(line_data.has('p_agent_middle_name')){agent.p_agent_middle_name = line_data.get('p_agent_middle_name');}
+        if(line_data.has('p_agent_last_name')){agent.p_agent_last_name = line_data.get('p_agent_last_name');}
+        if(line_data.has('p_nick_name')){agent.p_nick_name = line_data.get('p_nick_name');}
+        if(line_data.has('p_nick_last_name')){agent.p_nick_last_name = line_data.get('p_nick_last_name');}
+        if(line_data.has('p_agency_id')){agent.p_agency_id = line_data.get('p_agency_id');}
+        if(line_data.has('p_mga_id')){agent.p_mga_id = line_data.get('p_mga_id');}
+        if(line_data.has('title')){agent.title = line_data.get('title');}
+        if(line_data.has('p_prefix')){agent.p_prefix = line_data.get('p_prefix');}
+        if(line_data.has('p_suffix')){agent.p_suffix = line_data.get('p_suffix');}
+        if(line_data.has('npn')){agent.npn = line_data.get('npn');}
+        if(line_data.has('p_dietary_consideration')){agent.p_dietary_consideration = line_data.get('p_dietary_consideration');}
+        if(line_data.has('p_dietary_consideration_other')){agent.p_dietary_consideration_other = line_data.get('p_dietary_consideration_other');}
+        if(line_data.has('p_dietary_or_personal_considerations')){agent.p_dietary_or_personal_considerations = line_data.get('p_dietary_or_personal_considerations');}
+        if(line_data.has('upline')){agent.upline = line_data.get('upline');}
+        if(line_data.has('agencyName')){agent.approvedBy = line_data.get('agencyName');}
+        if(line_data.has('registration_source')){agent.registration_source = line_data.get('registration_source');}
+        if(line_data.has('manager_id')){agent.manager_id = line_data.get('manager_id');}
+        if(line_data.has('approve_deny_reason')){agent.approve_deny_reason = line_data.get('approve_deny_reason');}
+        if(line_data.has('awb_site_id')){agent.awb_site_id = line_data.get('awb_site_id');}
+        if(line_data.has('certifications')){agent.certifications = line_data.get('certifications');}
+        if(line_data.has('prospect_referred_to')){agent.prospect_referred_to = line_data.get('prospect_referred_to');}
+        if(line_data.has('prospect_wrap_up_notes')){agent.prospect_wrap_up_notes = line_data.get('prospect_wrap_up_notes');}
+        if(line_data.has('campaigns_user_name')){agent.campaigns_user_name = line_data.get('campaigns_user_name');}
+        if(line_data.has('campaigns_address')){agent.campaigns_address = line_data.get('campaigns_address');}
+        if(line_data.has('race')){agent.race = line_data.get('race');}
+        if(line_data.has('ethnicity')){agent.ethnicity = line_data.get('ethnicity');}
+        if(line_data.has('gender')){agent.gender = line_data.get('gender');}
+        if(line_data.has('primary_language')){agent.primary_language = line_data.get('primary_language');}
+        if(line_data.has('secondary_language')){agent.secondary_language = line_data.get('secondary_language');}
+        if(line_data.has('hobbies')){agent.hobbies = line_data.get('hobbies');}
+        if(line_data.has('p_tshirt_size')){agent.p_tshirt_size = line_data.get('p_tshirt_size');}
+        if(line_data.has('unisex_tshirt_size')){agent.unisex_tshirt_size = line_data.get('unisex_tshirt_size');}
+        if(line_data.has('favorite_destination')){agent.favorite_destination = line_data.get('favorite_destination');}
+        if(line_data.has('shoe_size')){agent.shoe_size = line_data.get('shoe_size');}
 
-        if (s.length == 1) {
-          if(field == 'approve_deny_reason'){
-            console.log(data);
-          }
-          if (typeof agent[field] == 'boolean') {
-            agent[field] = data.toLowerCase() == 'true';
-          } else if (data && (field == 'dob' || field == 'approval_date')) {
-            agent[field] = new Date(data);
-          } else if (field == 'role') {
-            agent.role = [];
+        if(line_data.has('p_strategic_agent')){agent.p_strategic_agent = this.getBoolean(line_data.get('p_strategic_agent'));}
+        if(line_data.has('alliance_group_employee')){agent.alliance_group_employee = this.getBoolean(line_data.get('alliance_group_employee'));}
+        if(line_data.has('is_manager')){agent.is_manager = this.getBoolean(line_data.get('is_manager'));}
+        if(line_data.has('is_rmd')){agent.is_rmd = this.getBoolean(line_data.get('is_rmd'));}
+        if(line_data.has('is_credited')){agent.is_credited = this.getBoolean(line_data.get('is_credited'));}
+        if(line_data.has('is_acb_user')){agent.is_acb_user = this.getBoolean(line_data.get('is_acb_user'));}
+        if(line_data.has('is_awb_user')){agent.is_awb_user = this.getBoolean(line_data.get('is_awb_user'));}
+        
+        if(line_data.has('prospect_referred_to_date')){agent.prospect_referred_to_date = new Date(line_data.get('prospect_referred_to_date'));}
+        if(line_data.has('campaigns_user_since')){agent.campaigns_user_since = new Date(line_data.get('campaigns_user_since'));}
+        if(line_data.has('dob')){agent.dob = new Date(line_data.get('dob'));}
 
-            if (field['role']) {
-              agent.role.push(Role[data]);
-            } else {
-              agent.role.push(Role.AGENT);
-            }
-          } else if (data && (field == 'agent_status')) {
-            agent.agent_status = AGENT_STATUS[data.trim()]
-          } else {
-            agent[field] = data.trim();
-          }
+        //calculate p_agent_name
+        if(agent.p_agent_first_name){
+          agent.p_agent_name = agent.p_agent_first_name;
         }
+
+        if(agent.p_agent_middle_name){
+          agent.p_agent_name = agent.p_agent_name + ' ' + agent.p_agent_middle_name;
+        }
+
+        if(agent.p_agent_last_name){
+          agent.p_agent_name = agent.p_agent_name + ' ' + agent.p_agent_last_name;
+        }
+
+        if(!agent.role){
+          agent.role = [];
+        }
+
+        if(line_data.has('role')){
+          agent.role.push(Role[line_data.get('role')]);
+        } else {
+          agent.role.push(Role.AGENT);
+        }
+
+        if(line_data.has('agent_status')){
+          agent.agent_status = AGENT_STATUS[line_data.get('agent_status').trim()]
+        }
+
+        if(line_data.has('prospect_status')){
+          agent.prospect_status = PROSPECT_STATUS[line_data.get('prospect_status').trim()]
+        }
+
+        if(line_data.has('prospect_priority')){
+          agent.prospect_priority = PROSPECT_PRIORITY[line_data.get('prospect_priority').trim()]
+        }
+
+        if(line_data.has('prospect_disposition')){
+          agent.prospect_disposition = PROSPECT_DISPOSITION[line_data.get('prospect_disposition').trim()]
+        }
+        
       } else {
         splitVals.set(field, data);
       }
     });
 
+    agent.personal_goals = [];
+    let goal1: Goal = { ...new Goal() };
+    goal1.year = new Date().getFullYear();
+    goal1.amount = 90000;
+    agent.personal_goals.push(goal1);
+
     agent.conference_goals = [];
-    let goal: Goal = { ...new Goal() };
-    goal.year = new Date().getFullYear();
-    goal.amount = 90000;
-    agent.conference_goals.push(goal);
+    let goal2: Goal = { ...new Goal() };
+    goal2.year = new Date().getFullYear();
+    goal2.amount = 90000;
+    agent.conference_goals.push(goal2);
+
+    if(agent.is_manager){
+      agent.manager_goals = [];
+      let goal3: Goal = { ...new Goal() };
+      goal3.year = new Date().getFullYear();
+      goal3.amount = 90000;
+      agent.manager_goals.push(goal3);
+    }
 
     agent.addresses = this.extractAddresses(splitVals);
     agent.email_addresses = this.extractEmailAddresses(splitVals);
     agent.phone_numbers = this.extractPhoneNumbers(splitVals);
     agent.associations = this.extractAssociations(splitVals);
+    agent.websites = this.extractWebsites(splitVals);
+    agent.socials = this.extractSocials(splitVals);
 
+    agent.login_count = 0;
+    agent.logged_in = false;
+    agent.emailVerified = false;
+    agent.showSplashScreen = false;
     agent.registration_source = 'File';
     agent.created_date = new Date();
+    agent.approvalDate = new Date();
+    agent.registrationDate = new Date();
     agent.created_by = createdBy;
+    agent.approvedBy = createdBy;
+    agent.agent_type = AGENT_TYPE.GENERAL_AGENT;
+    agent.is_rmd = false;
+    agent.is_credited = false;
 
     if (!agent.email_addresses || agent.email_addresses.length == 0) {
       messages.push('No Email Addresses were set for this agent. Not Importing ' + agent.p_email);
@@ -156,20 +253,76 @@ export class DomainService {
 
   updateAgent(data: Map<string, string>, messages: string[], agent: Agent): Agent {    
     //update these if value is provided
-    if(data.has('p_prefix')){
-      agent.p_prefix = data.get('p_prefix');
+    if(data.has('p_agent_id')){agent.p_agent_id = data.get('p_agent_id');}
+    if(data.has('p_external_agent_id')){agent.p_prefix = data.get('p_external_agent_id');}
+    if(data.has('p_agent_first_name')){agent.p_agent_first_name = data.get('p_agent_first_name');}
+    if(data.has('p_agent_middle_name')){agent.p_agent_middle_name = data.get('p_agent_middle_name');}
+    if(data.has('p_agent_last_name')){agent.p_agent_last_name = data.get('p_agent_last_name');}
+    if(data.has('p_nick_name')){agent.p_nick_name = data.get('p_nick_name');}
+    if(data.has('p_nick_last_name')){agent.p_nick_last_name = data.get('p_nick_last_name');}
+    if(data.has('p_agency_id')){agent.p_agency_id = data.get('p_agency_id');}
+    if(data.has('p_mga_id')){agent.p_mga_id = data.get('p_mga_id');}
+    if(data.has('title')){agent.title = data.get('title');}
+    if(data.has('p_prefix')){agent.p_prefix = data.get('p_prefix');}
+    if(data.has('p_suffix')){agent.p_suffix = data.get('p_suffix');}
+    if(data.has('npn')){agent.npn = data.get('npn');}
+    if(data.has('upline')){agent.upline = data.get('upline');}
+    if(data.has('agencyName')){agent.agencyName = data.get('agencyName');}
+    if(data.has('manager_id')){agent.manager_id = data.get('manager_id');}
+    if(data.has('awb_site_id')){agent.awb_site_id = data.get('awb_site_id');}
+    if(data.has('certifications')){agent.certifications = data.get('certifications');}
+    if(data.has('prospect_referred_to')){agent.prospect_referred_to = data.get('prospect_referred_to');}
+    if(data.has('prospect_wrap_up_notes')){agent.prospect_wrap_up_notes = data.get('prospect_wrap_up_notes');}
+    if(data.has('campaigns_user_name')){agent.campaigns_user_name = data.get('campaigns_user_name');}
+    if(data.has('campaigns_address')){agent.campaigns_address = data.get('campaigns_address');}
+    if(data.has('race')){agent.race = data.get('race');}
+    if(data.has('ethnicity')){agent.ethnicity = data.get('ethnicity');}
+    if(data.has('gender')){agent.gender = data.get('gender');}
+    if(data.has('primary_language')){agent.primary_language = data.get('primary_language');}
+    if(data.has('secondary_language')){agent.secondary_language = data.get('secondary_language');}
+    if(data.has('hobbies')){agent.hobbies = data.get('hobbies');}
+    if(data.has('p_tshirt_size')){agent.p_tshirt_size = data.get('p_tshirt_size');}
+    if(data.has('unisex_tshirt_size')){agent.unisex_tshirt_size = data.get('unisex_tshirt_size');}
+    if(data.has('favorite_destination')){agent.favorite_destination = data.get('favorite_destination');}
+    if(data.has('shoe_size')){agent.shoe_size = data.get('shoe_size');}
+
+    if(data.has('p_strategic_agent')){agent.p_strategic_agent = this.getBoolean(data.get('p_strategic_agent'));}
+    if(data.has('alliance_group_employee')){agent.alliance_group_employee = this.getBoolean(data.get('alliance_group_employee'));}
+    if(data.has('is_manager')){agent.is_manager = this.getBoolean(data.get('is_manager'));}
+    if(data.has('is_acb_user')){agent.is_acb_user = this.getBoolean(data.get('is_acb_user'));}
+    if(data.has('is_awb_user')){agent.is_awb_user = this.getBoolean(data.get('is_awb_user'));}
+    
+    if(data.has('prospect_referred_to_date')){agent.prospect_referred_to_date = new Date(data.get('prospect_referred_to_date'));}
+    if(data.has('campaigns_user_since')){agent.campaigns_user_since = new Date(data.get('campaigns_user_since'));}
+    if(data.has('dob')){agent.dob = new Date(data.get('dob'));}
+
+    //calculate p_agent_name
+    if(agent.p_agent_first_name){
+      agent.p_agent_name = agent.p_agent_first_name;
     }
-    if(data.has('p_nick_name')){
-      agent.p_nick_name = data.get('p_nick_name');
+
+    if(agent.p_agent_middle_name){
+      agent.p_agent_name = agent.p_agent_name + ' ' + agent.p_agent_middle_name;
     }
-    if(data.has('p_nick_last_name')){
-      agent.p_nick_last_name = data.get('p_nick_last_name');
+
+    if(agent.p_agent_last_name){
+      agent.p_agent_name = agent.p_agent_name + ' ' + agent.p_agent_last_name;
     }
-    if(data.has('p_tshirt_size')){
-      agent.p_tshirt_size = data.get('p_tshirt_size');
-    }
+
     if(data.has('agent_status')){
-      agent.agent_status = AGENT_STATUS[data.get('agent_status')];
+      agent.agent_status = AGENT_STATUS[data.get('agent_status').trim()]
+    }
+
+    if(data.has('prospect_status')){
+      agent.prospect_status = PROSPECT_STATUS[data.get('prospect_status').trim()]
+    }
+
+    if(data.has('prospect_priority')){
+      agent.prospect_priority = PROSPECT_PRIORITY[data.get('prospect_priority').trim()]
+    }
+
+    if(data.has('prospect_disposition')){
+      agent.prospect_disposition = PROSPECT_DISPOSITION[data.get('prospect_disposition').trim()]
     }
 
     //only overwrite if blank
@@ -196,25 +349,25 @@ export class DomainService {
       agent.approve_deny_reason = data.get('approve_deny_reason');
     }
     
-    let addresses: Address[] = this.extractAddresses(data);
+    let incoming_addresses: Address[] = this.extractAddresses(data);
 
     if(!agent.addresses){
       agent.addresses = [];
     }
 
-    let is_p_billing_set: boolean = addresses.filter(a => a.is_primary_billing).length > 0;
+    let is_p_billing_set: boolean = incoming_addresses.filter(a => a.is_primary_billing).length > 0;
 
     if(is_p_billing_set){
       agent.addresses.forEach(a => a.is_primary_billing = false);
     }
 
-    let is_p_shipping_set: boolean = addresses.filter(a => a.is_primary_shipping).length > 0;
+    let is_p_shipping_set: boolean = incoming_addresses.filter(a => a.is_primary_shipping).length > 0;
 
     if(is_p_shipping_set){
       agent.addresses.forEach(a => a.is_primary_shipping = false);
     }
 
-    addresses.forEach(incoming_address => {
+    incoming_addresses.forEach(incoming_address => {
       let matching_address: Address = agent.addresses.find(address => address.address1 == incoming_address.address1);
 
       if(matching_address){
@@ -241,10 +394,17 @@ export class DomainService {
         if(incoming_address.country && !matching_address.country){
           matching_address.country = incoming_address.country
         }
+
+        if(incoming_address.is_primary_billing){
+          matching_address.is_primary_billing = incoming_address.is_primary_billing
+        }
+
+        if(incoming_address.is_primary_shipping){
+          matching_address.is_primary_shipping = incoming_address.is_primary_shipping
+        }
       } else {
         agent.addresses.push(incoming_address);
       }
-
     })
 
     let emails: EmailAddress[] = this.extractEmailAddresses(data);
@@ -543,6 +703,66 @@ export class DomainService {
 
     return a;
   }
+  
+  extractWebsites(invals: Map<string, string>): Website[] {
+    let retval: Website[] = [];
+
+    let i: Map<string, string> = this.getCount(invals, 'websites');
+
+    i.forEach((value, key) => {
+      let a: Website = this.createWebsite(invals, key);
+      if (a.url) retval.push(a);
+    });
+
+    return retval;
+  }
+
+  createWebsite(invals: Map<string, string>, key: string): Website {
+    let a: Website = { ...new Website() };
+    a.id = this.generateId();
+
+    if (invals.has('websites.' + key + '.url')) {
+      a.url = invals.get('websites.' + key + '.url')
+    }
+
+    if (invals.has('websites.' + key + '.website_type')) {
+      a.website_type = BUSINESS_PERSONAL_TYPE[invals.get('websites.' + key + '.website_type').toUpperCase()];
+    }
+
+    return a;
+  }
+
+  extractSocials(invals: Map<string, string>): Social[] {
+    let retval: Social[] = [];
+
+    let i: Map<string, string> = this.getCount(invals, 'socials');
+
+    i.forEach((value, key) => {
+      let a: Social = this.createSocial(invals, key);
+      if (a.url) retval.push(a);
+    });
+
+    return retval;
+  }
+
+  createSocial(invals: Map<string, string>, key: string): Social {
+    let a: Social = { ...new Social() };
+    a.id = this.generateId();
+
+    if (invals.has('socials.' + key + '.url')) {
+      a.url = invals.get('socials.' + key + '.url')
+    }
+
+    if (invals.has('socials.' + key + '.social_type')) {
+      a.social_type = BUSINESS_PERSONAL_TYPE[invals.get('socials.' + key + '.social_type').toUpperCase()];
+    }
+
+    if (invals.has('socials.' + key + '.social_media')) {
+      a.social_media = SOCIAL_MEDIA[invals.get('socials.' + key + '.social_media').toUpperCase()];
+    }
+
+    return a;
+  }
 
   extractAssociations(invals: Map<string, string>): Association[] {
     let retval: Association[] = [];
@@ -665,6 +885,20 @@ export class DomainService {
         v = c == 'x' ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
+  }
+
+  getBoolean(value){
+    switch(value){
+         case true:
+         case "true":
+         case 1:
+         case "1":
+         case "on":
+         case "yes":
+             return true;
+         default: 
+             return false;
+     }
   }
 }
 

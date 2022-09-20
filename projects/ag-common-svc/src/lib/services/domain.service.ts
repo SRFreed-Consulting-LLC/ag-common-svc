@@ -1,23 +1,6 @@
 import { Injectable } from '@angular/core';
-import {
-  Address,
-  Agent,
-  AGENT_STATUS,
-  AGENT_TYPE,
-  Association,
-  ASSOCIATION_TYPE,
-  BUSINESS_PERSONAL_TYPE,
-  EmailAddress,
-  Goal,
-  PhoneNumber,
-  PROSPECT_DISPOSITION,
-  PROSPECT_PRIORITY,
-  PROSPECT_STATUS,
-  Role,
-  Social,
-  SOCIAL_MEDIA,
-  Website
-} from 'ag-common-lib/public-api';
+import { Address, Agent, AGENT_STATUS, AGENT_TYPE, Association, ASSOCIATION_TYPE, BUSINESS_PERSONAL_TYPE, EmailAddress,
+  Goal, PhoneNumber, PROSPECT_DISPOSITION, PROSPECT_PRIORITY, PROSPECT_STATUS, Role, Social, SOCIAL_MEDIA, Website } from 'ag-common-lib/public-api';
 
 @Injectable({
   providedIn: 'root'
@@ -47,9 +30,9 @@ export class DomainService {
         if(line_data.has('p_prefix')){agent.p_prefix = line_data.get('p_prefix');}
         if(line_data.has('p_suffix')){agent.p_suffix = line_data.get('p_suffix');}
         if(line_data.has('npn')){agent.npn = line_data.get('npn');}
-        if(line_data.has('p_dietary_or_personal_considerations')){agent.p_dietary_or_personal_considerations = line_data.get('p_dietary_or_personal_considerations');}
-        if(line_data.has('p_dietary_consideration')){agent.p_dietary_consideration = line_data.get('p_dietary_consideration');}
-        if(line_data.has('p_dietary_consideration_other')){agent.p_dietary_consideration_other = line_data.get('p_dietary_consideration_other');}
+        if(line_data.has('dietary_or_personal_considerations')){agent.dietary_or_personal_considerations = line_data.get('dietary_or_personal_considerations');}
+        if(line_data.has('dietary_consideration')){agent.dietary_consideration = line_data.get('dietary_consideration');}
+        if(line_data.has('dietary_consideration_type')){agent.dietary_consideration_type = line_data.get('dietary_consideration_type');}
         if(line_data.has('upline')){agent.upline = line_data.get('upline');}
         if(line_data.has('agencyName')){agent.approvedBy = line_data.get('agencyName');}
         if(line_data.has('registration_source')){agent.registration_source = line_data.get('registration_source');}
@@ -192,9 +175,9 @@ export class DomainService {
     if(data.has('p_prefix')){agent.p_prefix = data.get('p_prefix');}
     if(data.has('p_suffix')){agent.p_suffix = data.get('p_suffix');}
     if(data.has('npn')){agent.npn = data.get('npn');}
-    if(data.has('p_dietary_or_personal_considerations')){agent.p_dietary_or_personal_considerations = data.get('p_dietary_or_personal_considerations');}
-    if(data.has('p_dietary_consideration')){agent.p_dietary_consideration = data.get('p_dietary_consideration');}
-    if(data.has('p_dietary_consideration_other')){agent.p_dietary_consideration_other = data.get('p_dietary_consideration_other');}
+    if(data.has('dietary_or_personal_considerations')){agent.dietary_or_personal_considerations = data.get('dietary_or_personal_considerations');}
+    if(data.has('dietary_consideration')){agent.dietary_consideration = data.get('dietary_consideration');}
+    if(data.has('dietary_consideration_type')){agent.dietary_consideration_type = data.get('dietary_consideration_type');}
     if(data.has('upline')){agent.upline = data.get('upline');}
     if(data.has('agencyName')){agent.agencyName = data.get('agencyName');}
     if(data.has('manager_id')){agent.manager_id = data.get('manager_id');}
@@ -771,16 +754,16 @@ export class DomainService {
       a.address.country = invals.get('association.' + key + '.address.country');
     }
 
-    if (invals.has('association.' + key + '.p_dietary_or_personal_considerations')) {
-      a.p_dietary_or_personal_considerations = invals.get('association.' + key + '.p_dietary_or_personal_considerations');
+    if (invals.has('association.' + key + '.dietary_or_personal_considerations')) {
+      a.dietary_or_personal_considerations = invals.get('association.' + key + '.dietary_or_personal_considerations');
     }
 
-    if (invals.has('association.' + key + '.p_dietary_consideration')) {
-      a.p_dietary_consideration = invals.get('association.' + key + '.p_dietary_consideration');
+    if (invals.has('association.' + key + '.dietary_consideration')) {
+      a.dietary_consideration = invals.get('association.' + key + '.dietary_consideration');
     }
 
-    if (invals.has('association.' + key + '.p_dietary_consideration_other')) {
-      a.p_dietary_consideration_other = invals.get('association.' + key + '.p_dietary_consideration_other');
+    if (invals.has('association.' + key + '.dietary_consideration_type')) {
+      a.dietary_consideration_type = invals.get('association.' + key + '.dietary_consideration_type');
     }
 
     if (invals.has('association.' + key + '.p_nick_name')) {
@@ -825,20 +808,20 @@ export class DomainService {
             matching_association.association_type = incoming_associations.association_type
           } 
   
-          if(incoming_associations.p_dietary_consideration){
-            matching_association.p_dietary_consideration = incoming_associations.p_dietary_consideration
+          if(incoming_associations.dietary_consideration){
+            matching_association.dietary_consideration = incoming_associations.dietary_consideration
           } 
   
-          if(incoming_associations.p_dietary_consideration && matching_association.p_dietary_consideration){
-            matching_association.p_dietary_consideration = matching_association.p_dietary_consideration + ' ' +incoming_associations.p_dietary_consideration
-          } else if(matching_association.p_dietary_consideration){
-            matching_association.p_dietary_consideration = incoming_associations.p_dietary_consideration
+          if(incoming_associations.dietary_consideration && matching_association.dietary_consideration){
+            matching_association.dietary_consideration = matching_association.dietary_consideration + ' ' +incoming_associations.dietary_consideration
+          } else if(matching_association.dietary_consideration){
+            matching_association.dietary_consideration = incoming_associations.dietary_consideration
           }
   
-          if(incoming_associations.p_dietary_consideration_other && matching_association.p_dietary_consideration_other){
-            matching_association.p_dietary_consideration_other = matching_association.p_dietary_consideration_other + ' ' +incoming_associations.p_dietary_consideration_other
-          } else if(matching_association.p_dietary_consideration_other){
-            matching_association.p_dietary_consideration_other = incoming_associations.p_dietary_consideration_other
+          if(incoming_associations.dietary_consideration_type && matching_association.dietary_consideration_type){
+            matching_association.dietary_consideration_type = matching_association.dietary_consideration_type + ' ' +incoming_associations.dietary_consideration_type
+          } else if(matching_association.dietary_consideration_type){
+            matching_association.dietary_consideration_type = incoming_associations.dietary_consideration_type
           }
   
           if(!matching_association.address){

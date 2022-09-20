@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { ToastrService } from 'ngx-toastr';
 import {
   Address,
   Agent,
@@ -24,50 +23,52 @@ import {
   providedIn: 'root'
 })
 export class DomainService {
-  constructor(public toster: ToastrService) {}
+  constructor() {}
 
-  importAgentsFile(file: File, messages: string[], createdBy: string): Promise<Agent[]> {
-    return new Promise((resolve) => {
-      this.importAgentsFileToString(file).then (text => {
-        let agents = this.createAgentArray(text, messages, createdBy);
-        resolve(agents);
-      })
-    })
-  }
+  // importAgentsFile(file: File, messages: string[], createdBy: string): Promise<Agent[]> {
+  //   return new Promise((resolve) => {
+  //     this.importAgentsFileToString(file).then (text => {
+  //       let agents = this.createAgentArray(text, messages, createdBy);
+  //       resolve(agents);
+  //     })
+  //   })
+  // }
 
-  importAgentsFileToString(file: File): Promise<string | ArrayBuffer> {
-    return new Promise((resolve) => {
-      try {
-        const reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = () => {
-          let text = reader.result;
-          resolve(text);
-        };
-      } catch (err) {
-        console.error(err);
-      }
-    });
-  }
+  // importAgentsFileToString(file: File): Promise<string | ArrayBuffer> {
+  //   return new Promise((resolve) => {
+  //     try {
+  //       const reader = new FileReader();
+  //       reader.readAsText(file);
+  //       reader.onload = () => {
+  //         let text = reader.result;
+  //         resolve(text);
+  //       };
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   });
+  // }
 
-  createAgentDataMap(csvText): Map<string, string>[]{
-    let retval: Map<string, string>[] = [];
+  // createAgentDataMap(csvText): Map<string, string>[]{
+  //   let retval: Map<string, string>[] = [];
 
-    let lines: string[] = csvText.split('\n');
-    let headers: string[] = lines[0].split(',');
+  //   let lines: string[] = csvText.split('\n');
+  //   let headers: string[] = lines[0].split(',');
 
-    for (var i = 1; i < lines.length - 1; i++) {
-      let data: Map<string, string> = new Map<string, string>();
+  //   for (var i = 1; i < lines.length - 1; i++) {
+  //     let data: Map<string, string> = new Map<string, string>();
 
-      for (var j = 0; j < headers.length; j++) {
-        data.set(headers[j], lines[i].split(',')[j]);
-      }
+  //     for (var j = 0; j < headers.length; j++) {
+  //       if(lines[i].split(',')[j] && lines[i].split(',')[j] !=''){
+  //         data.set(headers[j], lines[i].split(',')[j]);
+  //       }
+  //     }
 
-      retval.push(data);
-    }
+  //     retval.push(data);
+  //   }
 
-    return retval;
-  }
+  //   return retval;
+  // }
 
   createAgentArray(csvText, messages: string[], createdBy: string): Agent[] {
     let lines: string[] = csvText.split('\n');
@@ -111,9 +112,9 @@ export class DomainService {
         if(line_data.has('p_prefix')){agent.p_prefix = line_data.get('p_prefix');}
         if(line_data.has('p_suffix')){agent.p_suffix = line_data.get('p_suffix');}
         if(line_data.has('npn')){agent.npn = line_data.get('npn');}
+        if(line_data.has('p_dietary_or_personal_considerations')){agent.p_dietary_or_personal_considerations = line_data.get('p_dietary_or_personal_considerations');}
         if(line_data.has('p_dietary_consideration')){agent.p_dietary_consideration = line_data.get('p_dietary_consideration');}
         if(line_data.has('p_dietary_consideration_other')){agent.p_dietary_consideration_other = line_data.get('p_dietary_consideration_other');}
-        if(line_data.has('p_dietary_or_personal_considerations')){agent.p_dietary_or_personal_considerations = line_data.get('p_dietary_or_personal_considerations');}
         if(line_data.has('upline')){agent.upline = line_data.get('upline');}
         if(line_data.has('agencyName')){agent.approvedBy = line_data.get('agencyName');}
         if(line_data.has('registration_source')){agent.registration_source = line_data.get('registration_source');}
@@ -145,6 +146,7 @@ export class DomainService {
         if(line_data.has('is_acb_user')){agent.is_acb_user = this.getBoolean(line_data.get('is_acb_user'));}
         if(line_data.has('is_awb_user')){agent.is_awb_user = this.getBoolean(line_data.get('is_awb_user'));}
         
+
         if(line_data.has('prospect_referred_to_date')){agent.prospect_referred_to_date = new Date(line_data.get('prospect_referred_to_date'));}
         if(line_data.has('campaigns_user_since')){agent.campaigns_user_since = new Date(line_data.get('campaigns_user_since'));}
         if(line_data.has('dob')){agent.dob = new Date(line_data.get('dob'));}
@@ -160,16 +162,6 @@ export class DomainService {
 
         if(agent.p_agent_last_name){
           agent.p_agent_name = agent.p_agent_name + ' ' + agent.p_agent_last_name;
-        }
-
-        if(!agent.role){
-          agent.role = [];
-        }
-
-        if(line_data.has('role')){
-          agent.role.push(Role[line_data.get('role')]);
-        } else {
-          agent.role.push(Role.AGENT);
         }
 
         if(line_data.has('agent_status')){
@@ -212,6 +204,8 @@ export class DomainService {
       goal3.amount = 90000;
       agent.manager_goals.push(goal3);
     }
+
+    agent.role = [Role.AGENT];
 
     agent.addresses = this.extractAddresses(splitVals);
     agent.email_addresses = this.extractEmailAddresses(splitVals);
@@ -260,12 +254,13 @@ export class DomainService {
     if(data.has('p_agent_last_name')){agent.p_agent_last_name = data.get('p_agent_last_name');}
     if(data.has('p_nick_name')){agent.p_nick_name = data.get('p_nick_name');}
     if(data.has('p_nick_last_name')){agent.p_nick_last_name = data.get('p_nick_last_name');}
-    if(data.has('p_agency_id')){agent.p_agency_id = data.get('p_agency_id');}
-    if(data.has('p_mga_id')){agent.p_mga_id = data.get('p_mga_id');}
     if(data.has('title')){agent.title = data.get('title');}
     if(data.has('p_prefix')){agent.p_prefix = data.get('p_prefix');}
     if(data.has('p_suffix')){agent.p_suffix = data.get('p_suffix');}
     if(data.has('npn')){agent.npn = data.get('npn');}
+    if(data.has('p_dietary_or_personal_considerations')){agent.p_dietary_or_personal_considerations = data.get('p_dietary_or_personal_considerations');}
+    if(data.has('p_dietary_consideration')){agent.p_dietary_consideration = data.get('p_dietary_consideration');}
+    if(data.has('p_dietary_consideration_other')){agent.p_dietary_consideration_other = data.get('p_dietary_consideration_other');}
     if(data.has('upline')){agent.upline = data.get('upline');}
     if(data.has('agencyName')){agent.agencyName = data.get('agencyName');}
     if(data.has('manager_id')){agent.manager_id = data.get('manager_id');}
@@ -324,34 +319,20 @@ export class DomainService {
       agent.prospect_disposition = PROSPECT_DISPOSITION[data.get('prospect_disposition').trim()]
     }
 
-    //only overwrite if blank
-    if(!agent.p_dietary_or_personal_considerations && data.has('p_dietary_or_personal_considerations')){
-      agent.p_dietary_or_personal_considerations = data.get('p_dietary_or_personal_considerations');
-    }
-
-    //append if value exists
-    if(data.has('p_dietary_consideration')){
-      agent.p_dietary_consideration += ' ' + data.get('p_dietary_consideration');
-    }
-
-    if(data.has('p_dietary_consideration_other')){
-      agent.p_dietary_consideration_other += ' '  + data.get('p_dietary_consideration_other');
-    }
-
     if(data.has('approve_deny_reason')){
-      agent.approve_deny_reason += ' ' + data.get('approve_deny_reason');
+      agent.approve_deny_reason = agent.approve_deny_reason ? agent.approve_deny_reason + ' ' + data.get('approve_deny_reason') : data.get('approve_deny_reason');
     }
 
     if(data.has('agency_approve_deny_reason')){
-      agent.agency_approve_deny_reason += ' ' + data.get('agency_approve_deny_reason');
+      agent.agency_approve_deny_reason += agent.agency_approve_deny_reason ? agent.agency_approve_deny_reason + ' ' + data.get('agency_approve_deny_reason') : data.get('agency_approve_deny_reason');
     }
 
     if(data.has('certifications')){
-      agent.certifications += ' ' + data.get('certifications');
+      agent.certifications = agent.certifications ? agent.certifications + ' ' + data.get('certifications') : data.get('certifications');
     }
 
     if(data.has('prospect_wrap_up_notes')){
-      agent.prospect_wrap_up_notes += ' ' + data.get('prospect_wrap_up_notes');
+      agent.prospect_wrap_up_notes = agent.prospect_wrap_up_notes? agent.prospect_wrap_up_notes + ' ' + data.get('prospect_wrap_up_notes') : agent.prospect_wrap_up_notes;
     }
     
     this.updateAddresses(data, agent);

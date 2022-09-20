@@ -25,71 +25,6 @@ import {
 export class DomainService {
   constructor() {}
 
-  // importAgentsFile(file: File, messages: string[], createdBy: string): Promise<Agent[]> {
-  //   return new Promise((resolve) => {
-  //     this.importAgentsFileToString(file).then (text => {
-  //       let agents = this.createAgentArray(text, messages, createdBy);
-  //       resolve(agents);
-  //     })
-  //   })
-  // }
-
-  // importAgentsFileToString(file: File): Promise<string | ArrayBuffer> {
-  //   return new Promise((resolve) => {
-  //     try {
-  //       const reader = new FileReader();
-  //       reader.readAsText(file);
-  //       reader.onload = () => {
-  //         let text = reader.result;
-  //         resolve(text);
-  //       };
-  //     } catch (err) {
-  //       console.error(err);
-  //     }
-  //   });
-  // }
-
-  // createAgentDataMap(csvText): Map<string, string>[]{
-  //   let retval: Map<string, string>[] = [];
-
-  //   let lines: string[] = csvText.split('\n');
-  //   let headers: string[] = lines[0].split(',');
-
-  //   for (var i = 1; i < lines.length - 1; i++) {
-  //     let data: Map<string, string> = new Map<string, string>();
-
-  //     for (var j = 0; j < headers.length; j++) {
-  //       if(lines[i].split(',')[j] && lines[i].split(',')[j] !=''){
-  //         data.set(headers[j], lines[i].split(',')[j]);
-  //       }
-  //     }
-
-  //     retval.push(data);
-  //   }
-
-  //   return retval;
-  // }
-
-  createAgentArray(csvText, messages: string[], createdBy: string): Agent[] {
-    let lines: string[] = csvText.split('\n');
-    let headers: string[] = lines[0].split(',');
-
-    let agents: Agent[] = [];
-
-    for (var i = 1; i < lines.length - 1; i++) {
-      let data: Map<string, string> = new Map<string, string>();
-
-      for (var j = 0; j < headers.length; j++) {
-        data.set(headers[j], lines[i].split(',')[j]);
-      }
-
-      let agent: Agent = this.createAgent(data, messages, createdBy);
-      agents.push(agent);
-    }
-
-    return agents;
-  }
-
   createAgent(line_data: Map<string, string>, messages: string[], createdBy: string): Agent {
     var agent = { ...new Agent() };
 
@@ -146,7 +81,6 @@ export class DomainService {
         if(line_data.has('is_acb_user')){agent.is_acb_user = this.getBoolean(line_data.get('is_acb_user'));}
         if(line_data.has('is_awb_user')){agent.is_awb_user = this.getBoolean(line_data.get('is_awb_user'));}
         
-
         if(line_data.has('prospect_referred_to_date')){agent.prospect_referred_to_date = new Date(line_data.get('prospect_referred_to_date'));}
         if(line_data.has('campaigns_user_since')){agent.campaigns_user_since = new Date(line_data.get('campaigns_user_since'));}
         if(line_data.has('dob')){agent.dob = new Date(line_data.get('dob'));}

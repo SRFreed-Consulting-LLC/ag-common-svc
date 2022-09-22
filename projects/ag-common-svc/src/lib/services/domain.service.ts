@@ -146,13 +146,14 @@ export class DomainService {
     agent.is_credited = false;
 
     if (!agent.email_addresses || agent.email_addresses.length == 0) {
-      messages.push('No Email Addresses were set for this agent. Not Importing ' + agent.p_email);
+      messages.push('No Email Addresses were set for this agent. Not Importing ' + agent.p_agent_name);
       return null;
     } else {
       let login_address: EmailAddress[] = agent.email_addresses.filter((email) => email.is_login == true);
 
       if (login_address.length == 0) {
-        console.log('No Login Email Addresses were set for this agent. Not Importing ' + agent.p_email);
+        messages.push('No Email Addresses were set for this agent. Not Importing ' + agent.p_agent_name);
+        console.log('No Login Email Addresses were set for this agent. Not Importing ' + agent.p_agent_name);
         return null;
       } else {
         agent.p_email = login_address[0].address;

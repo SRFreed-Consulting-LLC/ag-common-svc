@@ -38,9 +38,10 @@ export class ImportService {
       let data: Map<string, string> = new Map<string, string>();
 
       for (var j = 0; j < headers.length; j++) {
-        //if(lines[i].split(',')[j] && lines[i].split(',')[j] !=''){
-          data.set(headers[j], lines[i].split(',')[j]);
-        //}
+        let val = lines[i].split(',')[j];
+        if(val && val !=''){
+          data.set(headers[j], val);
+        }
       }
 
       retval.push(data);

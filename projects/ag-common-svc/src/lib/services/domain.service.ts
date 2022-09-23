@@ -30,7 +30,7 @@ export class DomainService {
         if(line_data.has('p_prefix')){agent.p_prefix = line_data.get('p_prefix');}
         if(line_data.has('p_suffix')){agent.p_suffix = line_data.get('p_suffix');}
         if(line_data.has('npn')){agent.npn = line_data.get('npn');}
-        if(line_data.has('dietary_or_personal_considerations')){agent.dietary_or_personal_considerations = line_data.get('dietary_or_personal_considerations');}
+        if(line_data.has('dietary_or_personal_considerations')){agent.dietary_or_personal_considerations = this.getYesNoValue(line_data.get('dietary_or_personal_considerations'));}
         if(line_data.has('dietary_consideration')){agent.dietary_consideration = line_data.get('dietary_consideration');}
         if(line_data.has('dietary_consideration_type')){agent.dietary_consideration_type = line_data.get('dietary_consideration_type');}
         if(line_data.has('upline')){agent.upline = line_data.get('upline');}
@@ -145,16 +145,18 @@ export class DomainService {
     agent.is_rmd = false;
     agent.is_credited = false;
 
-    if (!agent.email_addresses || agent.email_addresses.length == 0) {
+    if (agent.email_addresses?.length == 0) {
       messages.push('No Email Addresses were set for this agent. Not Importing ' + agent.p_agent_name);
+      
       return null;
-    } else {
+    } else if (agent.email_addresses?.length > 0) {
       let login_address: EmailAddress[] = agent.email_addresses.filter((email) => email.is_login == true);
 
       if (login_address.length == 0) {
-        messages.push('No Email Addresses were set for this agent. Not Importing ' + agent.p_agent_name);
-        console.log('No Login Email Addresses were set for this agent. Not Importing ' + agent.p_agent_name);
-        return null;
+        agent.email_addresses[0].is_login = true;
+        agent.p_email = agent.email_addresses[0].address;
+
+        return agent;
       } else {
         agent.p_email = login_address[0].address;
 
@@ -176,7 +178,7 @@ export class DomainService {
     if(data.has('p_prefix')){agent.p_prefix = data.get('p_prefix');}
     if(data.has('p_suffix')){agent.p_suffix = data.get('p_suffix');}
     if(data.has('npn')){agent.npn = data.get('npn');}
-    if(data.has('dietary_or_personal_considerations')){agent.dietary_or_personal_considerations = data.get('dietary_or_personal_considerations');}
+    if(data.has('dietary_or_personal_considerations')){agent.dietary_or_personal_considerations = this.getYesNoValue(data.get('dietary_or_personal_considerations'));}
     if(data.has('dietary_consideration')){agent.dietary_consideration = data.get('dietary_consideration');}
     if(data.has('dietary_consideration_type')){agent.dietary_consideration_type = data.get('dietary_consideration_type');}
     if(data.has('upline')){agent.upline = data.get('upline');}
@@ -484,10 +486,16 @@ export class DomainService {
 
     let i: Map<string, string> = this.getCount(invals, 'phone_numbers');
 
+    let tempMap: Map<string, PhoneNumber> = new Map<string, PhoneNumber>();
+
     i.forEach((value, key) => {
       let a: PhoneNumber = this.createPhoneNumber(invals, key);
-      if (a.number) retval.push(a);
+      if (a.number) tempMap.set(a.number, a);
     });
+
+    tempMap.forEach((val, key) => {
+      retval.push(val);
+    })
 
     return retval;
   }
@@ -895,6 +903,23 @@ export class DomainService {
              return true;
          default: 
              return false;
+     }
+  }
+
+  getYesNoValue(value){
+    switch(value){
+      case true:
+      case "true":
+      case "TRUE":
+      case "T":
+      case "t": 
+      case "YES":
+      case "yes":
+      case "Y":
+      case "y":         
+        return 'Yes';
+      default: 
+        return 'No';
      }
   }
 }

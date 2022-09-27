@@ -63,6 +63,8 @@ export class DomainService {
         if(line_data.has('is_credited')){agent.is_credited = this.getBoolean(line_data.get('is_credited'));}
         if(line_data.has('is_acb_user')){agent.is_acb_user = this.getBoolean(line_data.get('is_acb_user'));}
         if(line_data.has('is_awb_user')){agent.is_awb_user = this.getBoolean(line_data.get('is_awb_user'));}
+
+        if(line_data.has('christmasCard')){agent.christmasCard = this.getBoolean(line_data.get('is_awb_user'));}
         
         if(line_data.has('prospect_referred_to_date')){agent.prospect_referred_to_date = new Date(line_data.get('prospect_referred_to_date'));}
         if(line_data.has('campaigns_user_since')){agent.campaigns_user_since = new Date(line_data.get('campaigns_user_since'));}
@@ -162,53 +164,56 @@ export class DomainService {
 
         return agent;
       }
+    } else {
+      return null;
     }
   }
 
-  updateAgent(data: Map<string, string>, messages: string[], agent: Agent): Agent {    
+  updateAgent(line_data: Map<string, string>, messages: string[], agent: Agent): Agent {    
     //update these if value is provided
-    if(data.has('p_agent_id')){agent.p_agent_id = data.get('p_agent_id');}
-    if(data.has('p_external_agent_id')){agent.p_prefix = data.get('p_external_agent_id');}
-    if(data.has('p_agent_first_name')){agent.p_agent_first_name = data.get('p_agent_first_name');}
-    if(data.has('p_agent_middle_name')){agent.p_agent_middle_name = data.get('p_agent_middle_name');}
-    if(data.has('p_agent_last_name')){agent.p_agent_last_name = data.get('p_agent_last_name');}
-    if(data.has('p_nick_name')){agent.p_nick_name = data.get('p_nick_name');}
-    if(data.has('p_nick_last_name')){agent.p_nick_last_name = data.get('p_nick_last_name');}
-    if(data.has('title')){agent.title = data.get('title');}
-    if(data.has('p_prefix')){agent.p_prefix = data.get('p_prefix');}
-    if(data.has('p_suffix')){agent.p_suffix = data.get('p_suffix');}
-    if(data.has('npn')){agent.npn = data.get('npn');}
-    if(data.has('dietary_or_personal_considerations')){agent.dietary_or_personal_considerations = this.getYesNoValue(data.get('dietary_or_personal_considerations'));}
-    if(data.has('dietary_consideration')){agent.dietary_consideration = data.get('dietary_consideration');}
-    if(data.has('dietary_consideration_type')){agent.dietary_consideration_type = data.get('dietary_consideration_type');}
-    if(data.has('upline')){agent.upline = data.get('upline');}
-    if(data.has('agencyName')){agent.agencyName = data.get('agencyName');}
-    if(data.has('manager_id')){agent.manager_id = data.get('manager_id');}
-    if(data.has('awb_site_id')){agent.awb_site_id = data.get('awb_site_id');}
+    if(line_data.has('p_agent_id')){agent.p_agent_id = line_data.get('p_agent_id');}
+    if(line_data.has('p_external_agent_id')){agent.p_prefix = line_data.get('p_external_agent_id');}
+    if(line_data.has('p_agent_first_name')){agent.p_agent_first_name = line_data.get('p_agent_first_name');}
+    if(line_data.has('p_agent_middle_name')){agent.p_agent_middle_name = line_data.get('p_agent_middle_name');}
+    if(line_data.has('p_agent_last_name')){agent.p_agent_last_name = line_data.get('p_agent_last_name');}
+    if(line_data.has('p_nick_name')){agent.p_nick_name = line_data.get('p_nick_name');}
+    if(line_data.has('p_nick_last_name')){agent.p_nick_last_name = line_data.get('p_nick_last_name');}
+    if(line_data.has('title')){agent.title = line_data.get('title');}
+    if(line_data.has('p_prefix')){agent.p_prefix = line_data.get('p_prefix');}
+    if(line_data.has('p_suffix')){agent.p_suffix = line_data.get('p_suffix');}
+    if(line_data.has('npn')){agent.npn = line_data.get('npn');}
+    if(line_data.has('dietary_or_personal_considerations')){agent.dietary_or_personal_considerations = this.getYesNoValue(line_data.get('dietary_or_personal_considerations'));}
+    if(line_data.has('dietary_consideration')){agent.dietary_consideration = line_data.get('dietary_consideration');}
+    if(line_data.has('dietary_consideration_type')){agent.dietary_consideration_type = line_data.get('dietary_consideration_type');}
+    if(line_data.has('upline')){agent.upline = line_data.get('upline');}
+    if(line_data.has('agencyName')){agent.agencyName = line_data.get('agencyName');}
+    if(line_data.has('manager_id')){agent.manager_id = line_data.get('manager_id');}
+    if(line_data.has('awb_site_id')){agent.awb_site_id = line_data.get('awb_site_id');}
 
-    if(data.has('prospect_referred_to')){agent.prospect_referred_to = data.get('prospect_referred_to');}
-    if(data.has('campaigns_user_name')){agent.campaigns_user_name = data.get('campaigns_user_name');}
-    if(data.has('campaigns_address')){agent.campaigns_address = data.get('campaigns_address');}
-    if(data.has('race')){agent.race = data.get('race');}
-    if(data.has('ethnicity')){agent.ethnicity = data.get('ethnicity');}
-    if(data.has('gender')){agent.gender = data.get('gender');}
-    if(data.has('primary_language')){agent.primary_language = data.get('primary_language');}
-    if(data.has('secondary_language')){agent.secondary_language = data.get('secondary_language');}
-    if(data.has('hobbies')){agent.hobbies = data.get('hobbies');}
-    if(data.has('p_tshirt_size')){agent.p_tshirt_size = data.get('p_tshirt_size');}
-    if(data.has('unisex_tshirt_size')){agent.unisex_tshirt_size = data.get('unisex_tshirt_size');}
-    if(data.has('favorite_destination')){agent.favorite_destination = data.get('favorite_destination');}
-    if(data.has('shoe_size')){agent.shoe_size = data.get('shoe_size');}
+    if(line_data.has('prospect_referred_to')){agent.prospect_referred_to = line_data.get('prospect_referred_to');}
+    if(line_data.has('campaigns_user_name')){agent.campaigns_user_name = line_data.get('campaigns_user_name');}
+    if(line_data.has('campaigns_address')){agent.campaigns_address = line_data.get('campaigns_address');}
+    if(line_data.has('race')){agent.race = line_data.get('race');}
+    if(line_data.has('ethnicity')){agent.ethnicity = line_data.get('ethnicity');}
+    if(line_data.has('gender')){agent.gender = line_data.get('gender');}
+    if(line_data.has('primary_language')){agent.primary_language = line_data.get('primary_language');}
+    if(line_data.has('secondary_language')){agent.secondary_language = line_data.get('secondary_language');}
+    if(line_data.has('hobbies')){agent.hobbies = line_data.get('hobbies');}
+    if(line_data.has('p_tshirt_size')){agent.p_tshirt_size = line_data.get('p_tshirt_size');}
+    if(line_data.has('unisex_tshirt_size')){agent.unisex_tshirt_size = line_data.get('unisex_tshirt_size');}
+    if(line_data.has('favorite_destination')){agent.favorite_destination = line_data.get('favorite_destination');}
+    if(line_data.has('shoe_size')){agent.shoe_size = line_data.get('shoe_size');}
 
-    if(data.has('p_strategic_agent')){agent.p_strategic_agent = this.getBoolean(data.get('p_strategic_agent'));}
-    if(data.has('alliance_group_employee')){agent.alliance_group_employee = this.getBoolean(data.get('alliance_group_employee'));}
-    if(data.has('is_manager')){agent.is_manager = this.getBoolean(data.get('is_manager'));}
-    if(data.has('is_acb_user')){agent.is_acb_user = this.getBoolean(data.get('is_acb_user'));}
-    if(data.has('is_awb_user')){agent.is_awb_user = this.getBoolean(data.get('is_awb_user'));}
+    if(line_data.has('p_strategic_agent')){agent.p_strategic_agent = this.getBoolean(line_data.get('p_strategic_agent'));}
+    if(line_data.has('alliance_group_employee')){agent.alliance_group_employee = this.getBoolean(line_data.get('alliance_group_employee'));}
+    if(line_data.has('is_manager')){agent.is_manager = this.getBoolean(line_data.get('is_manager'));}
+    if(line_data.has('is_acb_user')){agent.is_acb_user = this.getBoolean(line_data.get('is_acb_user'));}
+    if(line_data.has('is_awb_user')){agent.is_awb_user = this.getBoolean(line_data.get('is_awb_user'));}
+    if(line_data.has('christmasCard')){agent.christmasCard = this.getBoolean(line_data.get('is_awb_user'));}
     
-    if(data.has('prospect_referred_to_date')){agent.prospect_referred_to_date = new Date(data.get('prospect_referred_to_date'));}
-    if(data.has('campaigns_user_since')){agent.campaigns_user_since = new Date(data.get('campaigns_user_since'));}
-    if(data.has('dob')){agent.dob = new Date(data.get('dob'));}
+    if(line_data.has('prospect_referred_to_date')){agent.prospect_referred_to_date = new Date(line_data.get('prospect_referred_to_date'));}
+    if(line_data.has('campaigns_user_since')){agent.campaigns_user_since = new Date(line_data.get('campaigns_user_since'));}
+    if(line_data.has('dob')){agent.dob = new Date(line_data.get('dob'));}
 
     //calculate p_agent_name
     if(agent.p_agent_first_name){
@@ -223,42 +228,42 @@ export class DomainService {
       agent.p_agent_name = agent.p_agent_name + ' ' + agent.p_agent_last_name;
     }
 
-    if(data.has('agent_status')){
-      agent.agent_status = AGENT_STATUS[data.get('agent_status').trim()]
+    if(line_data.has('agent_status')){
+      agent.agent_status = AGENT_STATUS[line_data.get('agent_status').trim()]
     }
 
-    if(data.has('prospect_status')){
-      agent.prospect_status = PROSPECT_STATUS[data.get('prospect_status').trim()]
+    if(line_data.has('prospect_status')){
+      agent.prospect_status = PROSPECT_STATUS[line_data.get('prospect_status').trim()]
     }
 
-    if(data.has('prospect_priority')){
-      agent.prospect_priority = PROSPECT_PRIORITY[data.get('prospect_priority').trim()]
+    if(line_data.has('prospect_priority')){
+      agent.prospect_priority = PROSPECT_PRIORITY[line_data.get('prospect_priority').trim()]
     }
 
-    if(data.has('prospect_disposition')){
-      agent.prospect_disposition = PROSPECT_DISPOSITION[data.get('prospect_disposition').trim()]
+    if(line_data.has('prospect_disposition')){
+      agent.prospect_disposition = PROSPECT_DISPOSITION[line_data.get('prospect_disposition').trim()]
     }
 
-    if(data.has('approve_deny_reason')){
-      agent.approve_deny_reason = agent.approve_deny_reason ? agent.approve_deny_reason + ' ' + data.get('approve_deny_reason') : data.get('approve_deny_reason');
+    if(line_data.has('approve_deny_reason')){
+      agent.approve_deny_reason = agent.approve_deny_reason ? agent.approve_deny_reason + ' ' + line_data.get('approve_deny_reason') : line_data.get('approve_deny_reason');
     }
 
-    if(data.has('agency_approve_deny_reason')){
-      agent.agency_approve_deny_reason += agent.agency_approve_deny_reason ? agent.agency_approve_deny_reason + ' ' + data.get('agency_approve_deny_reason') : data.get('agency_approve_deny_reason');
+    if(line_data.has('agency_approve_deny_reason')){
+      agent.agency_approve_deny_reason += agent.agency_approve_deny_reason ? agent.agency_approve_deny_reason + ' ' + line_data.get('agency_approve_deny_reason') : line_data.get('agency_approve_deny_reason');
     }
 
-    if(data.has('certifications')){
-      agent.certifications = agent.certifications ? agent.certifications + ' ' + data.get('certifications') : data.get('certifications');
+    if(line_data.has('certifications')){
+      agent.certifications = agent.certifications ? agent.certifications + ' ' + line_data.get('certifications') : line_data.get('certifications');
     }
 
-    if(data.has('prospect_wrap_up_notes')){
-      agent.prospect_wrap_up_notes = agent.prospect_wrap_up_notes? agent.prospect_wrap_up_notes + ' ' + data.get('prospect_wrap_up_notes') : agent.prospect_wrap_up_notes;
+    if(line_data.has('prospect_wrap_up_notes')){
+      agent.prospect_wrap_up_notes = agent.prospect_wrap_up_notes? agent.prospect_wrap_up_notes + ' ' + line_data.get('prospect_wrap_up_notes') : agent.prospect_wrap_up_notes;
     }
     
-    this.updateAddresses(data, agent);
-    this.updateEmailAddresses(data, agent);
-    this.updatePhoneNumbers(data, agent);
-    this.updateAssociations(data, agent);
+    this.updateAddresses(line_data, agent);
+    this.updateEmailAddresses(line_data, agent);
+    this.updatePhoneNumbers(line_data, agent);
+    this.updateAssociations(line_data, agent);
 
     return agent;
   }
@@ -894,12 +899,18 @@ export class DomainService {
 
   getBoolean(value){
     switch(value){
-         case true:
-         case "true":
-         case 1:
-         case "1":
-         case "on":
-         case "yes":
+        case true:
+        case "true":
+        case "True":
+        case "TRUE":
+        case 1:
+        case "1":
+        case "on":
+        case "On":
+        case "ON":
+        case "yes":
+        case "Yes": 
+        case "YES":
              return true;
          default: 
              return false;

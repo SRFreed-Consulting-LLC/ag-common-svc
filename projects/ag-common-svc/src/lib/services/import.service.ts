@@ -6,8 +6,11 @@ import { Injectable } from '@angular/core';
 export class ImportService {
   constructor() {}
 
-  convertFileToDataMapArray(file: File): Map<string, string>[]{
-    return this.createDataMap(this.importFileToString(file));
+  convertFileToDataMapArray(file: File): Promise<Map<string, string>[]>{
+    return this.importFileToString(file).then(csvText => {
+      return this.createDataMap(csvText);
+    })
+    
   }
 
   private importFileToString(file: File): Promise<string | ArrayBuffer> {
@@ -35,8 +38,9 @@ export class ImportService {
       let data: Map<string, string> = new Map<string, string>();
 
       for (var j = 0; j < headers.length; j++) {
-        if(lines[i].split(',')[j] && lines[i].split(',')[j] !=''){
-          data.set(headers[j], lines[i].split(',')[j]);
+        let val = lines[i].split(',')[j];
+        if(val && val !=''){
+          data.set(headers[j], val);
         }
       }
 

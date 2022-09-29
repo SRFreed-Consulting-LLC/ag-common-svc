@@ -10,10 +10,9 @@ export class ImportService {
     return this.importFileToString(file).then(csvText => {
       return this.createDataMap(csvText);
     })
-    
   }
 
-  private importFileToString(file: File): Promise<string | ArrayBuffer> {
+  public importFileToString(file: File): Promise<string | ArrayBuffer> {
     return new Promise((resolve) => {
       try {
         const reader = new FileReader();
@@ -30,7 +29,6 @@ export class ImportService {
 
   private createDataMap(csvText): Map<string, string>[]{
     let retval: Map<string, string>[] = [];
-
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
 
@@ -49,6 +47,27 @@ export class ImportService {
 
     return retval;
   }
+
+  validateFile(csvText, messages: String[]): Promise<boolean>{
+    let lines: string[] = csvText.split('\n');
+    let headers: string[] = lines[0].split(',');
+    
+    let numOfFields = headers.length;
+
+    for (var i = 1; i < lines.length - 1; i++) {
+      let count = lines[i].split(',').length;
+
+      if(count != numOfFields){
+        messages.push("The number of Fields on line " + i + " does not match the number of headers.")
+      }
+    }
+
+    if(messages.length == 0){
+      messages.push("The file appears to be valid!.")
+      return Promise.resolve(true);
+    } else {
+      messages.push("Please fix the file and reimport it!.")
+      return Promise.resolve(false);
+    }
+  }
 }
-
-

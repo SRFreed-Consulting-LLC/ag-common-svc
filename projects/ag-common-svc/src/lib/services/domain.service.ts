@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ImportFieldRule, ImportRuleSet, ImportRuleSetKeys } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
+import { ImportFieldRule, ImportRuleSet, ImportRuleSetKeys, PrimaryFieldRule } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {Address, Agent, AgentKeys, AGENT_STATUS, AGENT_TYPE, Association, ASSOCIATION_TYPE, BaseModelKeys, BUSINESS_PERSONAL_TYPE,
   EmailAddress, Goal, PhoneNumber, PROSPECT_DISPOSITION, PROSPECT_PRIORITY, PROSPECT_STATUS, Role, Social, SOCIAL_MEDIA, Website
 } from 'ag-common-lib/public-api';
@@ -386,24 +386,6 @@ export class DomainService {
     let incoming_addresses: Address[] = this.extractAddresses(data);
 
     if (incoming_addresses.length > 0) {
-      if (!agent[AgentKeys.addresses]) {
-        agent[AgentKeys.addresses] = [];
-      }
-
-      //if primary shipping currently set, set any incoming is_primary_shipping flags to false
-      let primary_shipping_already_exists = agent[AgentKeys.addresses].filter((a) => a.is_primary_shipping)?.length > 0;
-
-      if (primary_shipping_already_exists) {
-        incoming_addresses.forEach((a) => (a.is_primary_shipping = false));
-      }
-
-      //if primary billing currently set, set any incoming is_primary_billing flags to false
-      let primary_billing_already_exists = agent[AgentKeys.addresses].filter((a) => a.is_primary_billing)?.length > 0;
-
-      if (primary_billing_already_exists) {
-        incoming_addresses.forEach((a) => (a.is_primary_billing = false));
-      }
-
       //look at each incoming and update if matching or add to list
       incoming_addresses.forEach((incoming_address) => {
         let matching_address: Address = agent[AgentKeys.addresses].find(
@@ -428,6 +410,12 @@ export class DomainService {
           }
           if (incoming_address.country) {
             this.updateField(selectedRuleSet[ImportRuleSetKeys.address_country], matching_address, 'country', incoming_address.country);
+          }
+          if(incoming_address.is_primary_billing){
+            this.updateField(selectedRuleSet[ImportRuleSetKeys.address_is_primary_billing], matching_address, 'is_primary_billing', incoming_address.is_primary_billing);
+          }
+          if(incoming_address.is_primary_shipping){
+            this.updateField(selectedRuleSet[ImportRuleSetKeys.address_is_primary_shipping], matching_address, 'is_primary_shipping', incoming_address.is_primary_shipping);
           }
         } else {
           agent[AgentKeys.addresses].push(incoming_address);
@@ -503,20 +491,6 @@ export class DomainService {
         agent[AgentKeys.email_addresses] = [];
       }
 
-      //if primary currently set, set any incoming is_primary flags to false
-      let primary_already_exists = agent[AgentKeys.email_addresses].filter((a) => a.is_primary)?.length > 0;
-
-      if (primary_already_exists) {
-        incoming_emails.forEach((a) => (a.is_primary = false));
-      }
-
-      //if login currently set, set any incoming is_login flags to false
-      let login_already_exists: boolean = agent[AgentKeys.email_addresses].filter((a) => a.is_login)?.length > 0;
-
-      if (login_already_exists) {
-        incoming_emails.forEach((a) => (a.is_login = false));
-      }
-
       //look at each incoming and update if matching or add to list
       incoming_emails.forEach((incoming_email) => {
         let matching_email: EmailAddress = agent[AgentKeys.email_addresses].find(
@@ -524,7 +498,15 @@ export class DomainService {
         );
 
         if (matching_email) {
-          this.updateField(selectedRuleSet[ImportRuleSetKeys.email_address_email_type], matching_email, 'email_type', incoming_email.email_type);
+          if(incoming_email.email_type){
+            this.updateField(selectedRuleSet[ImportRuleSetKeys.email_address_email_type], matching_email, 'email_type', incoming_email.email_type);
+          }
+          if(incoming_email.is_primary){
+            this.updateField(selectedRuleSet[ImportRuleSetKeys.email_address_is_primary], matching_email, 'is_primary', incoming_email.is_primary);
+          }
+          if(incoming_email.is_login){
+            this.updateField(selectedRuleSet[ImportRuleSetKeys.email_address_is_login], matching_email, 'is_login', incoming_email.is_login);
+          }
         } else {
           agent[AgentKeys.email_addresses].push(incoming_email);
         }
@@ -640,7 +622,9 @@ export class DomainService {
         if (matching_phone) {
           if (incoming_phone.phone_type) {
             this.updateField(selectedRuleSet[ImportRuleSetKeys.phone_phone_type], matching_phone, 'phone_type', incoming_phone.phone_type);
-            matching_phone.phone_type = incoming_phone.phone_type;
+          }
+          if (incoming_phone.is_primary) {
+            this.updateField(selectedRuleSet[ImportRuleSetKeys.phone_is_primary], matching_phone, 'is_primary', incoming_phone.is_primary);
           }
         } else {
           agent[AgentKeys.phone_numbers].push(incoming_phone);
@@ -958,7 +942,7 @@ export class DomainService {
     }
   }
 
-  updateField(rule: ImportFieldRule, itemToUpdate, field_name: string, value){
+  updateField(rule, itemToUpdate, field_name: string, value){
     if(rule == ImportFieldRule.APPEND_TO_EXISTING){
       itemToUpdate[field_name] = itemToUpdate[field_name] + ' ' + value;
     } else if(rule == ImportFieldRule.DO_NOT_UPDATE){
@@ -969,6 +953,10 @@ export class DomainService {
       if(!itemToUpdate[field_name]  || itemToUpdate[field_name]  == ''){
         itemToUpdate[field_name]  = value;
       }
+    } else if(rule == PrimaryFieldRule.UPDATE_PRIMARY_VALUE){
+      itemToUpdate[field_name]  = value;
+    } else if(rule == PrimaryFieldRule.DO_NOT_UPDATE){
+      itemToUpdate[field_name]  = itemToUpdate[field_name];
     }
   }
 

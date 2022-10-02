@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { ImportRuleSet, ImportRuleSetKeys } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 
 @Injectable({
   providedIn: 'root'
@@ -48,7 +49,7 @@ export class ImportService {
     return retval;
   }
 
-  validateFile(csvText, messages: String[]): Promise<boolean>{
+  validateFile(csvText, messages: String[], importRuleSet: ImportRuleSet): Promise<boolean>{
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
     
@@ -61,6 +62,27 @@ export class ImportService {
         messages.push("The number of Fields on line " + i + " does not match the number of headers.")
       }
     }
+
+    let p_email_exist = headers.filter(h => h == 'p_email').length > 0;
+
+    if(!p_email_exist){
+      messages.push("The import must contain a field called 'p_email'")
+    }
+
+    if(importRuleSet[ImportRuleSetKeys.import_type] == "Registration"){
+      let invitee_email_exist = headers.filter(h => h == 'invitee_email').length > 0;
+      
+      if(!invitee_email_exist){
+        messages.push("The 'Registration' import must contain a field called 'invitee_email'")
+      }
+      
+      let invitee_guest_exist = headers.filter(h => h == 'invitee_guest').length > 0;
+
+      if(!invitee_guest_exist){
+        messages.push("The 'Registration' import must contain a field called 'invitee_guest'")
+      }
+    }
+    
 
     if(messages.length == 0){
       messages.push("The file appears to be valid!.")

@@ -386,6 +386,28 @@ export class DomainService {
     let incoming_addresses: Address[] = this.extractAddresses(data);
 
     if (incoming_addresses.length > 0) {
+      if (!agent[AgentKeys.addresses]) {
+        agent[AgentKeys.addresses] = [];
+      }
+      let required_to_update_shipping = selectedRuleSet[ImportRuleSetKeys.primary_shipping_address] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+
+      if(required_to_update_shipping){
+        let incoming_has_primary_shipping = incoming_addresses.filter(add => add.is_primary_shipping == true).length > 0;
+  
+        if(incoming_has_primary_shipping){
+          agent.addresses.forEach(add => add.is_primary_shipping = false);
+        }
+      }
+  
+      let required_to_update_billing = selectedRuleSet[ImportRuleSetKeys.primary_billing_address] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+  
+      if(required_to_update_billing){
+        let incoming_has_primary_billing = incoming_addresses.filter(add => add.is_primary_billing == true).length > 0;
+  
+        if(incoming_has_primary_billing){
+          agent.addresses.forEach(add => add.is_primary_billing = false);
+        }
+      }
       //look at each incoming and update if matching or add to list
       incoming_addresses.forEach((incoming_address) => {
         let matching_address: Address = agent[AgentKeys.addresses].find(
@@ -491,6 +513,16 @@ export class DomainService {
         agent[AgentKeys.email_addresses] = [];
       }
 
+      let required_to_update_primary = selectedRuleSet[ImportRuleSetKeys.primary_email_address] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+
+      if(required_to_update_primary){
+        let incoming_has_primary = incoming_emails.filter(add => add.is_primary == true).length > 0;
+  
+        if(incoming_has_primary){
+          agent.email_addresses.forEach(add => add.is_primary = false);
+        }
+      }
+
       //look at each incoming and update if matching or add to list
       incoming_emails.forEach((incoming_email) => {
         let matching_email: EmailAddress = agent[AgentKeys.email_addresses].find(
@@ -589,6 +621,16 @@ export class DomainService {
     if (incoming_phone_numbers.length > 0) {
       if (!agent[AgentKeys.phone_numbers]) {
         agent[AgentKeys.phone_numbers] = [];
+      }
+
+      let required_to_update_primary = selectedRuleSet[ImportRuleSetKeys.primary_email_address] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+
+      if(required_to_update_primary){
+        let incoming_has_primary = incoming_phone_numbers.filter(ph => ph.is_primary == true).length > 0;
+  
+        if(incoming_has_primary){
+          agent.phone_numbers.forEach(ph => ph.is_primary = false);
+        }
       }
 
       //if primary currently set, set any incoming is_primary flags to false

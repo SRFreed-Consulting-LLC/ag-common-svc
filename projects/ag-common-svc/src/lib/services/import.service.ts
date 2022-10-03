@@ -114,6 +114,5 @@ export class ImportService {
     } else {
       messages.push(data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + " does not have an 'email_addresses.1.address' field.");
     }
-
   }
 }

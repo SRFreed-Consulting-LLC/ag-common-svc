@@ -8,14 +8,10 @@ import { FIREBASE_APP } from '../injections/firebase-app';
   providedIn: 'root'
 })
 export class PortalDataService extends DataService<PortalData>{
-  public collection: string = "portal-data";
-  
   constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp) {
     super(fireBaseApp, null, null);
-    super.collection = 'agents';
+    super.collection = 'portal-data';
   }
-
-  
 
   public getPortalData(): Promise<PortalData> {
     return this.fsDao.getById(this.collection, 'data');

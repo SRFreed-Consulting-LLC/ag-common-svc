@@ -51,7 +51,7 @@ export class ImportService {
     return retval;
   }
 
-  validateFile(csvText, messages: String[], importRuleSet: ImportRuleSet): Promise<boolean>{
+  validateFile(csvText, messages: String[], importRuleSet: ImportRuleSet, import_type: string): Promise<boolean>{
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
     
@@ -71,7 +71,7 @@ export class ImportService {
       messages.push("The import must contain a field called 'email_addresses.1.address'")
     }
 
-    if(importRuleSet[ImportRuleSetKeys.import_type] == "Registration"){
+    if(import_type == "registration"){
       let invitee_email_exist = headers.filter(h => h == 'invitee_email').length > 0;
       
       if(!invitee_email_exist){

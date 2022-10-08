@@ -87,10 +87,10 @@ export class ImportService {
     }
 
     if (messages.length == 0) {
-      messages.push('The file appears to be valid!.');
+      messages.push('The file format appears to be valid!.');
       return Promise.resolve(true);
     } else {
-      messages.push('Please fix the file and reimport it!.');
+      messages.push('Please fix the file format and reimport it!.');
       return Promise.resolve(false);
     }
   }

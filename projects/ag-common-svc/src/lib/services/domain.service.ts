@@ -498,13 +498,13 @@ export class DomainService {
       let incoming_has_primary_shipping = incoming_addresses.filter(add => add.is_primary_shipping == true);
       
       if(incoming_has_primary_shipping.length == 0){
-        messages.push('Selected Rule Set requires Primary Shipping Address to be updated, but no Primary is set. Please set primary for ' + agent.p_email);
+        messages.push('Selected Rule Set requires Primary Shipping Address to be updated, but no Primary is set. Please set primary for ' + agent.p_email + ' or change the import rule.');
         return false;
       } else if(incoming_has_primary_shipping.length == 1){
         agent.addresses.forEach(add => add.is_primary_shipping = false);
         return true;
       } else if(incoming_has_primary_shipping.length == 2){
-        messages.push('Selected Rule Set requires Primary Shipping Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email);
+        messages.push('Selected Rule Set requires Primary Shipping Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
         return false;
       } else {
         return false;
@@ -519,13 +519,13 @@ export class DomainService {
       let incoming_has_primary_billing = incoming_addresses.filter(add => add.is_primary_billing == true);
       
       if(incoming_has_primary_billing.length == 0){
-        messages.push('Selected Rule Set requires Primary Billing Address to be updated, but no Primary is set. Please set primary for ' + agent.p_email);
+        messages.push('Selected Rule Set requires Primary Billing Address to be updated, but no Primary is set. Please set primary for ' + agent.p_email + ' or change the import rule.');
         return false;
       } else if(incoming_has_primary_billing.length == 1){
         agent.addresses.forEach(add => add.is_primary_shipping = false);
         return true;
       } else if(incoming_has_primary_billing.length == 2){
-        messages.push('Selected Rule Set requires Primary Billing Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email);
+        messages.push('Selected Rule Set requires Primary Billing Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
         return false;
       } else {
         return false;
@@ -640,13 +640,13 @@ export class DomainService {
       let incoming_has_primary: EmailAddress[] = incoming_emails.filter(add => add.is_primary == true);
 
       if(incoming_has_primary.length == 0){
-        messages.push('Selected Rule Set requires Primary Email to be updated, but no Primary is set. Please set primary for ' + agent.p_email);
+        messages.push('Selected Rule Set requires Primary Email to be updated, but no Primary is set. Please set primary for ' + agent.p_email) + ' or change the import rule.';
         return false;
       } else if(incoming_has_primary.length == 1){
         agent.email_addresses.forEach(add => add.is_primary = false);
         return true;
       } else if(incoming_has_primary.length == 2){
-        messages.push('Selected Rule Set requires Primary Email to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email);
+        messages.push('Selected Rule Set requires Primary Email to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
         return false;
       } else {
         return false;
@@ -781,13 +781,13 @@ export class DomainService {
       let incoming_has_primary: PhoneNumber[] = incoming_phone_numbers.filter(add => add.is_primary == true);
 
       if(incoming_has_primary.length == 0){
-        messages.push('Selected Rule Set requires Primary Phone Number to be updated, but no Primary is set. Please set primary for ' + agent.p_email);
+        messages.push('Selected Rule Set requires Primary Phone Number to be updated, but no Primary is set. Please set primary for ' + agent.p_email + ' or change the import rule.');
         return false;
       } else if(incoming_has_primary.length == 1){
         agent.email_addresses.forEach(add => add.is_primary = false);
         return true;
       } else if(incoming_has_primary.length == 2){
-        messages.push('Selected Rule Set requires Primary Phone Number to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email);
+        messages.push('Selected Rule Set requires Primary Phone Number to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
         return false;
       } else {
         return false;

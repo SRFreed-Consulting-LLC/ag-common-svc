@@ -1,14 +1,251 @@
 import { Injectable } from '@angular/core';
 import { ImportFieldRule, ImportRuleSet, ImportRuleSetKeys, PrimaryFieldRule } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {Address, Agency, Agent, AgentKeys, AGENT_STATUS, AGENT_TYPE, Association, ASSOCIATION_TYPE, BaseModelKeys, BUSINESS_PERSONAL_TYPE,
-  EmailAddress, Goal, PhoneNumber, PROSPECT_DISPOSITION, PROSPECT_PRIORITY, PROSPECT_STATUS, Role, Social, SOCIAL_MEDIA, Website
+  EmailAddress, Goal, PhoneNumber, PROSPECT_DISPOSITION, PROSPECT_PRIORITY, PROSPECT_STATUS, Registrant, Role, Social, SOCIAL_MEDIA, Website
 } from 'ag-common-lib/public-api';
+import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
+import { AgentService } from './agent.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DomainService {
-  constructor() {}
+  constructor(public agentService: AgentService) {}
+  
+  PRIMARY_EMAIL_IDENTIFIER = 'email_addresses.1.address';
+
+  //************************************************************* */
+  //  Method to import Agents from import file
+  //
+  //  agents: Map<string, string>[]: Map of key value 
+  //          pairs for AGent Record
+  //  agencies: Agency[]: List of all Agencies for 
+  //          validating incoming Agency ID's are correct
+  //  selectedRuleSet: ImportRuleSet: Rulset to apply 
+  //          to import
+  //  createdBy: string: EMail address of person 
+  //          performing import to be added to "created_by" 
+  //          and "approved_by"
+  //  messages: string[]: Array of messges to be displayed 
+  //          in import process. Used to return messages 
+  //          back to user
+  //************************************************************* */
+  createAgentsArray(agents: Map<string, string>[], agencies: Agency[], selectedRuleSet: ImportRuleSet, createdBy: string, messages: string[]): Promise<Agent[]> {
+    let promises: Promise<Agent>[] = [];
+
+    agents.forEach((data) => {
+      let p: Promise<Agent> = this.agentService
+        .getAllByValue([new QueryParam('p_email', WhereFilterOperandKeys.equal, data.get(this.PRIMARY_EMAIL_IDENTIFIER))])
+        .then((existing_agents) => {
+          let agent: Agent;
+
+          if (existing_agents.length == 1) {
+            agent = this.updateAgent(data, messages, existing_agents[0], selectedRuleSet, agencies);
+          } else if (existing_agents.length == 0) {
+            agent = this.createAgent(data, messages, createdBy, agencies);
+          } else {
+            agent = null;
+          }
+          return agent;
+        });
+
+      promises.push(p);
+    });
+
+    return Promise.all(promises).then((agents_array) => {
+      let retval: Agent[] = [];
+
+      if (agents_array.length > 0) {
+        agents_array.forEach((agent) => {
+          if (agent) {
+            retval.push(agent);
+          }
+        });
+      }
+
+      return retval;
+    });
+  }
+
+  createAssociationsArray(agents: Agent[], data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[]) {
+    data.forEach((registrant_data) => {
+      let invitees = agents.filter((a) => a.p_email == registrant_data.get('invitee_email'));
+
+      if (invitees.length == 1) {
+        if (!invitees[0].associations) {
+          invitees[0].associations = [];
+        }
+
+        this.updateAssociations(registrant_data, invitees[0], selectedRuleSet, messages);
+      }
+    });
+  }
+
+  createRegistrantArray(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, messages: string[]): Registrant[] {
+    let retval: Registrant[] = [];
+
+    registrant_data.forEach((data) => {
+      let registrant: Registrant = { ...new Registrant() };
+
+      registrant.registration_source = 'Conference Import';
+      registrant.event_id = selectedConference;
+      registrant.created_date = new Date();
+      registrant.created_by = createdBy;
+
+      registrant.approved_by = createdBy;
+      registrant.approved_date = new Date();
+      registrant.registered_date = new Date();
+      registrant.invitee_guest = data.get('invitee_guest');
+
+      if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
+        registrant.approved = true;
+      } else {
+        registrant.approved = false;
+      }
+
+      registrant.registration_type = data.get('registration_type');
+
+      if (registrant.invitee_guest?.toLowerCase() == 'guest') {
+        registrant.invitee_email = data.get('invitee_email');
+
+        let guests: Association[] = this.extractAssociations(data);
+
+        if (guests.length == 1) {
+          let guest: Association = guests[0];
+
+          if (guest.email_address) {
+            registrant.email_address = guest.email_address;
+          }
+
+          if (guest.first_name) {
+            registrant.first_name = guest.first_name;
+          }
+
+          if (guest.last_name) {
+            registrant.last_name = guest.last_name;
+          }
+
+          if (guest.email_address) {
+            registrant.email_address = guest.email_address;
+          }
+
+          if (guest.association_type) {
+            registrant.relationship = guest.association_type;
+          }
+
+          if (guest.p_nick_first_name) {
+            registrant.p_nick_name = guest.p_nick_first_name;
+          }
+
+          if (guest.p_nick_last_name) {
+            registrant.p_nick_last_name = guest.p_nick_last_name;
+          }
+
+          if (guest.dietary_or_personal_considerations) {
+            registrant.dietary_or_personal_considerations = guest.dietary_or_personal_considerations;
+          }
+
+          if (guest.dietary_consideration_type) {
+            registrant.dietary_consideration_type = guest.dietary_consideration_type;
+          }
+
+          if (guest.dietary_consideration) {
+            registrant.dietary_consideration = guest.dietary_consideration;
+          }
+
+          if (guest.p_tshirt_size) {
+            registrant.tshirt_size = guest.p_tshirt_size;
+          }
+
+          if (guest.address) {
+            registrant.address = guest.address;
+          }
+
+          if (guest.contact_number) {
+            let pn: PhoneNumber = { ...new PhoneNumber() };
+            pn.number = guest.contact_number;
+            registrant.phone_number1 = pn;
+          }
+        }
+      } else {
+        if (data.has('p_email')) {
+          registrant.email_address = data.get('p_email');
+        }
+
+        if (data.has('p_agent_first_name')) {
+          registrant.first_name = data.get('p_agent_first_name');
+        }
+
+        if (data.has('p_agent_last_name')) {
+          registrant.last_name = data.get('p_agent_last_name');
+        }
+
+        if (data.has('p_prefix')) {
+          registrant.p_prefix = data.get('p_prefix');
+        }
+
+        if (data.has('p_nick_name')) {
+          registrant.p_nick_name = data.get('p_nick_name');
+        }
+
+        if (data.has('p_nick_last_name')) {
+          registrant.p_nick_last_name = data.get('p_nick_last_name');
+        }
+
+        if (data.has('dietary_or_personal_considerations')) {
+          registrant.dietary_or_personal_considerations = data.get('dietary_or_personal_considerations');
+        }
+
+        if (data.has('dietary_consideration_type')) {
+          registrant.dietary_consideration_type = data.get('dietary_consideration_type');
+        }
+
+        if (data.has('dietary_consideration')) {
+          registrant.dietary_consideration = data.get('dietary_consideration');
+        }
+
+        if (data.has('p_tshirt_size')) {
+          registrant.tshirt_size = data.get('p_tshirt_size');
+        }
+
+        let addresses: Address[] = this.extractAddresses(data);
+
+        if (addresses[0]) {
+          registrant.address = addresses[0];
+        }
+
+        let phone_numbers: PhoneNumber[] = this.extractPhoneNumbers(data);
+
+        if (phone_numbers[0]) {
+          registrant.phone_number1 = phone_numbers[0];
+        }
+
+        if (phone_numbers[1]) {
+          registrant.phone_number2 = phone_numbers[1];
+        }
+
+        let emergency_contacts: Association[] = this.extractAssociations(data);
+
+        if (emergency_contacts[0]) {
+          registrant.emergency_contact = emergency_contacts[0];
+        }
+      }
+
+      data.forEach((value, key) => {
+        if (key.startsWith('custom.')) {
+          registrant[key.split('.')[1]] = value;
+        }
+      });
+
+      messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
+
+
+      retval.push(registrant);
+   
+    });
+
+    return retval;
+  }
 
   createAgent(line_data: Map<string, string>, messages: string[], createdBy: string, agencies: Agency[]): Agent {
     var agent = { ...new Agent() };
@@ -532,7 +769,7 @@ export class DomainService {
       }
     }
 
-    return false
+    return true;
   }
 
   extractEmailAddresses(invals: Map<string, string>): EmailAddress[] {
@@ -653,7 +890,7 @@ export class DomainService {
       }
     }
 
-    return false;
+    return true;
   }
 
   extractPhoneNumbers(invals: Map<string, string>): PhoneNumber[] {
@@ -794,7 +1031,7 @@ export class DomainService {
       }
     }
 
-    return false;
+    return true;
   }
 
   extractWebsites(invals: Map<string, string>): Website[] {
@@ -1036,6 +1273,8 @@ export class DomainService {
         );
 
         if (matching_association) {
+          messages.push('Associate updated (' + matching_association.first_name + ' ' + matching_association.last_name + ') for ' + agent.p_email)
+          
           if (incoming_associations.email_address) {
             this.updateField(selectedRuleSet[ImportRuleSetKeys.email_address_address], matching_association, 'email_address', incoming_associations.email_address);
           }
@@ -1096,6 +1335,7 @@ export class DomainService {
             this.updateField(selectedRuleSet[ImportRuleSetKeys.association_address_country], matching_association.address, 'country', incoming_associations.address.country);
           }
         } else {
+          messages.push('Associate updated (' + incoming_associations.first_name + ' ' + incoming_associations.last_name + ') to ' + agent.p_email)
           agent[AgentKeys.associations].push(incoming_associations);
         }
       });

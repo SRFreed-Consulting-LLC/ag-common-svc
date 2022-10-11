@@ -51,7 +51,8 @@ export class ImportService {
     return retval;
   }
 
-  validateFile(csvText, messages: string[], importRuleSet: ImportRuleSet): Promise<boolean> {
+  validateFile(csvText, messages: String[], importRuleSet: ImportRuleSet, import_type: string): Promise<boolean>{
+
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
 
@@ -71,11 +72,11 @@ export class ImportService {
       messages.push("The import must contain a field called 'email_addresses.1.address'");
     }
 
-    if (importRuleSet[ImportRuleSetKeys.import_type] == 'Registration') {
-      let invitee_email_exist = headers.filter((h) => h == 'invitee_email').length > 0;
-
-      if (!invitee_email_exist) {
-        messages.push("The 'Registration' import must contain a field called 'invitee_email'");
+    if(import_type == "registration"){
+      let invitee_email_exist = headers.filter(h => h == 'invitee_email').length > 0;
+      
+      if(!invitee_email_exist){
+        messages.push("The 'Registration' import must contain a field called 'invitee_email'")
       }
 
       let invitee_guest_exist = headers.filter((h) => h == 'invitee_guest').length > 0;
@@ -86,10 +87,10 @@ export class ImportService {
     }
 
     if (messages.length == 0) {
-      messages.push('The file appears to be valid!.');
+      messages.push('The file format appears to be valid!.');
       return Promise.resolve(true);
     } else {
-      messages.push('Please fix the file and reimport it!.');
+      messages.push('Please fix the file format and reimport it!.');
       return Promise.resolve(false);
     }
   }

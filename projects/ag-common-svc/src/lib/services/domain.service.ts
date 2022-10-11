@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ImportFieldRule, ImportRuleSet, ImportRuleSetKeys, PrimaryFieldRule } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
-import {Address, Agent, AgentKeys, AGENT_STATUS, AGENT_TYPE, Association, ASSOCIATION_TYPE, BaseModelKeys, BUSINESS_PERSONAL_TYPE,
+import {Address, Agency, Agent, AgentKeys, AGENT_STATUS, AGENT_TYPE, Association, ASSOCIATION_TYPE, BaseModelKeys, BUSINESS_PERSONAL_TYPE,
   EmailAddress, Goal, PhoneNumber, PROSPECT_DISPOSITION, PROSPECT_PRIORITY, PROSPECT_STATUS, Role, Social, SOCIAL_MEDIA, Website
 } from 'ag-common-lib/public-api';
 
@@ -10,86 +10,93 @@ import {Address, Agent, AgentKeys, AGENT_STATUS, AGENT_TYPE, Association, ASSOCI
 export class DomainService {
   constructor() {}
 
-  createAgent(line_data: Map<string, string>, messages: string[], createdBy: string): Agent {
+  createAgent(line_data: Map<string, string>, messages: string[], createdBy: string, agencies: Agency[]): Agent {
     var agent = { ...new Agent() };
+
+    if (line_data.has(AgentKeys.p_agent_id)) {agent[AgentKeys.p_agent_id] = line_data.get(AgentKeys.p_agent_id);}
+    if (line_data.has(AgentKeys.p_external_agent_id)) {agent[AgentKeys.p_external_agent_id] = line_data.get(AgentKeys.p_external_agent_id);}
+    if (line_data.has(AgentKeys.p_agent_first_name)) {agent[AgentKeys.p_agent_first_name] = line_data.get(AgentKeys.p_agent_first_name);}
+    if (line_data.has(AgentKeys.p_agent_middle_name)) {agent[AgentKeys.p_agent_middle_name] = line_data.get(AgentKeys.p_agent_middle_name);}
+    if (line_data.has(AgentKeys.p_agent_last_name)) {agent[AgentKeys.p_agent_last_name] = line_data.get(AgentKeys.p_agent_last_name);}
+    if (line_data.has(AgentKeys.p_nick_name)) {agent[AgentKeys.p_nick_name] = line_data.get(AgentKeys.p_nick_name);}
+    if (line_data.has(AgentKeys.p_nick_last_name)) {agent[AgentKeys.p_nick_last_name] = line_data.get(AgentKeys.p_nick_last_name);}
+    if (line_data.has(AgentKeys.p_agency_id)) {agent[AgentKeys.p_agency_id] = line_data.get(AgentKeys.p_agency_id);}
+    if (line_data.has(AgentKeys.p_mga_id)) {agent[AgentKeys.p_mga_id] = line_data.get(AgentKeys.p_mga_id);}
+    if (line_data.has(AgentKeys.p_mga_id)) {agent[AgentKeys.title] = line_data.get(AgentKeys.p_mga_id);}
+    if (line_data.has(AgentKeys.p_prefix)) {agent[AgentKeys.p_prefix] = line_data.get(AgentKeys.p_prefix);}
+    if (line_data.has(AgentKeys.p_suffix)) {agent[AgentKeys.p_suffix] = line_data.get(AgentKeys.p_suffix);}
+    if (line_data.has(AgentKeys.npn)) {agent[AgentKeys.npn] = line_data.get(AgentKeys.npn);}
+    if (line_data.has(AgentKeys.dietary_or_personal_considerations)) {agent[AgentKeys.dietary_or_personal_considerations] = this.getYesNoValue(line_data.get(AgentKeys.dietary_or_personal_considerations));}
+    if (line_data.has(AgentKeys.dietary_consideration)) {agent[AgentKeys.dietary_consideration] = line_data.get(AgentKeys.dietary_consideration);}
+    if (line_data.has(AgentKeys.dietary_consideration_type)) {agent[AgentKeys.dietary_consideration_type] = line_data.get(AgentKeys.dietary_consideration_type);}
+    if (line_data.has(AgentKeys.upline)) {agent[AgentKeys.upline] = line_data.get(AgentKeys.upline);}
+    if (line_data.has(AgentKeys.agencyName)) {agent[AgentKeys.agencyName] = line_data.get(AgentKeys.agencyName);}
+    if (line_data.has(AgentKeys.registration_source)) {agent[AgentKeys.registration_source] = line_data.get(AgentKeys.registration_source);}
+    if (line_data.has(AgentKeys.manager_id)) {agent[AgentKeys.manager_id] = line_data.get(AgentKeys.manager_id);}
+    if (line_data.has(AgentKeys.agency_approve_deny_reason)) {agent[AgentKeys.agency_approve_deny_reason] = line_data.get(AgentKeys.agency_approve_deny_reason);}
+    if (line_data.has(AgentKeys.approve_deny_reason)) {agent[AgentKeys.approve_deny_reason] = line_data.get(AgentKeys.approve_deny_reason);}
+    if (line_data.has(AgentKeys.awb_site_id)) {agent[AgentKeys.awb_site_id] = line_data.get(AgentKeys.awb_site_id);}
+    if (line_data.has(AgentKeys.certifications)) {agent[AgentKeys.certifications] = line_data.get(AgentKeys.certifications);}
+    if (line_data.has(AgentKeys.prospect_referred_to)) {agent[AgentKeys.prospect_referred_to] = line_data.get(AgentKeys.prospect_referred_to);}
+    if (line_data.has(AgentKeys.prospect_wrap_up_notes)) {agent[AgentKeys.prospect_wrap_up_notes] = line_data.get(AgentKeys.prospect_wrap_up_notes);}
+    if (line_data.has(AgentKeys.campaigns_user_name)) {agent[AgentKeys.campaigns_user_name] = line_data.get(AgentKeys.campaigns_user_name);}
+    if (line_data.has(AgentKeys.campaigns_address)) {agent[AgentKeys.campaigns_address] = line_data.get(AgentKeys.campaigns_address);}
+    if (line_data.has(AgentKeys.race)) {agent[AgentKeys.race] = line_data.get(AgentKeys.race);}
+    if (line_data.has(AgentKeys.ethnicity)) {agent[AgentKeys.ethnicity] = line_data.get(AgentKeys.ethnicity);}
+    if (line_data.has(AgentKeys.gender)) {agent[AgentKeys.gender] = line_data.get(AgentKeys.gender);}
+    if (line_data.has(AgentKeys.primary_language)) {agent[AgentKeys.primary_language] = line_data.get(AgentKeys.primary_language);}
+    if (line_data.has(AgentKeys.secondary_language)) {agent[AgentKeys.secondary_language] = line_data.get(AgentKeys.secondary_language);}
+    if (line_data.has(AgentKeys.hobbies)) {agent[AgentKeys.hobbies] = line_data.get(AgentKeys.hobbies);}
+    if (line_data.has(AgentKeys.p_tshirt_size)) {agent[AgentKeys.p_tshirt_size] = line_data.get(AgentKeys.p_tshirt_size);}
+    if (line_data.has(AgentKeys.unisex_tshirt_size)) {agent[AgentKeys.unisex_tshirt_size] = line_data.get(AgentKeys.unisex_tshirt_size);}
+    if (line_data.has(AgentKeys.favorite_destination)) {agent[AgentKeys.favorite_destination] = line_data.get(AgentKeys.favorite_destination);}
+    if (line_data.has(AgentKeys.shoe_size)) {agent[AgentKeys.shoe_size] = line_data.get(AgentKeys.shoe_size);}
+    if (line_data.has(AgentKeys.christmasCard)) {agent[AgentKeys.christmasCard] = this.getBoolean(line_data.get(AgentKeys.christmasCard));}
+
+    if (line_data.has(AgentKeys.p_strategic_agent)) {agent[AgentKeys.p_strategic_agent] = this.getBoolean(line_data.get(AgentKeys.p_strategic_agent));}
+    if (line_data.has(AgentKeys.alliance_group_employee)) {agent[AgentKeys.alliance_group_employee] = this.getBoolean(line_data.get(AgentKeys.alliance_group_employee));}
+    if (line_data.has(AgentKeys.is_manager)) {agent[AgentKeys.is_manager] = this.getBoolean(line_data.get(AgentKeys.is_manager));}
+    if (line_data.has(AgentKeys.is_acb_user)) {agent[AgentKeys.is_acb_user] = this.getBoolean(line_data.get(AgentKeys.is_acb_user));}
+    if (line_data.has(AgentKeys.is_awb_user)) {agent[AgentKeys.is_awb_user] = this.getBoolean(line_data.get(AgentKeys.is_awb_user));}
+
+    if (line_data.has(AgentKeys.prospect_referred_to_date)) {agent[AgentKeys.prospect_referred_to_date] = new Date(line_data.get(AgentKeys.prospect_referred_to_date));}
+    if (line_data.has(AgentKeys.campaigns_user_since)) {agent[AgentKeys.campaigns_user_since] = new Date(line_data.get(AgentKeys.campaigns_user_since));}
+    if (line_data.has(AgentKeys.dob)) {agent[AgentKeys.dob] = new Date(line_data.get(AgentKeys.dob));}
+
+    if (line_data.has(AgentKeys.agent_status)) {agent[AgentKeys.agent_status] = AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim()];}
+    if (line_data.has(AgentKeys.prospect_status)) {agent[AgentKeys.prospect_status] = PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim()];}
+    if (line_data.has(AgentKeys.prospect_priority)) {agent[AgentKeys.prospect_priority] = PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim()];}
+    if (line_data.has(AgentKeys.prospect_disposition)) {agent[AgentKeys.prospect_disposition] = PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim()];}
 
     let splitVals: Map<string, string> = new Map<string, string>();
 
     line_data.forEach((data, field) => {
       let splitfields = field.split('.');
 
-      if (splitfields.length == 1) {
-        if (line_data.has(AgentKeys.p_agent_id)) {agent[AgentKeys.p_agent_id] = line_data.get(AgentKeys.p_agent_id);}
-        if (line_data.has(AgentKeys.p_external_agent_id)) {agent[AgentKeys.p_external_agent_id] = line_data.get(AgentKeys.p_external_agent_id);}
-        if (line_data.has(AgentKeys.p_agent_first_name)) {agent[AgentKeys.p_agent_first_name] = line_data.get(AgentKeys.p_agent_first_name);}
-        if (line_data.has(AgentKeys.p_agent_middle_name)) {agent[AgentKeys.p_agent_middle_name] = line_data.get(AgentKeys.p_agent_middle_name);}
-        if (line_data.has(AgentKeys.p_agent_last_name)) {agent[AgentKeys.p_agent_last_name] = line_data.get(AgentKeys.p_agent_last_name);}
-        if (line_data.has(AgentKeys.p_nick_name)) {agent[AgentKeys.p_nick_name] = line_data.get(AgentKeys.p_nick_name);}
-        if (line_data.has(AgentKeys.p_nick_last_name)) {agent[AgentKeys.p_nick_last_name] = line_data.get(AgentKeys.p_nick_last_name);}
-        if (line_data.has(AgentKeys.p_agency_id)) {agent[AgentKeys.p_agency_id] = line_data.get(AgentKeys.p_agency_id);}
-        if (line_data.has(AgentKeys.p_mga_id)) {agent[AgentKeys.p_mga_id] = line_data.get(AgentKeys.p_mga_id);}
-        if (line_data.has(AgentKeys.p_mga_id)) {agent[AgentKeys.title] = line_data.get(AgentKeys.p_mga_id);}
-        if (line_data.has(AgentKeys.p_prefix)) {agent[AgentKeys.p_prefix] = line_data.get(AgentKeys.p_prefix);}
-        if (line_data.has(AgentKeys.p_suffix)) {agent[AgentKeys.p_suffix] = line_data.get(AgentKeys.p_suffix);}
-        if (line_data.has(AgentKeys.npn)) {agent[AgentKeys.npn] = line_data.get(AgentKeys.npn);}
-        if (line_data.has(AgentKeys.dietary_or_personal_considerations)) {agent[AgentKeys.dietary_or_personal_considerations] = this.getYesNoValue(line_data.get(AgentKeys.dietary_or_personal_considerations));}
-        if (line_data.has(AgentKeys.dietary_consideration)) {agent[AgentKeys.dietary_consideration] = line_data.get(AgentKeys.dietary_consideration);}
-        if (line_data.has(AgentKeys.dietary_consideration_type)) {agent[AgentKeys.dietary_consideration_type] = line_data.get(AgentKeys.dietary_consideration_type);}
-        if (line_data.has(AgentKeys.upline)) {agent[AgentKeys.upline] = line_data.get(AgentKeys.upline);}
-        if (line_data.has(AgentKeys.agencyName)) {agent[AgentKeys.agencyName] = line_data.get(AgentKeys.agencyName);}
-        if (line_data.has(AgentKeys.registration_source)) {agent[AgentKeys.registration_source] = line_data.get(AgentKeys.registration_source);}
-        if (line_data.has(AgentKeys.manager_id)) {agent[AgentKeys.manager_id] = line_data.get(AgentKeys.manager_id);}
-        if (line_data.has(AgentKeys.agency_approve_deny_reason)) {agent[AgentKeys.agency_approve_deny_reason] = line_data.get(AgentKeys.agency_approve_deny_reason);}
-        if (line_data.has(AgentKeys.approve_deny_reason)) {agent[AgentKeys.approve_deny_reason] = line_data.get(AgentKeys.approve_deny_reason);}
-        if (line_data.has(AgentKeys.awb_site_id)) {agent[AgentKeys.awb_site_id] = line_data.get(AgentKeys.awb_site_id);}
-        if (line_data.has(AgentKeys.certifications)) {agent[AgentKeys.certifications] = line_data.get(AgentKeys.certifications);}
-        if (line_data.has(AgentKeys.prospect_referred_to)) {agent[AgentKeys.prospect_referred_to] = line_data.get(AgentKeys.prospect_referred_to);}
-        if (line_data.has(AgentKeys.prospect_wrap_up_notes)) {agent[AgentKeys.prospect_wrap_up_notes] = line_data.get(AgentKeys.prospect_wrap_up_notes);}
-        if (line_data.has(AgentKeys.campaigns_user_name)) {agent[AgentKeys.campaigns_user_name] = line_data.get(AgentKeys.campaigns_user_name);}
-        if (line_data.has(AgentKeys.campaigns_address)) {agent[AgentKeys.campaigns_address] = line_data.get(AgentKeys.campaigns_address);}
-        if (line_data.has(AgentKeys.race)) {agent[AgentKeys.race] = line_data.get(AgentKeys.race);}
-        if (line_data.has(AgentKeys.ethnicity)) {agent[AgentKeys.ethnicity] = line_data.get(AgentKeys.ethnicity);}
-        if (line_data.has(AgentKeys.gender)) {agent[AgentKeys.gender] = line_data.get(AgentKeys.gender);}
-        if (line_data.has(AgentKeys.primary_language)) {agent[AgentKeys.primary_language] = line_data.get(AgentKeys.primary_language);}
-        if (line_data.has(AgentKeys.secondary_language)) {agent[AgentKeys.secondary_language] = line_data.get(AgentKeys.secondary_language);}
-        if (line_data.has(AgentKeys.hobbies)) {agent[AgentKeys.hobbies] = line_data.get(AgentKeys.hobbies);}
-        if (line_data.has(AgentKeys.p_tshirt_size)) {agent[AgentKeys.p_tshirt_size] = line_data.get(AgentKeys.p_tshirt_size);}
-        if (line_data.has(AgentKeys.unisex_tshirt_size)) {agent[AgentKeys.unisex_tshirt_size] = line_data.get(AgentKeys.unisex_tshirt_size);}
-        if (line_data.has(AgentKeys.favorite_destination)) {agent[AgentKeys.favorite_destination] = line_data.get(AgentKeys.favorite_destination);}
-        if (line_data.has(AgentKeys.shoe_size)) {agent[AgentKeys.shoe_size] = line_data.get(AgentKeys.shoe_size);}
-        if (line_data.has(AgentKeys.christmasCard)) {agent[AgentKeys.christmasCard] = this.getBoolean(line_data.get(AgentKeys.christmasCard));}
-
-        if (line_data.has(AgentKeys.p_strategic_agent)) {agent[AgentKeys.p_strategic_agent] = this.getBoolean(line_data.get(AgentKeys.p_strategic_agent));}
-        if (line_data.has(AgentKeys.alliance_group_employee)) {agent[AgentKeys.alliance_group_employee] = this.getBoolean(line_data.get(AgentKeys.alliance_group_employee));}
-        if (line_data.has(AgentKeys.is_manager)) {agent[AgentKeys.is_manager] = this.getBoolean(line_data.get(AgentKeys.is_manager));}
-        if (line_data.has(AgentKeys.is_acb_user)) {agent[AgentKeys.is_acb_user] = this.getBoolean(line_data.get(AgentKeys.is_acb_user));}
-        if (line_data.has(AgentKeys.is_awb_user)) {agent[AgentKeys.is_awb_user] = this.getBoolean(line_data.get(AgentKeys.is_awb_user));}
-
-        if (line_data.has(AgentKeys.prospect_referred_to_date)) {agent[AgentKeys.prospect_referred_to_date] = new Date(line_data.get(AgentKeys.prospect_referred_to_date));}
-        if (line_data.has(AgentKeys.campaigns_user_since)) {agent[AgentKeys.campaigns_user_since] = new Date(line_data.get(AgentKeys.campaigns_user_since));}
-        if (line_data.has(AgentKeys.dob)) {agent[AgentKeys.dob] = new Date(line_data.get(AgentKeys.dob));}
-
-        if (line_data.has(AgentKeys.agent_status)) {agent[AgentKeys.agent_status] = AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim()];}
-        if (line_data.has(AgentKeys.prospect_status)) {agent[AgentKeys.prospect_status] = PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim()];}
-        if (line_data.has(AgentKeys.prospect_priority)) {agent[AgentKeys.prospect_priority] = PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim()];}
-        if (line_data.has(AgentKeys.prospect_disposition)) {agent[AgentKeys.prospect_disposition] = PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim()];}
-
-        //calculate p_agent_name
-        if (agent[AgentKeys.p_agent_first_name]) {
-          agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_first_name];
-        }
-
-        if (agent[AgentKeys.p_agent_middle_name]) {
-          agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_name] + ' ' + agent[AgentKeys.p_agent_middle_name];
-        }
-
-        if (agent[AgentKeys.p_agent_last_name]) {
-          agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_name] + ' ' + agent[AgentKeys.p_agent_last_name];
-        }
-      } else {
+      if (splitfields.length > 1) {
         splitVals.set(field, data);
       }
-    });
+    })
+
+    agent[AgentKeys.addresses] = this.extractAddresses(splitVals);
+    agent[AgentKeys.email_addresses] = this.extractEmailAddresses(splitVals);
+    agent[AgentKeys.phone_numbers] = this.extractPhoneNumbers(splitVals);
+    agent[AgentKeys.associations] = this.extractAssociations(splitVals);
+    agent[AgentKeys.websites] = this.extractWebsites(splitVals);
+    agent[AgentKeys.socials] = this.extractSocials(splitVals);
+
+    //calculate p_agent_name
+    if (agent[AgentKeys.p_agent_first_name]) {
+      agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_first_name];
+    }
+
+    if (agent[AgentKeys.p_agent_middle_name]) {
+      agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_name] + ' ' + agent[AgentKeys.p_agent_middle_name];
+    }
+
+    if (agent[AgentKeys.p_agent_last_name]) {
+      agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_name] + ' ' + agent[AgentKeys.p_agent_last_name];
+    }
 
     agent[AgentKeys.personal_goals] = [];
     let goal1: Goal = { ...new Goal() };
@@ -113,13 +120,6 @@ export class DomainService {
 
     agent[AgentKeys.role] = [Role.AGENT];
 
-    agent[AgentKeys.addresses] = this.extractAddresses(splitVals);
-    agent[AgentKeys.email_addresses] = this.extractEmailAddresses(splitVals);
-    agent[AgentKeys.phone_numbers] = this.extractPhoneNumbers(splitVals);
-    agent[AgentKeys.associations] = this.extractAssociations(splitVals);
-    agent[AgentKeys.websites] = this.extractWebsites(splitVals);
-    agent[AgentKeys.socials] = this.extractSocials(splitVals);
-
     agent[AgentKeys.login_count] = 0;
     agent[AgentKeys.logged_in] = false;
     agent[AgentKeys.emailVerified] = false;
@@ -134,29 +134,33 @@ export class DomainService {
     agent[AgentKeys.is_rmd] = false;
     agent[AgentKeys.is_credited] = false;
 
-    if (agent[AgentKeys.email_addresses]?.length == 0) {
-      messages.push('No Email Addresses were set for this agent. Not Importing ' + agent[AgentKeys.p_agent_name]);
-
-      return null;
-    } else if (agent[AgentKeys.email_addresses]?.length > 0) {
-      let login_address: EmailAddress[] = agent[AgentKeys.email_addresses].filter((email) => email.is_login == true);
-
-      if (login_address.length == 0) {
-        agent[AgentKeys.email_addresses][0].is_login = true;
-        agent[AgentKeys.p_email] = agent[AgentKeys.email_addresses][0].address;
-
-        return agent;
+    if(this.validateAgency(agent, agencies, messages)){
+      if (agent[AgentKeys.email_addresses]?.length == 0) {
+        messages.push('No Email Addresses were set for this agent. Not Importing ' + agent[AgentKeys.p_agent_name]);
+  
+        return null;
+      } else if (agent[AgentKeys.email_addresses]?.length > 0) {
+        let login_address: EmailAddress[] = agent[AgentKeys.email_addresses].filter((email) => email.is_login == true);
+  
+        if (login_address.length == 0) {
+          agent[AgentKeys.email_addresses][0].is_login = true;
+          agent[AgentKeys.p_email] = agent[AgentKeys.email_addresses][0].address;
+  
+          return agent;
+        } else {
+          agent[AgentKeys.p_email] = login_address[0].address;
+  
+          return agent;
+        }
       } else {
-        agent[AgentKeys.p_email] = login_address[0].address;
-
-        return agent;
+        return null;
       }
     } else {
       return null;
     }
   }
 
-  updateAgent(line_data: Map<string, string>, messages: string[], agent: Agent, selectedRuleSet: ImportRuleSet): Agent {
+  updateAgent(line_data: Map<string, string>, messages: string[], agent: Agent, selectedRuleSet: ImportRuleSet, agencies: Agency[]): Agent {
     if (line_data.has(AgentKeys.p_agent_id)) {
       this.updateField(selectedRuleSet[ImportRuleSetKeys.p_agent_id], agent, AgentKeys.p_agent_id, line_data.get(AgentKeys.p_agent_id));
     }
@@ -324,14 +328,48 @@ export class DomainService {
       agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_name] + ' ' + agent[AgentKeys.p_agent_last_name];
     }
 
-    this.updateAddresses(line_data, agent, selectedRuleSet, messages);
-    this.updateEmailAddresses(line_data, agent, selectedRuleSet, messages);
-    this.updatePhoneNumbers(line_data, agent, selectedRuleSet, messages);
-    this.updateAssociations(line_data, agent, selectedRuleSet, messages);
-    this.updateSocials(line_data, agent, selectedRuleSet, messages);
-    this.updateWebsites(line_data, agent, selectedRuleSet, messages);
+    let shouldContinue: boolean = true;
 
-    return agent;
+    shouldContinue = shouldContinue && this.validateAgency(agent, agencies, messages);
+
+    shouldContinue = shouldContinue && this.updateAddresses(line_data, agent, selectedRuleSet, messages);
+    shouldContinue = shouldContinue && this.updateEmailAddresses(line_data, agent, selectedRuleSet, messages);
+    shouldContinue = shouldContinue && this.updatePhoneNumbers(line_data, agent, selectedRuleSet, messages);
+    shouldContinue = shouldContinue && this.updateAssociations(line_data, agent, selectedRuleSet, messages);
+    shouldContinue = shouldContinue && this.updateSocials(line_data, agent, selectedRuleSet, messages);
+    shouldContinue = shouldContinue && this.updateWebsites(line_data, agent, selectedRuleSet, messages);
+
+    if(shouldContinue){
+      return agent;
+    } else {
+      return null;
+    }
+  }
+
+  validateAgency(agent: Agent, agencies: Agency[], messages: string[]): boolean {
+    let retval: boolean = true;
+
+    if(agent.p_agency_id){
+      let a: Agency[] = agencies.filter(agency => agency.agency_id == agent.p_agency_id);
+
+      if(a.length != 1){
+        retval = false;
+
+        messages.push(agent.email_addresses[0].address + ' has an value set for Agency Id that does not match an existing Agency!');
+      }
+    }
+
+    if(agent.p_mga_id){
+      let a: Agency[] = agencies.filter(agency => agency.agency_id == agent.p_mga_id);
+
+      if(a.length != 1){
+        retval = false;
+
+        messages.push(agent.email_addresses[0].address + ' has an value set for MGA Id that does not match an existing Agency!');
+      }
+    }
+
+    return retval;
   }
 
   extractAddresses(invals: Map<string, string>): Address[] {
@@ -382,32 +420,18 @@ export class DomainService {
     return a;
   }
 
-  updateAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]) {
+  updateAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]): boolean {
     let incoming_addresses: Address[] = this.extractAddresses(data);
 
-    if (incoming_addresses.length > 0) {
+    if (incoming_addresses.length > 0 && this.validateAddresses(incoming_addresses, selectedRuleSet, agent, messages)) {
       if (!agent[AgentKeys.addresses]) {
         agent[AgentKeys.addresses] = [];
       }
-      let required_to_update_shipping = selectedRuleSet[ImportRuleSetKeys.primary_shipping_address] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
 
-      if(required_to_update_shipping){
-        let incoming_has_primary_shipping = incoming_addresses.filter(add => add.is_primary_shipping == true).length > 0;
-  
-        if(incoming_has_primary_shipping){
-          agent.addresses.forEach(add => add.is_primary_shipping = false);
-        }
-      }
-  
-      let required_to_update_billing = selectedRuleSet[ImportRuleSetKeys.primary_billing_address] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
-  
-      if(required_to_update_billing){
-        let incoming_has_primary_billing = incoming_addresses.filter(add => add.is_primary_billing == true).length > 0;
-  
-        if(incoming_has_primary_billing){
-          agent.addresses.forEach(add => add.is_primary_billing = false);
-        }
-      }
+      let required_to_update_shipping = PrimaryFieldRule[selectedRuleSet[ImportRuleSetKeys.primary_shipping_address]] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+
+      let required_to_update_billing = PrimaryFieldRule[selectedRuleSet[ImportRuleSetKeys.primary_billing_address]] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+
       //look at each incoming and update if matching or add to list
       incoming_addresses.forEach((incoming_address) => {
         let matching_address: Address = agent[AgentKeys.addresses].find(
@@ -433,10 +457,10 @@ export class DomainService {
           if (incoming_address.country) {
             this.updateField(selectedRuleSet[ImportRuleSetKeys.address_country], matching_address, 'country', incoming_address.country);
           }
-          if(incoming_address.is_primary_billing){
+          if(incoming_address.is_primary_billing && required_to_update_billing){
             this.updateField(selectedRuleSet[ImportRuleSetKeys.address_is_primary_billing], matching_address, 'is_primary_billing', incoming_address.is_primary_billing);
           }
-          if(incoming_address.is_primary_shipping){
+          if(incoming_address.is_primary_shipping && required_to_update_shipping){
             this.updateField(selectedRuleSet[ImportRuleSetKeys.address_is_primary_shipping], matching_address, 'is_primary_shipping', incoming_address.is_primary_shipping);
           }
         } else {
@@ -459,7 +483,56 @@ export class DomainService {
       if (!is_primary_billing_set && agent[AgentKeys.addresses].length > 0) {
         agent[AgentKeys.addresses][0].is_primary_billing = true;
       }
+      return true;
+    } else {
+      return false;
     }
+  }
+
+  validateAddresses(incoming_addresses: Address[], selectedRuleSet: ImportRuleSet, agent: Agent, messages: string[]){
+    let shipping_rule = selectedRuleSet[ImportRuleSetKeys.primary_shipping_address];
+
+    let required_to_update_shipping = PrimaryFieldRule[shipping_rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+
+    if(required_to_update_shipping){
+      let incoming_has_primary_shipping = incoming_addresses.filter(add => add.is_primary_shipping == true);
+      
+      if(incoming_has_primary_shipping.length == 0){
+        messages.push('Selected Rule Set requires Primary Shipping Address to be updated, but no Primary is set. Please set primary for ' + agent.p_email + ' or change the import rule.');
+        return false;
+      } else if(incoming_has_primary_shipping.length == 1){
+        agent.addresses.forEach(add => add.is_primary_shipping = false);
+        return true;
+      } else if(incoming_has_primary_shipping.length == 2){
+        messages.push('Selected Rule Set requires Primary Shipping Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
+        return false;
+      } else {
+        return false;
+      }
+    }
+
+    let billing_rule = selectedRuleSet[ImportRuleSetKeys.primary_billing_address];
+
+    let required_to_update_billinging = PrimaryFieldRule[billing_rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+
+    if(required_to_update_billinging){
+      let incoming_has_primary_billing = incoming_addresses.filter(add => add.is_primary_billing == true);
+      
+      if(incoming_has_primary_billing.length == 0){
+        messages.push('Selected Rule Set requires Primary Billing Address to be updated, but no Primary is set. Please set primary for ' + agent.p_email + ' or change the import rule.');
+        return false;
+      } else if(incoming_has_primary_billing.length == 1){
+        agent.addresses.forEach(add => add.is_primary_shipping = false);
+        return true;
+      } else if(incoming_has_primary_billing.length == 2){
+        messages.push('Selected Rule Set requires Primary Billing Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
+        return false;
+      } else {
+        return false;
+      }
+    }
+
+    return false
   }
 
   extractEmailAddresses(invals: Map<string, string>): EmailAddress[] {
@@ -508,20 +581,14 @@ export class DomainService {
   updateEmailAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]) {
     let incoming_emails: EmailAddress[] = this.extractEmailAddresses(data);
 
-    if (incoming_emails.length > 0) {
+    if (incoming_emails.length > 0 && this.validateEmail(incoming_emails, selectedRuleSet, agent, messages)) {
       if (!agent[AgentKeys.email_addresses]) {
         agent[AgentKeys.email_addresses] = [];
       }
 
-      let required_to_update_primary = selectedRuleSet[ImportRuleSetKeys.primary_email_address] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+      let email_rule = selectedRuleSet[ImportRuleSetKeys.primary_email_address];
 
-      if(required_to_update_primary){
-        let incoming_has_primary = incoming_emails.filter(add => add.is_primary == true).length > 0;
-  
-        if(incoming_has_primary){
-          agent.email_addresses.forEach(add => add.is_primary = false);
-        }
-      }
+      let required_to_update_primary = PrimaryFieldRule[email_rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
 
       //look at each incoming and update if matching or add to list
       incoming_emails.forEach((incoming_email) => {
@@ -533,11 +600,8 @@ export class DomainService {
           if(incoming_email.email_type){
             this.updateField(selectedRuleSet[ImportRuleSetKeys.email_address_email_type], matching_email, 'email_type', incoming_email.email_type);
           }
-          if(incoming_email.is_primary){
+          if(incoming_email.is_primary && required_to_update_primary){
             this.updateField(selectedRuleSet[ImportRuleSetKeys.email_address_is_primary], matching_email, 'is_primary', incoming_email.is_primary);
-          }
-          if(incoming_email.is_login){
-            this.updateField(selectedRuleSet[ImportRuleSetKeys.email_address_is_login], matching_email, 'is_login', incoming_email.is_login);
           }
         } else {
           agent[AgentKeys.email_addresses].push(incoming_email);
@@ -560,7 +624,36 @@ export class DomainService {
         agent[AgentKeys.email_addresses][0].is_login = true;
         agent[AgentKeys.p_email] = agent[AgentKeys.email_addresses][0].address;
       }
+
+      return true;
+    } else {
+      return false;
     }
+  }
+
+  validateEmail(incoming_emails: EmailAddress[], selectedRuleSet: ImportRuleSet, agent: Agent, messages: string[]){
+    let email_rule = selectedRuleSet[ImportRuleSetKeys.primary_email_address];
+
+    let required_to_update_primary = PrimaryFieldRule[email_rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+
+    if(required_to_update_primary){
+      let incoming_has_primary: EmailAddress[] = incoming_emails.filter(add => add.is_primary == true);
+
+      if(incoming_has_primary.length == 0){
+        messages.push('Selected Rule Set requires Primary Email to be updated, but no Primary is set. Please set primary for ' + agent.p_email) + ' or change the import rule.';
+        return false;
+      } else if(incoming_has_primary.length == 1){
+        agent.email_addresses.forEach(add => add.is_primary = false);
+        return true;
+      } else if(incoming_has_primary.length == 2){
+        messages.push('Selected Rule Set requires Primary Email to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
+        return false;
+      } else {
+        return false;
+      }
+    }
+
+    return false;
   }
 
   extractPhoneNumbers(invals: Map<string, string>): PhoneNumber[] {
@@ -618,20 +711,12 @@ export class DomainService {
   updatePhoneNumbers(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]) {
     let incoming_phone_numbers: PhoneNumber[] = this.extractPhoneNumbers(data);
 
-    if (incoming_phone_numbers.length > 0) {
+    if (incoming_phone_numbers.length > 0 && this.validatePhoneNumbers(incoming_phone_numbers, selectedRuleSet, agent, messages)) {
       if (!agent[AgentKeys.phone_numbers]) {
         agent[AgentKeys.phone_numbers] = [];
       }
 
-      let required_to_update_primary = selectedRuleSet[ImportRuleSetKeys.primary_email_address] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
-
-      if(required_to_update_primary){
-        let incoming_has_primary = incoming_phone_numbers.filter(ph => ph.is_primary == true).length > 0;
-  
-        if(incoming_has_primary){
-          agent.phone_numbers.forEach(ph => ph.is_primary = false);
-        }
-      }
+      let required_to_update_primary = selectedRuleSet[ImportRuleSetKeys.primary_phone_number] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
 
       //if primary currently set, set any incoming is_primary flags to false
       let primary_already_exists = agent[AgentKeys.phone_numbers].filter((a) => a.is_primary)?.length > 0;
@@ -665,7 +750,7 @@ export class DomainService {
           if (incoming_phone.phone_type) {
             this.updateField(selectedRuleSet[ImportRuleSetKeys.phone_phone_type], matching_phone, 'phone_type', incoming_phone.phone_type);
           }
-          if (incoming_phone.is_primary) {
+          if (incoming_phone.is_primary && required_to_update_primary) {
             this.updateField(selectedRuleSet[ImportRuleSetKeys.phone_is_primary], matching_phone, 'is_primary', incoming_phone.is_primary);
           }
         } else {
@@ -680,7 +765,36 @@ export class DomainService {
       if (!is_primary_set && agent[AgentKeys.phone_numbers].length > 0) {
         agent[AgentKeys.phone_numbers][0].is_primary = true;
       }
+
+      return true;
+    } else {
+      return false;
     }
+  }
+
+  validatePhoneNumbers(incoming_phone_numbers: PhoneNumber[], selectedRuleSet: ImportRuleSet, agent: Agent, messages: string[]){
+    let phone_number_rule = selectedRuleSet[ImportRuleSetKeys.primary_phone_number];
+
+    let required_to_update_primary = PrimaryFieldRule[phone_number_rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+
+    if(required_to_update_primary){
+      let incoming_has_primary: PhoneNumber[] = incoming_phone_numbers.filter(add => add.is_primary == true);
+
+      if(incoming_has_primary.length == 0){
+        messages.push('Selected Rule Set requires Primary Phone Number to be updated, but no Primary is set. Please set primary for ' + agent.p_email + ' or change the import rule.');
+        return false;
+      } else if(incoming_has_primary.length == 1){
+        agent.email_addresses.forEach(add => add.is_primary = false);
+        return true;
+      } else if(incoming_has_primary.length == 2){
+        messages.push('Selected Rule Set requires Primary Phone Number to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
+        return false;
+      } else {
+        return false;
+      }
+    }
+
+    return false;
   }
 
   extractWebsites(invals: Map<string, string>): Website[] {
@@ -733,6 +847,8 @@ export class DomainService {
         }
       });
     }
+
+    return true;
   }
 
   extractSocials(invals: Map<string, string>): Social[] {
@@ -792,6 +908,8 @@ export class DomainService {
         }
       });
     }
+
+    return true;
   }
 
   extractAssociations(invals: Map<string, string>): Association[] {
@@ -982,22 +1100,24 @@ export class DomainService {
         }
       });
     }
+
+    return true;
   }
 
   updateField(rule, itemToUpdate, field_name: string, value){
-    if(rule == ImportFieldRule.APPEND_TO_EXISTING){
+    if(ImportFieldRule[rule] == ImportFieldRule.APPEND_TO_EXISTING){
       itemToUpdate[field_name] = itemToUpdate[field_name] + ' ' + value;
-    } else if(rule == ImportFieldRule.DO_NOT_UPDATE){
+    } else if(ImportFieldRule[rule] == ImportFieldRule.DO_NOT_UPDATE){
       itemToUpdate[field_name] = itemToUpdate[field_name];
-    } else if(rule == ImportFieldRule.UPDATE_EXISTING_VALUE){
+    } else if(ImportFieldRule[rule] == ImportFieldRule.UPDATE_EXISTING_VALUE){
       itemToUpdate[field_name] = value;
-    } else if(rule == ImportFieldRule.UPDATE_IF_BLANK){
+    } else if(ImportFieldRule[rule] == ImportFieldRule.UPDATE_IF_BLANK){
       if(!itemToUpdate[field_name]  || itemToUpdate[field_name]  == ''){
         itemToUpdate[field_name]  = value;
       }
-    } else if(rule == PrimaryFieldRule.UPDATE_PRIMARY_VALUE){
+    } else if(PrimaryFieldRule[rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE){
       itemToUpdate[field_name]  = value;
-    } else if(rule == PrimaryFieldRule.DO_NOT_UPDATE){
+    } else if(PrimaryFieldRule[rule] == PrimaryFieldRule.DO_NOT_UPDATE){
       itemToUpdate[field_name]  = itemToUpdate[field_name];
     }
   }

@@ -67,7 +67,7 @@ export class DomainService {
     });
   }
 
-  createAssociationsArray(agents: Agent[], data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[]) {
+  createGuestsArray(agents: Agent[], data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[]) {
     data.forEach((registrant_data) => {
       let invitees = agents.filter((a) => a.p_email == registrant_data.get('invitee_email'));
 
@@ -658,7 +658,8 @@ export class DomainService {
   }
 
   updateAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]): boolean {
-    let incoming_addresses: Address[] = this.extractAddresses(data);
+    let incoming_addresses: Address[] = 
+    this.extractAddresses(data);
 
     if (incoming_addresses.length > 0 && this.validateAddresses(incoming_addresses, selectedRuleSet, agent, messages)) {
       if (!agent[AgentKeys.addresses]) {
@@ -701,6 +702,14 @@ export class DomainService {
             this.updateField(selectedRuleSet[ImportRuleSetKeys.address_is_primary_shipping], matching_address, 'is_primary_shipping', incoming_address.is_primary_shipping);
           }
         } else {
+          if(!required_to_update_shipping){
+            incoming_address.is_primary_shipping = false;
+          }
+
+          if(!required_to_update_billing){
+            incoming_address.is_primary_billing = false;
+          }
+
           agent[AgentKeys.addresses].push(incoming_address);
         }
       });
@@ -727,6 +736,9 @@ export class DomainService {
   }
 
   validateAddresses(incoming_addresses: Address[], selectedRuleSet: ImportRuleSet, agent: Agent, messages: string[]){
+
+    let returnVal: boolean = false;
+
     let shipping_rule = selectedRuleSet[ImportRuleSetKeys.primary_shipping_address];
 
     let required_to_update_shipping = PrimaryFieldRule[shipping_rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
@@ -736,15 +748,15 @@ export class DomainService {
       
       if(incoming_has_primary_shipping.length == 0){
         messages.push('Selected Rule Set requires Primary Shipping Address to be updated, but no Primary is set. Please set primary for ' + agent.p_email + ' or change the import rule.');
-        return false;
+        returnVal = false;
       } else if(incoming_has_primary_shipping.length == 1){
         agent.addresses.forEach(add => add.is_primary_shipping = false);
-        return true;
+        returnVal = true;
       } else if(incoming_has_primary_shipping.length == 2){
         messages.push('Selected Rule Set requires Primary Shipping Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
-        return false;
+        returnVal = false;
       } else {
-        return false;
+        returnVal = true;
       }
     }
 
@@ -757,19 +769,19 @@ export class DomainService {
       
       if(incoming_has_primary_billing.length == 0){
         messages.push('Selected Rule Set requires Primary Billing Address to be updated, but no Primary is set. Please set primary for ' + agent.p_email + ' or change the import rule.');
-        return false;
+        returnVal = returnVal && false;
       } else if(incoming_has_primary_billing.length == 1){
-        agent.addresses.forEach(add => add.is_primary_shipping = false);
-        return true;
+        agent.addresses.forEach(add => add.is_primary_billing = false);
+        returnVal = returnVal &&  true;
       } else if(incoming_has_primary_billing.length == 2){
         messages.push('Selected Rule Set requires Primary Billing Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');
-        return false;
+        returnVal = returnVal &&  false;
       } else {
-        return false;
+        returnVal = returnVal &&  false;
       }
     }
 
-    return true;
+    return returnVal;
   }
 
   extractEmailAddresses(invals: Map<string, string>): EmailAddress[] {
@@ -817,6 +829,9 @@ export class DomainService {
 
   updateEmailAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]) {
     let incoming_emails: EmailAddress[] = this.extractEmailAddresses(data);
+    
+    //security measure to make sure is_login is NEVER updated
+    incoming_emails.forEach(email => email.is_login =false);
 
     if (incoming_emails.length > 0 && this.validateEmail(incoming_emails, selectedRuleSet, agent, messages)) {
       if (!agent[AgentKeys.email_addresses]) {
@@ -841,6 +856,9 @@ export class DomainService {
             this.updateField(selectedRuleSet[ImportRuleSetKeys.email_address_is_primary], matching_email, 'is_primary', incoming_email.is_primary);
           }
         } else {
+          if(!required_to_update_primary){
+            incoming_email.is_primary = false;
+          }
           agent[AgentKeys.email_addresses].push(incoming_email);
         }
       });
@@ -851,15 +869,6 @@ export class DomainService {
       //if no primary set, set first email to primary
       if (!is_primary_set && agent[AgentKeys.email_addresses].length > 0) {
         agent[AgentKeys.email_addresses][0].is_primary = true;
-      }
-
-      //after creating new list, check for a login
-      let is_login_set = agent[AgentKeys.email_addresses].filter((a) => a.is_login)?.length > 0;
-
-      //if no primary set, set first email to login
-      if (!is_login_set && agent[AgentKeys.email_addresses].length > 0) {
-        agent[AgentKeys.email_addresses][0].is_login = true;
-        agent[AgentKeys.p_email] = agent[AgentKeys.email_addresses][0].address;
       }
 
       return true;
@@ -900,10 +909,17 @@ export class DomainService {
 
     let tempMap: Map<string, PhoneNumber> = new Map<string, PhoneNumber>();
 
+    let primary: PhoneNumber;
+
     i.forEach((value, key) => {
       let a: PhoneNumber = this.createPhoneNumber(invals, key);
-      if (a.number) tempMap.set(a.number, a);
+
+      if(a.is_primary) primary = a;
+      
+      if(a.number) tempMap.set(a.number, a);
     });
+
+    tempMap.set(primary.number, primary);
 
     tempMap.forEach((val, key) => {
       retval.push(val);
@@ -1021,7 +1037,7 @@ export class DomainService {
         messages.push('Selected Rule Set requires Primary Phone Number to be updated, but no Primary is set. Please set primary for ' + agent.p_email + ' or change the import rule.');
         return false;
       } else if(incoming_has_primary.length == 1){
-        agent.email_addresses.forEach(add => add.is_primary = false);
+        agent.phone_numbers.forEach(add => add.is_primary = false);
         return true;
       } else if(incoming_has_primary.length == 2){
         messages.push('Selected Rule Set requires Primary Phone Number to be updated, but 2 Primararies are set. Please set set only 1 primary for ' + agent.p_email + ' or change the import rule.');

@@ -142,7 +142,7 @@ export class DomainService {
           }
 
           if (guest.dietary_or_personal_considerations) {
-            registrant.dietary_or_personal_considerations = guest.dietary_or_personal_considerations;
+            registrant.dietary_or_personal_considerations = this.getYesNoValue(guest.dietary_or_personal_considerations.trim());
           }
 
           if (guest.dietary_consideration_type) {
@@ -193,7 +193,7 @@ export class DomainService {
         }
 
         if (data.has('dietary_or_personal_considerations')) {
-          registrant.dietary_or_personal_considerations = data.get('dietary_or_personal_considerations');
+          registrant.dietary_or_personal_considerations = this.getYesNoValue(data.get('dietary_or_personal_considerations').trim());
         }
 
         if (data.has('dietary_consideration_type')) {
@@ -259,11 +259,11 @@ export class DomainService {
     if (line_data.has(AgentKeys.p_nick_last_name)) {agent[AgentKeys.p_nick_last_name] = line_data.get(AgentKeys.p_nick_last_name);}
     if (line_data.has(AgentKeys.p_agency_id)) {agent[AgentKeys.p_agency_id] = line_data.get(AgentKeys.p_agency_id);}
     if (line_data.has(AgentKeys.p_mga_id)) {agent[AgentKeys.p_mga_id] = line_data.get(AgentKeys.p_mga_id);}
-    if (line_data.has(AgentKeys.p_mga_id)) {agent[AgentKeys.title] = line_data.get(AgentKeys.p_mga_id);}
+    if (line_data.has(AgentKeys.title)) {agent[AgentKeys.title] = line_data.get(AgentKeys.title);}
     if (line_data.has(AgentKeys.p_prefix)) {agent[AgentKeys.p_prefix] = line_data.get(AgentKeys.p_prefix);}
     if (line_data.has(AgentKeys.p_suffix)) {agent[AgentKeys.p_suffix] = line_data.get(AgentKeys.p_suffix);}
     if (line_data.has(AgentKeys.npn)) {agent[AgentKeys.npn] = line_data.get(AgentKeys.npn);}
-    if (line_data.has(AgentKeys.dietary_or_personal_considerations)) {agent[AgentKeys.dietary_or_personal_considerations] = this.getYesNoValue(line_data.get(AgentKeys.dietary_or_personal_considerations));}
+    if (line_data.has(AgentKeys.dietary_or_personal_considerations)) {agent[AgentKeys.dietary_or_personal_considerations] = this.getYesNoValue(line_data.get(AgentKeys.dietary_or_personal_considerations).trim());}
     if (line_data.has(AgentKeys.dietary_consideration)) {agent[AgentKeys.dietary_consideration] = line_data.get(AgentKeys.dietary_consideration);}
     if (line_data.has(AgentKeys.dietary_consideration_type)) {agent[AgentKeys.dietary_consideration_type] = line_data.get(AgentKeys.dietary_consideration_type);}
     if (line_data.has(AgentKeys.upline)) {agent[AgentKeys.upline] = line_data.get(AgentKeys.upline);}
@@ -1250,7 +1250,7 @@ export class DomainService {
     }
 
     if (invals.has('association.' + key + '.dietary_or_personal_considerations')) {
-      a.dietary_or_personal_considerations = invals.get('association.' + key + '.dietary_or_personal_considerations');
+      a.dietary_or_personal_considerations = this.getYesNoValue(invals.get('association.' + key + '.dietary_or_personal_considerations').trim());
     }
 
     if (invals.has('association.' + key + '.dietary_consideration')) {
@@ -1308,7 +1308,7 @@ export class DomainService {
           }
 
           if (incoming_associations.dietary_or_personal_considerations) {
-            this.updateField(selectedRuleSet[ImportRuleSetKeys.association_dietary_or_personal_considerations], matching_association, 'dietary_or_personal_considerations', incoming_associations.dietary_or_personal_considerations);
+            this.updateField(selectedRuleSet[ImportRuleSetKeys.association_dietary_or_personal_considerations], matching_association, 'dietary_or_personal_considerations', this.getYesNoValue(incoming_associations.dietary_or_personal_considerations.trim()));
           }
 
           if (incoming_associations.dietary_consideration) {

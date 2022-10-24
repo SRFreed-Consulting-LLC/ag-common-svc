@@ -15,7 +15,6 @@ export class ProspectService extends DataService<Prospect> {
   }
 
   static readonly fromFirestore = (data): Prospect => {
-    console.log('data', data);
     return Object.assign({}, data, {
       inquiry_received_date: dateFromTimestamp(data?.inquiry_received_date)
     });

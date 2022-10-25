@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { Agent } from 'ag-common-lib/public-api';
+import { Agent, AgentKeys } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
 import { FIREBASE_APP } from '../injections/firebase-app';
 import { DataService } from './data.service';
@@ -14,10 +14,10 @@ export class AgentService extends DataService<Agent> {
   }
 
   static readonly toFirestore = (data: Agent): Agent => {
-    const fullName = [data?.p_agent_first_name, data?.p_agent_last_name].filter(Boolean).join(' ');
+    const fullName = [data[AgentKeys.p_agent_first_name], data[AgentKeys.p_agent_last_name]].filter(Boolean).join(' ');
 
     return Object.assign(data, {
-      p_agent_name: fullName
+      [AgentKeys.p_agent_name]: fullName
     });
   };
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ImportRuleSet, ImportRuleSetKeys } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
+import { AgentKeys } from 'ag-common-lib/public-api';
 import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { AgentService } from './agent.service';
 
@@ -95,8 +96,35 @@ export class ImportService {
     }
   }
 
-  validateData(data: Map<string, string>, messages: String[]) {
+  validateData(data: Map<string, any>, messages: String[]) {
     let promises: Promise<boolean>[] = [];
+
+    if(data.has(AgentKeys.campaigns_user_name) && !this.isDate(data.get(AgentKeys.campaigns_user_since))){
+      messages.push('ERROR: ' +
+        data.get('p_agent_first_name') +
+          ' ' +
+          data.get('p_agent_last_name') +
+          " has an invalid date in " + AgentKeys.campaigns_user_name
+      );
+    }
+
+    if(data.has(AgentKeys.dob) && !this.isDate(data.get(AgentKeys.dob))){
+      messages.push('ERROR: ' +
+        data.get('p_agent_first_name') +
+          ' ' +
+          data.get('p_agent_last_name') +
+          " has an invalid date in " + AgentKeys.dob
+      );
+    }
+
+    if(data.has(AgentKeys.prospect_referred_to_date) && !this.isDate(data.get(AgentKeys.prospect_referred_to_date))){
+      messages.push('ERROR: ' +
+        data.get('p_agent_first_name') +
+          ' ' +
+          data.get('p_agent_last_name') +
+          " has an invalid date in " + AgentKeys.prospect_referred_to_date
+      );
+    }
 
     if (data.has('email_addresses.1.address')) {
       let p = this.agentService
@@ -144,12 +172,16 @@ export class ImportService {
         });
       promises.push(p);
     } else {
-      messages.push(
+      messages.push('ERROR: ' +
         data.get('p_agent_first_name') +
           ' ' +
           data.get('p_agent_last_name') +
           " does not have an 'email_addresses.1.address' field."
       );
     }
+  }
+  
+  isDate(date: string): boolean {
+    return new Date(date).toString() != "Invalid Date";
   }
 }

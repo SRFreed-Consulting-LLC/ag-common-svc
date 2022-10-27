@@ -247,7 +247,7 @@ export class DomainService {
     return retval;
   }
 
-  createAgent(line_data: Map<string, string>, messages: string[], createdBy: string, agencies: Agency[]): Agent {
+  createAgent(line_data: Map<string, any>, messages: string[], createdBy: string, agencies: Agency[]): Agent {
     var agent = { ...new Agent() };
 
     if (line_data.has(AgentKeys.p_agent_id)) {agent[AgentKeys.p_agent_id] = line_data.get(AgentKeys.p_agent_id);}
@@ -296,9 +296,9 @@ export class DomainService {
     if (line_data.has(AgentKeys.is_acb_user)) {agent[AgentKeys.is_acb_user] = this.getBoolean(line_data.get(AgentKeys.is_acb_user));}
     if (line_data.has(AgentKeys.is_awb_user)) {agent[AgentKeys.is_awb_user] = this.getBoolean(line_data.get(AgentKeys.is_awb_user));}
 
-    if (line_data.has(AgentKeys.prospect_referred_to_date)) {agent[AgentKeys.prospect_referred_to_date] = new Date(line_data.get(AgentKeys.prospect_referred_to_date));}
-    if (line_data.has(AgentKeys.campaigns_user_since)) {agent[AgentKeys.campaigns_user_since] = new Date(line_data.get(AgentKeys.campaigns_user_since));}
-    if (line_data.has(AgentKeys.dob)) {agent[AgentKeys.dob] = new Date(line_data.get(AgentKeys.dob));}
+    if (line_data.has(AgentKeys.prospect_referred_to_date) && line_data.get(AgentKeys.prospect_referred_to_date) instanceof Date) {agent[AgentKeys.prospect_referred_to_date] = new Date(line_data.get(AgentKeys.prospect_referred_to_date));}
+    if (line_data.has(AgentKeys.campaigns_user_since) && line_data.get(AgentKeys.campaigns_user_since) instanceof Date) {agent[AgentKeys.campaigns_user_since] = new Date(line_data.get(AgentKeys.campaigns_user_since));}
+    if (line_data.has(AgentKeys.dob) && line_data.get(AgentKeys.dob) instanceof Date) {agent[AgentKeys.dob] = new Date(line_data.get(AgentKeys.dob));}
 
     if (line_data.has(AgentKeys.agent_status)) {agent[AgentKeys.agent_status] = AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim()];}
     if (line_data.has(AgentKeys.prospect_status)) {agent[AgentKeys.prospect_status] = PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim()];}

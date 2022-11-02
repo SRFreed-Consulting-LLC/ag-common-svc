@@ -16,6 +16,11 @@ export class AgentService extends DataService<Agent> {
   }
 
   static readonly fromFirestore = (data): Agent => {
+
+    data[AgentKeys.approve_deny_reasons]?.forEach(reason => {
+      reason.created_date = dateFromTimestamp(reason.created_date as Timestamp)
+    });
+
     return Object.assign({}, data, {
       [AgentKeys.campaigns_user_since]: dateFromTimestamp(data?.campaigns_user_since as Timestamp)
     });

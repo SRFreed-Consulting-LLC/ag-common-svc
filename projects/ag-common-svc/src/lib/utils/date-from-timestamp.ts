@@ -4,7 +4,6 @@ export const dateFromTimestamp = (item) => {
   if (!item) {
     return null;
   }
-  console.log('item', item, isDate(item));
 
   if (isDate(item)) {
     return item;

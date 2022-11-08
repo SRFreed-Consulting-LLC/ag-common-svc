@@ -10,6 +10,7 @@ import {
   collection,
   getDocs,
   setDoc,
+  onSnapshot,
   deleteDoc,
   limit,
   QueryConstraint,
@@ -18,9 +19,14 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   Timestamp,
-  orderBy
+  orderBy,
+  Unsubscribe,
+  updateDoc,
+  UpdateData
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
+import { Observable, Subject } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 const localeCompareOptions = {
   numeric: true,
@@ -86,6 +92,29 @@ export class CommonFireStoreDao<T> {
     const snap = await addDoc(ref, value);
 
     return this.getById(table, snap.id);
+  }
+
+  public getList(table, queries: QueryParam[] = [], sortField?: string): Observable<T[]> {
+    const subject = new Subject<T[]>();
+    const queryConstraints: QueryConstraint[] = queries.map((query) =>
+      where(query.field, query.operation, query.value)
+    );
+    const collectionRef = collection(this.db, table).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
+    });
+    const collectionQuery = query(collectionRef, ...queryConstraints);
+
+    const unsubscribe = onSnapshot(collectionQuery, (collectionSnapshot) => {
+      const data = collectionSnapshot.docs.map((document) => (document.exists() ? document.data() : null));
+      subject.next(data);
+    });
+
+    return subject.asObservable().pipe(
+      finalize(() => {
+        unsubscribe();
+      })
+    );
   }
 
   public async getAll(table: string, sortField?: string): Promise<T[]> {
@@ -202,7 +231,7 @@ export class CommonFireStoreDao<T> {
     return deleteDoc(ref);
   }
 
-  public async update(value: T, id: string, table: string): Promise<T> {
+  public async update(value, id: string, table: string): Promise<T> {
     const ref = doc(this.db, table, id).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {
@@ -212,7 +241,7 @@ export class CommonFireStoreDao<T> {
       }
     });
 
-    await setDoc(ref, value);
+    await updateDoc(ref, value);
 
     return this.getById(table, id);
   }

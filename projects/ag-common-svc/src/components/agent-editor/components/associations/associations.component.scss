@@ -1,0 +1,11 @@
+::ng-deep .associations {
+  .dx-treelist-rowsview,
+  .dx-treelist-headers {
+    border: none;
+    .dx-header-row {
+      td {
+        border: none;
+      }
+    }
+  }
+}

@@ -62,6 +62,7 @@
 <ng-template #grid let-isEdit="isEdit">
   <dx-data-grid
     #dataGridRef
+    class="associations__data-grid"
     [dataSource]="associations$ | async"
     [keyExpr]="BaseModelKeys.dbId"
     [showRowLines]="isEdit"

@@ -1,4 +1,7 @@
 ::ng-deep .associations {
+  &__data-grid {
+    box-shadow: none;
+  }
   .dx-treelist-rowsview,
   .dx-treelist-headers {
     border: none;

@@ -20,13 +20,13 @@ import {
   SnapshotOptions,
   Timestamp,
   orderBy,
-  Unsubscribe,
   updateDoc,
-  UpdateData
+  QuerySnapshot,
+  DocumentSnapshot
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
-import { Observable, Subject } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { fromEventPattern, Observable, Subject } from 'rxjs';
+import { finalize, map, tap } from 'rxjs/operators';
 
 const localeCompareOptions = {
   numeric: true,
@@ -94,8 +94,7 @@ export class CommonFireStoreDao<T> {
     return this.getById(table, snap.id);
   }
 
-  public getList(table, queries: QueryParam[] = [], sortField?: string): Observable<T[]> {
-    const subject = new Subject<T[]>();
+  public getList(table, queries: QueryParam[] = [], includeRef: boolean = false, sortField?: string): Observable<T[]> {
     const queryConstraints: QueryConstraint[] = queries.map((query) =>
       where(query.field, query.operation, query.value)
     );
@@ -105,14 +104,15 @@ export class CommonFireStoreDao<T> {
     });
     const collectionQuery = query(collectionRef, ...queryConstraints);
 
-    const unsubscribe = onSnapshot(collectionQuery, (collectionSnapshot) => {
-      const data = collectionSnapshot.docs.map((document) => (document.exists() ? document.data() : null));
-      subject.next(data);
-    });
-
-    return subject.asObservable().pipe(
-      finalize(() => {
+    return fromEventPattern(
+      (handler) => onSnapshot(collectionQuery, handler),
+      (handler, unsubscribe) => {
         unsubscribe();
+      }
+    ).pipe(
+      map((collectionSnapshot: any) => {
+        const data = collectionSnapshot.docs.map((document) => (document.exists() ? document.data() : null));
+        return data;
       })
     );
   }
@@ -231,7 +231,7 @@ export class CommonFireStoreDao<T> {
     return deleteDoc(ref);
   }
 
-  public async update(value, id: string, table: string): Promise<T> {
+  public async updateFields(value, id: string, table: string): Promise<T> {
     const ref = doc(this.db, table, id).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {
@@ -242,6 +242,24 @@ export class CommonFireStoreDao<T> {
     });
 
     await updateDoc(ref, value);
+
+    return this.getById(table, id);
+  }
+
+  /**
+   * @deprecated Use updateFields instead
+   */
+  public async update(value, id: string, table: string): Promise<T> {
+    const ref = doc(this.db, table, id).withConverter({
+      fromFirestore: null,
+      toFirestore: (item: T): DocumentData => {
+        return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
+          [BaseModelKeys.updatedDate]: new Date()
+        });
+      }
+    });
+
+    await setDoc(ref, value);
 
     return this.getById(table, id);
   }

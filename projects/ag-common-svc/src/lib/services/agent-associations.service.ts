@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { Association, LookupKeys } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
+import { updateDoc } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
 import { CommonFireStoreDao } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
@@ -62,8 +63,8 @@ export class AgentAssociationsService {
   }
 
   public lockLookup = (data: Partial<Association>) => {
-    if (data?.associationTypeRef && data?.associationTypeRef?.update) {
-      data?.associationTypeRef?.update({ [LookupKeys.isAssigned]: true });
+    if (data?.associationTypeRef) {
+      updateDoc(data?.associationTypeRef, { [LookupKeys.isAssigned]: true });
     }
   };
 

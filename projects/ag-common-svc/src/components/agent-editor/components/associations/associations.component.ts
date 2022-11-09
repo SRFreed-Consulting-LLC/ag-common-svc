@@ -1,7 +1,6 @@
-import { Component, HostBinding, Inject, Input, ViewChild } from '@angular/core';
-import { Association, BaseModelKeys, COUNTRIES, Lookup, LookupKeys, STATES } from 'ag-common-lib/public-api';
+import { Component, HostBinding, Input, ViewChild } from '@angular/core';
+import { ActiveLookup, Association, BaseModelKeys, COUNTRIES, LookupKeys, STATES } from 'ag-common-lib/public-api';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { RELATIONSHIP_LOOKUP } from './associations.model';
 import { AgentAssociationsService } from '../../../../lib/services/agent-associations.service';
 import { filter, map, shareReplay, switchMap } from 'rxjs/operators';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
@@ -9,6 +8,7 @@ import DataSource from 'devextreme/data/data_source';
 import ArrayStore from 'devextreme/data/array_store';
 import { AssociationFormService } from './association-form.service';
 import { DxFormComponent } from 'devextreme-angular';
+import { LookupsService } from '../../../../lib/services/lookups.service';
 
 @Component({
   selector: 'ag-shr-associations',
@@ -32,14 +32,16 @@ export class AssociationsComponent {
   public states = STATES;
   public associations$: Observable<DataSource>;
   public associationFormData: Association;
+  public relationshipTypeLookup$: Observable<ActiveLookup[]>;
 
   private readonly agentId$ = new BehaviorSubject<string>(undefined);
 
   constructor(
-    @Inject(RELATIONSHIP_LOOKUP) public relationshipTypeLookup$: Observable<Lookup[]>,
+    private readonly lookupsService: LookupsService,
     private readonly associationFormService: AssociationFormService,
     private readonly agentAssociationsService: AgentAssociationsService
   ) {
+    this.relationshipTypeLookup$ = this.lookupsService.associationTypeLookup$;
     this.inProgress$ = this.associationFormService.inProgress$;
     this.associations$ = this.agentId$.pipe(
       filter(Boolean),

@@ -4,7 +4,7 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 @UntilDestroy()
 @Directive({
   selector: '[multipleClick]',
-  exportAs: 'meetingLogAttendees'
+  exportAs: 'meetingLogAttendees',
 })
 export class MultipleClickDirective {
   @Output() singleClick = new EventEmitter();

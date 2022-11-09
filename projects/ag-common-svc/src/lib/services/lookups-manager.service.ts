@@ -20,7 +20,11 @@ export class LookupsManagerService {
   public getList = (lookupId: Lookups, queryParams: QueryParam[] = []): Observable<any> => {
     const path = this.getPath(lookupId);
 
-    return this.fsDao.getList(path, queryParams, true);
+    return this.fsDao.getList(path, queryParams, true).pipe(
+      tap((data) => {
+        console.log('data', data);
+      }),
+    );
   };
 
   public create = (lookupId: Lookups, lookup: Lookup) => {

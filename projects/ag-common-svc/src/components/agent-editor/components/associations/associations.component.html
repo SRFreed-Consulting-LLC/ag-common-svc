@@ -63,6 +63,7 @@
   <dx-data-grid
     #dataGridRef
     class="associations__data-grid"
+    [ngClass]="{ 'associations__data-grid--view': !isEdit }"
     [dataSource]="associations$ | async"
     [keyExpr]="BaseModelKeys.dbId"
     [showRowLines]="isEdit"
@@ -70,13 +71,16 @@
     [showColumnLines]="isEdit"
     [columnAutoWidth]="false"
     [wordWrapEnabled]="true"
+    [rowAlternationEnabled]="false"
     (onRowRemoving)="onRowRemoving($event)"
     height="100%"
   >
     <dxo-toolbar>
       <dxi-item location="before" [visible]="!isEdit">
         <div *dxTemplate>
-          <b>&nbsp;&nbsp;&nbsp;Associations</b>
+          <div class="toolbar-label">
+            <b>Associations</b>
+          </div>
         </div>
       </dxi-item>
 
@@ -126,6 +130,7 @@
       sortOrder="desc"
       dataType="boolean"
       caption="Emergency Contact"
+      width="200"
     ></dxi-column>
 
     <dxi-column type="buttons" [visible]="isEdit">

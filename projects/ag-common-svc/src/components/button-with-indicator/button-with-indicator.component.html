@@ -1,0 +1,19 @@
+<dx-button
+  [type]="type"
+  [stylingMode]="stylingMode"
+  [disabled]="isInProgress || disabled"
+  (onClick)="onClick.emit()"
+  class="button-with-indicator {{ cssClass }}"
+>
+  <div *dxTemplate="let data of 'content'" class="button-with-indicator__content">
+    <div class="button-with-indicator__content-container">
+      <dx-load-indicator class="button-with-indicator__indicator" [visible]="isInProgress"></dx-load-indicator>
+      <span
+        class="button-with-indicator__title dx-button-text"
+        [ngClass]="{ 'button-with-indicator__title--hidden': isInProgress }"
+      >
+        {{ title }}
+      </span>
+    </div>
+  </div>
+</dx-button>

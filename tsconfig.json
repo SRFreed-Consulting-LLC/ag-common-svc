@@ -22,6 +22,7 @@
     ],
     "paths": {
       "ag-common-lib/*": ["../ag-common-lib/projects/ag-common-lib/src/*"]
+      //"@ag-common-svc/*": ["./projects/ag-common-svc/src/*"]
     },
   },
   "angularCompilerOptions": {

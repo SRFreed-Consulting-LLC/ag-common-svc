@@ -10,6 +10,7 @@ import {
   collection,
   getDocs,
   setDoc,
+  onSnapshot,
   deleteDoc,
   limit,
   QueryConstraint,
@@ -18,9 +19,12 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   Timestamp,
-  orderBy
+  orderBy,
+  updateDoc
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
+import { fromEventPattern, Observable, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 const localeCompareOptions = {
   numeric: true,
@@ -29,8 +33,8 @@ const localeCompareOptions = {
 };
 export class CommonFireStoreDao<T> {
   private readonly db: Firestore;
-  private fromFirestore: (documentData: DocumentData) => T;
-  private toFirestore: (item: T) => T;
+  private fromFirestore: (documentData: DocumentData) => T = null;
+  private toFirestore: (item: T) => T = null;
 
   constructor(
     fireBaseApp: FirebaseApp,
@@ -86,6 +90,40 @@ export class CommonFireStoreDao<T> {
     const snap = await addDoc(ref, value);
 
     return this.getById(table, snap.id);
+  }
+
+  public getList(table, queries: QueryParam[] = [], includeRef: boolean = false, sortField?: string): Observable<T[]> {
+    const queryConstraints: QueryConstraint[] = queries.map((query) =>
+      where(query.field, query.operation, query.value)
+    );
+    const collectionRef = collection(this.db, table).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
+    });
+    const collectionQuery = query(collectionRef, ...queryConstraints);
+
+    return fromEventPattern(
+      (handler) => onSnapshot(collectionQuery, handler),
+      (handler, unsubscribe) => {
+        unsubscribe();
+      }
+    ).pipe(
+      map((collectionSnapshot: any) => {
+        const items = collectionSnapshot.docs.map((document) => {
+          if (!document.exists()) {
+            return null;
+          }
+          const data = document.data();
+          if (includeRef) {
+            Object.assign(data, { [BaseModelKeys.firebaseRef]: document.ref });
+          }
+
+          return data;
+        });
+
+        return items;
+      })
+    );
   }
 
   public async getAll(table: string, sortField?: string): Promise<T[]> {
@@ -202,7 +240,25 @@ export class CommonFireStoreDao<T> {
     return deleteDoc(ref);
   }
 
-  public async update(value: T, id: string, table: string): Promise<T> {
+  public async updateFields(value, id: string, table: string): Promise<T> {
+    const ref = doc(this.db, table, id).withConverter({
+      fromFirestore: null,
+      toFirestore: (item: T): DocumentData => {
+        return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
+          [BaseModelKeys.updatedDate]: new Date()
+        });
+      }
+    });
+
+    await updateDoc(ref, value);
+
+    return this.getById(table, id);
+  }
+
+  /**
+   * @deprecated Use updateFields instead
+   */
+  public async update(value, id: string, table: string): Promise<T> {
     const ref = doc(this.db, table, id).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {

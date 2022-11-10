@@ -1,0 +1,25 @@
+<dx-popup
+  #popupRef
+  [deferRendering]="false"
+  [showCloseButton]="true"
+  [resizeEnabled]="true"
+  [wrapperAttr]="{ class: '' }"
+  [toolbarItems]="[{ visible: !!title, location: 'left', text: title }]"
+  (onHiding)="handleClosePopup($event)"
+>
+  <div class="modal-window-main-layout">
+    <div class="modal-window-main-layout__content modal-window-main-layout__content--modal">
+      <ng-content></ng-content>
+    </div>
+    <div class="modal-window-main-layout__buttons-container">
+      <dx-button text="CANCEL" stylingMode="contained" type="normal" (onClick)="popupRef.instance.hide()"></dx-button>
+
+      <shr-button-with-indicator
+        *ngIf="showSaveButton"
+        [title]="'SAVE'"
+        [isInProgress]="inProgress"
+        (onClick)="handelSaveClick()"
+      ></shr-button-with-indicator>
+    </div>
+  </div>
+</dx-popup>

@@ -1,0 +1,60 @@
+$base-padding: 8px;
+
+::ng-deep .modal-window {
+  &__content {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+::ng-deep .modal-window-main-layout {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 100%;
+
+  &__title {
+    margin: 0;
+    padding: 0;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  &__content-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    flex-basis: 0;
+    min-height: 0;
+    padding: calc($base-padding * 2);
+    background-color: #ffffff;
+    border-radius: 0 0 $base-padding $base-padding;
+  }
+
+  &__content {
+    min-height: 0;
+    flex-grow: 1;
+    padding: calc($base-padding * 2) 0;
+    &--modal {
+      padding: 0;
+    }
+  }
+
+  &__button {
+    &--align-left {
+      margin-right: auto;
+    }
+  }
+
+  &__buttons-container {
+    display: flex;
+    flex-direction: row;
+    grid-column-gap: calc($base-padding * 2);
+    justify-content: flex-end;
+    padding-top: calc($base-padding * 2);
+
+    & > * {
+      min-width: 150px;
+    }
+  }
+}

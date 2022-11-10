@@ -6,7 +6,7 @@ import {
   LookupKeys,
   WhereFilterOperandKeys,
   Lookup,
-  BaseModelKeys,
+  BaseModelKeys
 } from 'ag-common-lib/public-api';
 import { Observable } from 'rxjs';
 import { map, shareReplay, tap } from 'rxjs/operators';
@@ -33,14 +33,12 @@ export class LookupsService {
   public getTaskSubcategoryLookup = (taskCategoryDbId) => {
     return this.lookupsManagerService
       .getList(Lookups.TaskSubcategory, [
-        new QueryParam(LookupKeys.dependsOn, WhereFilterOperandKeys.equal, taskCategoryDbId),
+        new QueryParam(LookupKeys.dependsOn, WhereFilterOperandKeys.equal, taskCategoryDbId)
       ])
       .pipe(map(this.normalizeLookup), shareReplay(1));
   };
 
   private normalizeLookup = (items: Lookup[]) => {
-    console.log('items', items);
-
     return Array.isArray(items)
       ? items.map((lookup) => {
           const {
@@ -49,7 +47,7 @@ export class LookupsService {
             [LookupKeys.value]: value,
             [LookupKeys.description]: description,
             [LookupKeys.isActive]: isActive,
-            [LookupKeys.isAssigned]: isAssigned,
+            [LookupKeys.isAssigned]: isAssigned
           } = lookup;
 
           return {
@@ -58,7 +56,7 @@ export class LookupsService {
             [LookupKeys.reference]: reference,
             [LookupKeys.description]: description,
             [LookupKeys.isAssigned]: isAssigned,
-            [LookupKeys.visible]: isActive,
+            [LookupKeys.visible]: isActive
           };
         })
       : [];

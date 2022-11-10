@@ -17,13 +17,13 @@ export class LookupsManagerService {
     this.tenantId = 'default'; // TODO get tenant id form auth
   }
 
-  public getList = (lookupId: Lookups, queryParams: QueryParam[] = []): Observable<any> => {
+  public getList = (lookupId: Lookups, queryParams: QueryParam[] = [], includeRef: boolean = true): Observable<any> => {
     const path = this.getPath(lookupId);
 
-    return this.fsDao.getList(path, queryParams, true).pipe(
+    return this.fsDao.getList(path, queryParams, includeRef).pipe(
       tap((data) => {
         console.log('data', data);
-      }),
+      })
     );
   };
 

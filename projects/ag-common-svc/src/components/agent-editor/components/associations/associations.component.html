@@ -10,10 +10,15 @@
   (onPopupClose)="handleAssociationFormPopupClose($event)"
 >
   <dx-form #associationFormRef [formData]="associationFormData" [colCount]="12" labelMode="floating">
-    <dxi-item dataField="first_name" [isRequired]="true" [colSpan]="6"></dxi-item>
-    <dxi-item dataField="last_name" [isRequired]="true" [colSpan]="6"></dxi-item>
-    <dxi-item dataField="email_address" [colSpan]="6"></dxi-item>
-    <dxi-item dataField="contact_number" [isRequired]="true" [colSpan]="6" [editorOptions]="{ mask: '(000) 000-0000' }">
+    <dxi-item dataField="first_name" [label]="{ text: 'First Name' }" [colSpan]="6"></dxi-item>
+    <dxi-item dataField="last_name" [label]="{ text: 'Last Name' }" [colSpan]="6"></dxi-item>
+    <dxi-item dataField="email_address" [label]="{ text: 'Email Address' }" [colSpan]="6"></dxi-item>
+    <dxi-item
+      dataField="contact_number"
+      [label]="{ text: 'Phone Number' }"
+      [colSpan]="6"
+      [editorOptions]="{ mask: '(000) 000-0000' }"
+    >
       <dxi-validation-rule
         type="stringLength"
         [min]="10"
@@ -23,18 +28,42 @@
         message="Please enter 10 digits for Phone Number"
       >
       </dxi-validation-rule>
-
-      <dxi-validation-rule type="required"></dxi-validation-rule>
     </dxi-item>
-    <dxi-item dataField="address.address1" [colSpan]="6"></dxi-item>
-    <dxi-item dataField="address.address2" [colSpan]="6"></dxi-item>
-    <dxi-item dataField="address.city" [colSpan]="4"></dxi-item>
-    <dxi-item dataField="address.state" [colSpan]="4"></dxi-item>
-    <dxi-item dataField="address.zip" [colSpan]="4"></dxi-item>
-    <dxi-item dataField="address.country" [colSpan]="4"></dxi-item>
-    <dxi-item dataField="address.county" [colSpan]="4"></dxi-item>
+    <dxi-item dataField="address.address1" [label]="{ text: 'Address 1' }" [colSpan]="6"></dxi-item>
+    <dxi-item dataField="address.address2" [label]="{ text: 'Address 2' }" [colSpan]="6"></dxi-item>
+    <dxi-item dataField="address.city" [label]="{ text: 'City' }" [colSpan]="4"></dxi-item>
+    <dxi-item
+      dataField="address.state"
+      [label]="{ text: 'State' }"
+      editorType="dxSelectBox"
+      [editorOptions]="{
+        items: states,
+        valueExpr: 'abbreviation',
+        displayExpr: 'abbreviation',
+        searchEnabled: true,
+        placeholder: ''
+      }"
+      [colSpan]="4"
+    ></dxi-item>
+    <dxi-item dataField="address.zip" [label]="{ text: 'Zip Code' }" [colSpan]="4"></dxi-item>
+    <dxi-item
+      dataField="address.country"
+      [label]="{ text: 'Country' }"
+      editorType="dxSelectBox"
+      [editorOptions]="{
+        acceptCustomValue: true,
+        items: countries,
+        valueExpr: 'name',
+        displayExpr: 'name',
+        searchEnabled: true,
+        placeholder: ''
+      }"
+      [colSpan]="4"
+    ></dxi-item>
+    <dxi-item dataField="address.county" [label]="{ text: 'County' }" [colSpan]="4"></dxi-item>
     <dxi-item
       dataField="is_emergency_contact"
+      [label]="{ text: 'Is Emergency Contact?' }"
       [alignItemLabels]="'left'"
       [colSpan]="4"
       editorType="dxSwitch"
@@ -43,12 +72,15 @@
     <dxi-item [colSpan]="4">
       <div *dxTemplate>
         <dx-select-box
+          [label]="'Relationship Type'"
+          [labelMode]="'floating'"
           [value]="associationFormData?.associationTypeRef?.id"
           (onSelectionChanged)="onRelationshipTypeSelectionChanged($event)"
           [dataSource]="relationshipTypeLookup$ | async"
           [valueExpr]="BaseModelKeys.dbId"
           [displayExpr]="LookupKeys.description"
           [searchEnabled]="true"
+          [placeholder]="''"
         >
           <dxi-button name="dropDown"></dxi-button>
         </dx-select-box>

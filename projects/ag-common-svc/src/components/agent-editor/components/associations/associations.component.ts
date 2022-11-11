@@ -14,7 +14,7 @@ import { LookupsService } from '../../../../lib/services/lookups.service';
   selector: 'ag-shr-associations',
   templateUrl: './associations.component.html',
   styleUrls: ['./associations.component.scss'],
-  providers: [AssociationFormService],
+  providers: [AssociationFormService]
 })
 export class AssociationsComponent {
   @HostBinding('class') className = 'associations';
@@ -39,7 +39,7 @@ export class AssociationsComponent {
   constructor(
     private readonly lookupsService: LookupsService,
     private readonly associationFormService: AssociationFormService,
-    private readonly agentAssociationsService: AgentAssociationsService,
+    private readonly agentAssociationsService: AgentAssociationsService
   ) {
     this.relationshipTypeLookup$ = this.lookupsService.associationTypeLookup$;
     this.inProgress$ = this.associationFormService.inProgress$;
@@ -52,11 +52,11 @@ export class AssociationsComponent {
         return new DataSource({
           store: new ArrayStore({
             key: 'dbId',
-            data: Array.isArray(associations) ? associations : [],
-          }),
+            data: Array.isArray(associations) ? associations : []
+          })
         });
       }),
-      shareReplay(1),
+      shareReplay(1)
     );
   }
 

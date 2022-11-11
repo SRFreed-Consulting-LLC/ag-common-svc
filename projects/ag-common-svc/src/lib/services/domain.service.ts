@@ -104,7 +104,8 @@ export class DomainService {
       let invitees = agents.filter((a) => a.p_email == registrant_data.get('invitee_email'));
 
       if (invitees.length == 1) {
-        this.updateAssociations(registrant_data, invitees[0], selectedRuleSet, messages);
+        // TODO
+        // this.updateAssociations(registrant_data, invitees[0], selectedRuleSet, messages);
       }
     });
   }
@@ -517,7 +518,7 @@ export class DomainService {
     agent[AgentKeys.is_rmd] = false;
     agent[AgentKeys.is_credited] = false;
 
-    const agentAssociations = await this.extractAssociations(splitVals); // TODO
+    const agentAssociations = await this.extractAssociations(splitVals);
     const isAgencyValid = this.validateAgency(agent, agencies, messages);
 
     if (!isAgencyValid) {
@@ -545,18 +546,19 @@ export class DomainService {
       const promises = agentAssociations.map((association) => {
         return this.agentAssociationsService.create(agent[BaseModelKeys.dbId], association);
       });
+      messages.push(`Agent ${agent.p_email} was created`);
 
       return Promise.all(promises).then(() => agent);
     });
   }
 
-  updateAgent(
+  async updateAgent(
     line_data: Map<string, string>,
     messages: string[],
     agent: Agent,
     selectedRuleSet: ImportRuleSet,
     agencies: Agency[]
-  ): Agent {
+  ): Promise<Agent> {
     if (line_data.has(AgentKeys.p_agent_id)) {
       this.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_agent_id],
@@ -969,22 +971,25 @@ export class DomainService {
       agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_name] + ' ' + agent[AgentKeys.p_agent_last_name];
     }
 
-    let shouldContinue: boolean = true;
+    const shouldContinue = [
+      this.validateAgency(agent, agencies, messages),
+      this.updateAddresses(line_data, agent, selectedRuleSet, messages),
+      this.updateEmailAddresses(line_data, agent, selectedRuleSet, messages),
+      this.updatePhoneNumbers(line_data, agent, selectedRuleSet, messages),
+      this.updateSocials(line_data, agent, selectedRuleSet, messages),
+      this.updateWebsites(line_data, agent, selectedRuleSet, messages)
+    ].every(Boolean);
 
-    shouldContinue = shouldContinue && this.validateAgency(agent, agencies, messages);
-
-    shouldContinue = shouldContinue && this.updateAddresses(line_data, agent, selectedRuleSet, messages);
-    shouldContinue = shouldContinue && this.updateEmailAddresses(line_data, agent, selectedRuleSet, messages);
-    shouldContinue = shouldContinue && this.updatePhoneNumbers(line_data, agent, selectedRuleSet, messages);
-    shouldContinue = shouldContinue && this.updateAssociations(line_data, agent, selectedRuleSet, messages);
-    shouldContinue = shouldContinue && this.updateSocials(line_data, agent, selectedRuleSet, messages);
-    shouldContinue = shouldContinue && this.updateWebsites(line_data, agent, selectedRuleSet, messages);
-
-    if (shouldContinue) {
-      return agent;
-    } else {
+    if (!shouldContinue) {
       return null;
     }
+
+    await this.updateAssociations(line_data, agent, selectedRuleSet, messages);
+
+    return this.agentService.updateFields(agent[BaseModelKeys.dbId], agent).then((updatedAgent) => {
+      messages.push(`Agent ${agent.p_email} was updated`);
+      return updatedAgent;
+    });
   }
 
   validateAgency(agent: Agent, agencies: Agency[], messages: string[]): boolean {
@@ -1814,151 +1819,170 @@ export class DomainService {
     return association;
   }
 
-  updateAssociations(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]) {
-    // let incoming_associations: Association[] = this.extractAssociations(data);
-    // if (incoming_associations.length > 0) {
-    //   incoming_associations.forEach((incoming_associations) => {
-    //     let matching_association: Association = agent[AgentKeys.associations].find(
-    //       (a) => association.first_name == incoming_associations.first_name && a.last_name == incoming_associations.last_name
-    //     );
-    //     if (matching_association) {
-    //       messages.push(
-    //         'Associate updated (' +
-    //           matching_association.first_name +
-    //           ' ' +
-    //           matching_association.last_name +
-    //           ') for ' +
-    //           agent.p_email
-    //       );
-    //       if (incoming_associations.email_address) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.email_address_address],
-    //           matching_association,
-    //           'email_address',
-    //           incoming_associations.email_address
-    //         );
-    //       }
-    //       if (incoming_associations.contact_number) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_contact_number],
-    //           matching_association,
-    //           'contact_number',
-    //           incoming_associations.contact_number
-    //         );
-    //       }
-    //       if (incoming_associations.is_emergency_contact) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_is_emergency_contact],
-    //           matching_association,
-    //           'is_emergency_contact',
-    //           incoming_associations.is_emergency_contact
-    //         );
-    //       }
-    //       if (incoming_associations.association_type) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_association_type],
-    //           matching_association,
-    //           'association_type',
-    //           incoming_associations.association_type
-    //         );
-    //       }
-    //       if (incoming_associations.dietary_or_personal_considerations) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_dietary_or_personal_considerations],
-    //           matching_association,
-    //           'dietary_or_personal_considerations',
-    //           this.getYesNoValue(incoming_associations.dietary_or_personal_considerations.trim())
-    //         );
-    //       }
-    //       if (incoming_associations.dietary_consideration) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_dietary_consideration],
-    //           matching_association,
-    //           'dietary_consideration',
-    //           incoming_associations.dietary_consideration
-    //         );
-    //       }
-    //       if (incoming_associations.dietary_consideration_type) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_dietary_consideration_type],
-    //           matching_association,
-    //           'dietary_consideration_type',
-    //           incoming_associations.dietary_consideration_type
-    //         );
-    //       }
-    //       if (!matching_association.address) {
-    //         matching_association.address = { ...new Address() };
-    //       }
-    //       if (incoming_associations.address.address1) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_address_address1],
-    //           matching_association.address,
-    //           'address1',
-    //           incoming_associations.address.address1
-    //         );
-    //       }
-    //       if (incoming_associations.address.address2) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_address_address2],
-    //           matching_association.address,
-    //           'address2',
-    //           incoming_associations.address.address2
-    //         );
-    //       }
-    //       if (incoming_associations.address.city) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_address_city],
-    //           matching_association.address,
-    //           'city',
-    //           incoming_associations.address.city
-    //         );
-    //       }
-    //       if (incoming_associations.address.state) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_address_state],
-    //           matching_association.address,
-    //           'state',
-    //           incoming_associations.address.state
-    //         );
-    //       }
-    //       if (incoming_associations.address.zip) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_address_zip],
-    //           matching_association.address,
-    //           'zip',
-    //           incoming_associations.address.zip
-    //         );
-    //       }
-    //       if (incoming_associations.address.county) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_address_county],
-    //           matching_association.address,
-    //           'county',
-    //           incoming_associations.address.county
-    //         );
-    //       }
-    //       if (incoming_associations.address.country) {
-    //         this.updateField(
-    //           selectedRuleSet[ImportRuleSetKeys.association_address_country],
-    //           matching_association.address,
-    //           'country',
-    //           incoming_associations.address.country
-    //         );
-    //       }
-    //     } else {
-    //       messages.push(
-    //         'Associate updated (' +
-    //           incoming_associations.first_name +
-    //           ' ' +
-    //           incoming_associations.last_name +
-    //           ') to ' +
-    //           agent.p_email
-    //       );
-    //       // TODO agent[AgentKeys.associations].push(incoming_associations);
-    //     }
-    //   });
-    // }
-    // return true;
+  async updateAssociations(
+    data: Map<string, string>,
+    agent: Agent,
+    selectedRuleSet: ImportRuleSet,
+    messages: string[]
+  ) {
+    const promises: Promise<any>[] = [];
+    const existingAssociations: Association[] = await this.agentAssociationsService.getAll(agent[BaseModelKeys.dbId]);
+    const incomingAssociations: Association[] = await this.extractAssociations(data);
+
+    for (const incomingAssociation of incomingAssociations) {
+      const matchingAssociation: Association = existingAssociations.find(
+        (association) =>
+          association.first_name == incomingAssociation.first_name &&
+          association.last_name == incomingAssociation.last_name
+      );
+
+      if (!matchingAssociation) {
+        promises.push(
+          this.agentAssociationsService.create(agent[BaseModelKeys.dbId], incomingAssociation).then((association) => {
+            if (association) {
+              messages.push(
+                'Associate created (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
+              );
+            }
+          })
+        );
+      }
+
+      if (matchingAssociation) {
+        if (incomingAssociation.email_address) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.email_address_address],
+            matchingAssociation,
+            'email_address',
+            incomingAssociation.email_address
+          );
+        }
+        if (incomingAssociation.contact_number) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_contact_number],
+            matchingAssociation,
+            'contact_number',
+            incomingAssociation.contact_number
+          );
+        }
+        if (incomingAssociation.is_emergency_contact) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_is_emergency_contact],
+            matchingAssociation,
+            'is_emergency_contact',
+            incomingAssociation.is_emergency_contact
+          );
+        }
+
+        if (incomingAssociation.dietary_or_personal_considerations) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_dietary_or_personal_considerations],
+            matchingAssociation,
+            'dietary_or_personal_considerations',
+            this.getYesNoValue(incomingAssociation.dietary_or_personal_considerations.trim())
+          );
+        }
+        if (incomingAssociation.dietary_consideration) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_dietary_consideration],
+            matchingAssociation,
+            'dietary_consideration',
+            incomingAssociation.dietary_consideration
+          );
+        }
+        if (incomingAssociation.dietary_consideration_type) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_dietary_consideration_type],
+            matchingAssociation,
+            'dietary_consideration_type',
+            incomingAssociation.dietary_consideration_type
+          );
+        }
+        if (!matchingAssociation.address) {
+          matchingAssociation.address = { ...new Address() };
+        }
+        if (incomingAssociation.address.address1) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_address_address1],
+            matchingAssociation.address,
+            'address1',
+            incomingAssociation.address.address1
+          );
+        }
+        if (incomingAssociation.address.address2) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_address_address2],
+            matchingAssociation.address,
+            'address2',
+            incomingAssociation.address.address2
+          );
+        }
+        if (incomingAssociation.address.city) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_address_city],
+            matchingAssociation.address,
+            'city',
+            incomingAssociation.address.city
+          );
+        }
+        if (incomingAssociation.address.state) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_address_state],
+            matchingAssociation.address,
+            'state',
+            incomingAssociation.address.state
+          );
+        }
+        if (incomingAssociation.address.zip) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_address_zip],
+            matchingAssociation.address,
+            'zip',
+            incomingAssociation.address.zip
+          );
+        }
+        if (incomingAssociation.address.county) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_address_county],
+            matchingAssociation.address,
+            'county',
+            incomingAssociation.address.county
+          );
+        }
+        if (incomingAssociation.address.country) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_address_country],
+            matchingAssociation.address,
+            'country',
+            incomingAssociation.address.country
+          );
+        }
+
+        if (incomingAssociation[AssociationKeys.associationTypeRef]) {
+          this.updateField(
+            selectedRuleSet[ImportRuleSetKeys.association_association_type],
+            matchingAssociation,
+            AssociationKeys.associationTypeRef,
+            incomingAssociation[AssociationKeys.associationTypeRef]
+          );
+        }
+
+        promises.push(
+          this.agentAssociationsService
+            .update(agent[BaseModelKeys.dbId], matchingAssociation[BaseModelKeys.dbId], matchingAssociation)
+            .then((association) => {
+              if (association) {
+                messages.push(
+                  'Associate updated (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
+                );
+              }
+            })
+        );
+      }
+    }
+
+    Promise.all(promises);
+
     return true;
   }
 

@@ -2,11 +2,11 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { SharedModule } from '../../../../shared/shared.module';
 import { ModalWindowModule } from '../../../modal-window/modal-window.module';
-import { AssociationsComponent } from './associations.component';
+import { ApproveDenyReasonsComponent } from './approve-deny-reasons.component';
 
 @NgModule({
   imports: [CommonModule, SharedModule, ModalWindowModule],
-  declarations: [AssociationsComponent],
-  exports: [AssociationsComponent]
+  declarations: [ApproveDenyReasonsComponent],
+  exports: [ApproveDenyReasonsComponent]
 })
-export class AssociationsModule {}
+export class ApproveDenyReasonsModule {}

@@ -79,7 +79,6 @@ export class AssociationsComponent {
   };
 
   public onRelationshipTypeSelectionChanged = ({ selectedItem }) => {
-    debugger;
     Object.assign(this.associationFormData, { associationTypeRef: selectedItem?.reference ?? null });
   };
 

@@ -34,7 +34,6 @@ export class LookupsManagerService {
 
   public update = (lookupId: Lookups, documentId: string, updates: Partial<Lookup>) => {
     const path = this.getPath(lookupId);
-    debugger;
     return this.fsDao.updateFields(updates, documentId, path);
   };
 

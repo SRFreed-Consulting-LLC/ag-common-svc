@@ -1,0 +1,39 @@
+::ng-deep .associations {
+  &__data-grid {
+    box-shadow: none;
+
+    tr:nth-child(even) {
+      background-color: initial;
+    }
+    .dx-datagrid-header-panel {
+      padding: 0 0 8px 0;
+      .dx-toolbar {
+        margin-bottom: 0;
+      }
+    }
+
+    &--view {
+      padding: 0 12px;
+
+      .dx-datagrid-header-panel {
+        padding: 0;
+      }
+
+      .dx-datagrid-headers {
+        background-color: transparent;
+        color: #505d69;
+        font-size: 14px;
+      }
+
+      .dx-datagrid-rowsview,
+      .dx-datagrid-headers {
+        border: none;
+        .dx-header-row {
+          td {
+            border: none;
+          }
+        }
+      }
+    }
+  }
+}

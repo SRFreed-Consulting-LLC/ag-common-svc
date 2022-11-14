@@ -1,6 +1,7 @@
 import { BaseModel } from 'ag-common-lib/public-api';
 import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { FirebaseApp } from 'firebase/app';
+import { Observable } from 'rxjs';
 
 export class DataService<T extends BaseModel> {
   public readonly fsDao: CommonFireStoreDao<T>;
@@ -23,6 +24,10 @@ export class DataService<T extends BaseModel> {
     return this.fsDao.getAllByQValue(this.collection, qp, sortField);
   }
 
+  public getList(qp: QueryParam[] = [], includeRef: boolean = false, sortField: string = null): Observable<T[]> {
+    return this, this.fsDao.getList(this.collection, qp, includeRef, sortField);
+  }
+
   public getAll(sortField?: string): Promise<T[]> {
     return this.fsDao.getAll(this.collection, sortField);
   }
@@ -35,8 +40,15 @@ export class DataService<T extends BaseModel> {
     return this.fsDao.createWithId(value, value.dbId, this.collection);
   }
 
+  /**
+   * @deprecated Use updateFields instead // TODO rename to set
+   */
   public update(value: T) {
     return this.fsDao.update(value, value.dbId, this.collection);
+  }
+
+  public updateFields(documentId: string, data: Partial<T>) {
+    return this.fsDao.updateFields(data, documentId, this.collection);
   }
 
   public delete(id: any) {

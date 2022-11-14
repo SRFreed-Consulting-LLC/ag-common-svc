@@ -1,0 +1,173 @@
+<ag-shr-modal-window #associationModalRef [title]="'Associations'" [showSaveButton]="false">
+  <ng-container *ngTemplateOutlet="grid; context: { isEdit: true }"></ng-container>
+</ag-shr-modal-window>
+
+<ag-shr-modal-window
+  #editAssociationModalRef
+  [title]="'Add/ Edit Association'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="handleSaveAssociation($event)"
+  (onPopupClose)="handleAssociationFormPopupClose($event)"
+>
+  <dx-form #associationFormRef [formData]="associationFormData" [colCount]="12" labelMode="floating">
+    <dxi-item dataField="first_name" [label]="{ text: 'First Name' }" [colSpan]="6"></dxi-item>
+    <dxi-item dataField="last_name" [label]="{ text: 'Last Name' }" [colSpan]="6"></dxi-item>
+    <dxi-item dataField="email_address" [label]="{ text: 'Email Address' }" [colSpan]="6"></dxi-item>
+    <dxi-item
+      dataField="contact_number"
+      [label]="{ text: 'Phone Number' }"
+      [colSpan]="6"
+      [editorOptions]="{ mask: '(000) 000-0000' }"
+    >
+      <dxi-validation-rule
+        type="stringLength"
+        [min]="10"
+        [max]="10"
+        [ignoreEmptyValue]="true"
+        [trim]="true"
+        message="Please enter 10 digits for Phone Number"
+      >
+      </dxi-validation-rule>
+    </dxi-item>
+    <dxi-item dataField="address.address1" [label]="{ text: 'Address 1' }" [colSpan]="6"></dxi-item>
+    <dxi-item dataField="address.address2" [label]="{ text: 'Address 2' }" [colSpan]="6"></dxi-item>
+    <dxi-item dataField="address.city" [label]="{ text: 'City' }" [colSpan]="4"></dxi-item>
+    <dxi-item
+      dataField="address.state"
+      [label]="{ text: 'State' }"
+      editorType="dxSelectBox"
+      [editorOptions]="{
+        items: states,
+        valueExpr: 'abbreviation',
+        displayExpr: 'abbreviation',
+        searchEnabled: true,
+        placeholder: ''
+      }"
+      [colSpan]="4"
+    ></dxi-item>
+    <dxi-item dataField="address.zip" [label]="{ text: 'Zip Code' }" [colSpan]="4"></dxi-item>
+    <dxi-item
+      dataField="address.country"
+      [label]="{ text: 'Country' }"
+      editorType="dxSelectBox"
+      [editorOptions]="{
+        acceptCustomValue: true,
+        items: countries,
+        valueExpr: 'name',
+        displayExpr: 'name',
+        searchEnabled: true,
+        placeholder: ''
+      }"
+      [colSpan]="4"
+    ></dxi-item>
+    <dxi-item dataField="address.county" [label]="{ text: 'County' }" [colSpan]="4"></dxi-item>
+    <dxi-item
+      dataField="is_emergency_contact"
+      [label]="{ text: 'Is Emergency Contact?' }"
+      [alignItemLabels]="'left'"
+      [colSpan]="4"
+      editorType="dxSwitch"
+      [editorOptions]="{ switchedOffText: 'false', switchedOnText: 'true' }"
+    ></dxi-item>
+    <dxi-item [colSpan]="4">
+      <div *dxTemplate>
+        <dx-select-box
+          [label]="'Relationship Type'"
+          [labelMode]="'floating'"
+          [value]="associationFormData?.associationTypeRef?.id"
+          (onSelectionChanged)="onRelationshipTypeSelectionChanged($event)"
+          [dataSource]="relationshipTypeLookup$ | async"
+          [valueExpr]="BaseModelKeys.dbId"
+          [displayExpr]="LookupKeys.description"
+          [searchEnabled]="true"
+          [placeholder]="''"
+        >
+          <dxi-button name="dropDown"></dxi-button>
+        </dx-select-box>
+      </div>
+    </dxi-item>
+  </dx-form>
+</ag-shr-modal-window>
+
+<ng-container *ngTemplateOutlet="grid; context: { isEdit: false }"></ng-container>
+
+<ng-template #grid let-isEdit="isEdit">
+  <dx-data-grid
+    #dataGridRef
+    class="associations__data-grid"
+    [ngClass]="{ 'associations__data-grid--view': !isEdit }"
+    [dataSource]="associations$ | async"
+    [keyExpr]="BaseModelKeys.dbId"
+    [showRowLines]="isEdit"
+    [showBorders]="isEdit"
+    [showColumnLines]="isEdit"
+    [columnAutoWidth]="false"
+    [wordWrapEnabled]="true"
+    [rowAlternationEnabled]="false"
+    (onRowRemoving)="onRowRemoving($event)"
+    height="100%"
+  >
+    <dxo-toolbar>
+      <dxi-item location="before" [visible]="!isEdit">
+        <div *dxTemplate>
+          <div class="toolbar-label">
+            <b>Associations</b>
+          </div>
+        </div>
+      </dxi-item>
+
+      <dxi-item
+        [visible]="isEdit"
+        location="after"
+        widget="dxButton"
+        [options]="{ icon: 'plus', onClick: showAddAssociationPopup }"
+      ></dxi-item>
+
+      <dxi-item
+        [visible]="!isEdit"
+        location="after"
+        widget="dxButton"
+        [options]="{ icon: 'edit', stylingMode: 'text', onClick: showListPopup }"
+      >
+      </dxi-item>
+    </dxo-toolbar>
+
+    <dxo-editing mode="popup" [useIcons]="true" [allowUpdating]="false" [allowDeleting]="true" [allowAdding]="false">
+    </dxo-editing>
+
+    <dxi-column dataField="first_name" caption="First Name"></dxi-column>
+    <dxi-column dataField="last_name" caption="Last Name"></dxi-column>
+    <dxi-column dataField="email_address" caption="Email Address"></dxi-column>
+    <dxi-column dataField="contact_number" caption="Contact Number" cellTemplate="contactNumberCellTemplate">
+    </dxi-column>
+    <div *dxTemplate="let data of 'contactNumberCellTemplate'">
+      {{ data.displayValue | phoneNumberMask }}
+    </div>
+
+    <dxi-column dataField="associationTypeRef.id" caption="Relationship">
+      <dxo-lookup
+        [dataSource]="relationshipTypeLookup$ | async"
+        [valueExpr]="BaseModelKeys.dbId"
+        [displayExpr]="LookupKeys.description"
+      ></dxo-lookup>
+    </dxi-column>
+
+    <dxi-column dataField="address" cellTemplate="addressCellTemplate" [caption]="'Address'"></dxi-column>
+    <div *dxTemplate="let data of 'addressCellTemplate'" title="{{ data.displayValue | fullAddress }}">
+      {{ data.displayValue | fullAddress }}
+    </div>
+
+    <dxi-column
+      dataField="is_emergency_contact"
+      sortOrder="desc"
+      dataType="boolean"
+      caption="Emergency Contact"
+      width="200"
+    ></dxi-column>
+
+    <dxi-column type="buttons" [visible]="isEdit">
+      <dxi-button icon="edit" [onClick]="showEditPopup"></dxi-button>
+      <dxi-button name="delete"></dxi-button>
+    </dxi-column>
+  </dx-data-grid>
+</ng-template>

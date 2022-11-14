@@ -1,0 +1,40 @@
+::ng-deep .button-with-indicator {
+  width: 150px;
+
+  &__content.dx-button-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: unset;
+  }
+
+  &__content-container {
+    display: inline-block;
+    position: relative;
+    width: min-content;
+    margin: 0 auto;
+  }
+
+  &__title {
+    display: inline-block;
+    padding: 8px 8px 7px;
+    white-space: nowrap;
+    &--hidden {
+      visibility: hidden;
+    }
+  }
+
+  &__indicator {
+    position: absolute;
+    display: block;
+    top: 50%;
+    left: 50%;
+    width: 22px;
+    height: 22px;
+    transform: translate(-50%, -50%);
+
+    .dx-loadindicator-segment {
+      background: white;
+    }
+  }
+}

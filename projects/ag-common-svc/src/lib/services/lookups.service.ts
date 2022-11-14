@@ -31,6 +31,9 @@ export class LookupsService {
   }
 
   public getTaskSubcategoryLookup = (taskCategoryDbId) => {
+    if (!taskCategoryDbId) {
+      return undefined;
+    }
     return this.lookupsManagerService
       .getList(Lookups.TaskSubcategory, [
         new QueryParam(LookupKeys.dependsOn, WhereFilterOperandKeys.equal, taskCategoryDbId)

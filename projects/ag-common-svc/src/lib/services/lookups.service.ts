@@ -2,14 +2,13 @@ import { Injectable } from '@angular/core';
 import {
   ActiveLookup,
   Lookups,
-  QueryParam,
   LookupKeys,
-  WhereFilterOperandKeys,
   Lookup,
   BaseModelKeys
 } from 'ag-common-lib/public-api';
 import { Observable } from 'rxjs';
 import { map, shareReplay, tap } from 'rxjs/operators';
+import { QueryParam, WhereFilterOperandKeys } from '../../public-api';
 import { LookupsManagerService } from './lookups-manager.service';
 
 @Injectable({ providedIn: 'root' })

@@ -32,7 +32,6 @@ import {
 } from 'ag-common-lib/public-api';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { AgentAssociationsService } from './agent-associations.service';
 import { AgentService } from './agent.service';
 import { LookupsService } from './lookups.service';
@@ -78,19 +77,13 @@ export class DomainService {
     const promises: Promise<Agent>[] = [];
 
     agents.forEach((data) => {
-      const promise: Promise<Agent> = this.agentService
-        .getAllByValue([
-          new QueryParam('p_email', WhereFilterOperandKeys.equal, data.get(this.PRIMARY_EMAIL_IDENTIFIER))
-        ])
+      const promise: Promise<Agent> = this.agentService.getAgentByEmail(data.get(this.PRIMARY_EMAIL_IDENTIFIER))
         .then((response) => {
-          if (!response || !response?.length) {
+          if (!response) {
             return this.createAgent(data, messages, createdBy, agencies);
+          } else {
+            return this.updateAgent(data, messages, response, selectedRuleSet, agencies);
           }
-          if (response?.length === 1) {
-            return this.updateAgent(data, messages, response[0], selectedRuleSet, agencies);
-          }
-
-          return null;
         });
 
       promises.push(promise);

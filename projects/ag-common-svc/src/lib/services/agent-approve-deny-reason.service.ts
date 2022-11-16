@@ -29,13 +29,13 @@ export class AgentApproveDenyReasonsService {
     return this.fsDao.getAll(table);
   }
 
-  public create(agentId: string, data: ApproveDenyReason) {
+  public create(agentId: string, data: ApproveDenyReason, silent = false) {
     const table = this.getCollectionPath(agentId);
 
     return this.fsDao
       .create(data, table)
       .then((response) => {
-        this.toastrService.success('Agent Approve / Deny Reason Successfully Created!');
+        !silent && this.toastrService.success('Agent Approve / Deny Reason Successfully Created!');
         return response;
       })
 
@@ -44,13 +44,13 @@ export class AgentApproveDenyReasonsService {
       });
   }
 
-  public update(agentId: string, documentId: any, updates: Partial<ApproveDenyReason>) {
+  public update(agentId: string, documentId: any, updates: Partial<ApproveDenyReason>, silent = false) {
     const table = this.getCollectionPath(agentId);
 
     return this.fsDao
       .updateFields(updates, documentId, table)
       .then((response) => {
-        this.toastrService.success('Agent Approve / Deny Reason Successfully Updated!');
+        !silent && this.toastrService.success('Agent Approve / Deny Reason Successfully Updated!');
         return response;
       })
 

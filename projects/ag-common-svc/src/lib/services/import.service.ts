@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ImportRuleSet, ImportRuleSetKeys } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
+import { ImportRuleSet } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import { AgentKeys } from 'ag-common-lib/public-api';
-import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { AgentService } from './agent.service';
 
 @Injectable({
@@ -127,16 +126,9 @@ export class ImportService {
     }
 
     if (data.has('email_addresses.1.address')) {
-      let p = this.agentService
-        .getAllByValue([
-          new QueryParam(
-            'p_email',
-            WhereFilterOperandKeys.equal,
-            data.get('email_addresses.1.address').toLowerCase().trim()
-          )
-        ])
+      let p = this.agentService.getAgentByEmail(data.get('email_addresses.1.address').toLowerCase().trim())
         .then((agents) => {
-          if (agents.length == 0) {
+          if (!agents) {
             messages.push(
               data.get('p_agent_first_name') +
                 ' ' +
@@ -146,7 +138,7 @@ export class ImportService {
                 ')' +
                 ' does not currently exist and will be created.'
             );
-          } else if (agents.length == 1) {
+          } else if (agents) {
             messages.push(
               data.get('p_agent_first_name') +
                 ' ' +
@@ -155,16 +147,6 @@ export class ImportService {
                 data.get('email_addresses.1.address') +
                 ')' +
                 ' does exist and will be updated.'
-            );
-          } else {
-            messages.push(
-              data.get('p_agent_first_name') +
-                ' ' +
-                data.get('p_agent_last_name') +
-                '(' +
-                data.get('email_addresses.1.address') +
-                ')' +
-                ' has more than 1 record.'
             );
           }
 

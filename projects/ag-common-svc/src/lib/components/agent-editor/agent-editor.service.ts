@@ -329,7 +329,7 @@ export class AgentEditorService {
     }
   }
 
-  validateUniqueness(collection: string, key: string, isEmail: boolean, e, agent: Agent) {
+  validateUniqueness(collection: string, key: string, isEmail: boolean, agent: Agent, e) {
     if (isEmail) {
       e.data[key] = e.data[key].toLowerCase().trim();
     }

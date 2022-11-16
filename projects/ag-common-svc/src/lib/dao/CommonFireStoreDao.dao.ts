@@ -20,7 +20,9 @@ import {
   SnapshotOptions,
   Timestamp,
   orderBy,
-  updateDoc
+  updateDoc,
+  startAfter,
+  startAt
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
 import { fromEventPattern, Observable, Subject } from 'rxjs';
@@ -133,6 +135,25 @@ export class CommonFireStoreDao<T> {
     });
 
     const querySnapshot = await getDocs(collectionRef);
+
+    const docsData = querySnapshot.docs.map((item) => (item.exists() ? item.data() : null));
+
+    if (sortField) {
+      docsData.sort((left, right) =>
+        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions)
+      );
+    }
+
+    return docsData;
+  }
+
+  public async getAllllllll(table: string, sortField: string, skip: number): Promise<T[]> {
+    const collectionRef = collection(this.db, table).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse
+    });
+
+    const querySnapshot = await getDocs(query(collectionRef, orderBy(sortField), limit(100), startAfter(skip)));
 
     const docsData = querySnapshot.docs.map((item) => (item.exists() ? item.data() : null));
 

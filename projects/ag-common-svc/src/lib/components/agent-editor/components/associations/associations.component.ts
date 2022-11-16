@@ -1,14 +1,14 @@
 import { Component, HostBinding, Input, ViewChild } from '@angular/core';
 import { ActiveLookup, Association, BaseModelKeys, COUNTRIES, LookupKeys, STATES } from 'ag-common-lib/public-api';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { AgentAssociationsService } from '../../../../lib/services/agent-associations.service';
+import { AgentAssociationsService } from '../../../../services/agent-associations.service';
 import { filter, map, shareReplay, switchMap } from 'rxjs/operators';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
 import DataSource from 'devextreme/data/data_source';
 import ArrayStore from 'devextreme/data/array_store';
 import { AssociationFormService } from './association-form.service';
 import { DxFormComponent } from 'devextreme-angular';
-import { LookupsService } from '../../../../lib/services/lookups.service';
+import { LookupsService } from '../../../../services/lookups.service';
 
 @Component({
   selector: 'ag-shr-associations',

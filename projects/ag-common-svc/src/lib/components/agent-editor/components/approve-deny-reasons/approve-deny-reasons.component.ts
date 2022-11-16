@@ -1,10 +1,16 @@
 import { Component, HostBinding, Input, ViewChild } from '@angular/core';
-import { ApproveDenyReason } from 'ag-common-lib/lib/models/utils/approve-deny-reason.model';
-import { Agent, BaseModelKeys } from 'ag-common-lib/public-api';
+import {
+  Agent,
+  ApproveDenyReason,
+  ApproveDenyReasonKeys,
+  ApproveDenyReasonVisibilityLevel,
+  APPROVE_DENY_REASON_VISIBILITY_LEVEL_LOOKUP,
+  BaseModelKeys
+} from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
 import ArrayStore from 'devextreme/data/array_store';
 import DataSource from 'devextreme/data/data_source';
-import { AgentApproveDenyReasonsService } from '../../../../lib/services/agent-approve-deny-reason.service';
+import { AgentApproveDenyReasonsService } from '../../../../services/agent-approve-deny-reason.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, map, shareReplay, switchMap } from 'rxjs/operators';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
@@ -28,6 +34,8 @@ export class ApproveDenyReasonsComponent {
 
   public inProgress$: Observable<boolean>;
   public BaseModelKeys = BaseModelKeys;
+  public ApproveDenyReasonKeys = ApproveDenyReasonKeys;
+  public approveDenyReasonVisibilityLevelLookup = APPROVE_DENY_REASON_VISIBILITY_LEVEL_LOOKUP;
   public approveDenyReasonFormData: ApproveDenyReason;
   public approveDenyReasons$: Observable<DataSource>;
 

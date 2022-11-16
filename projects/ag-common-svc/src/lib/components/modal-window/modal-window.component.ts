@@ -14,6 +14,8 @@ export class ModalWindowComponent {
   @Input() inProgress: boolean;
   @Input() title: string;
   @Input() showSaveButton = true;
+  @Input() width: string | number = '80vw';
+  @Input() height: string | number = '80vh';
   @Output() onSaveClick = new EventEmitter<{ component: DxPopupComponent }>();
   @Output() onPopupClose = new EventEmitter<any>();
 

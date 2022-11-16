@@ -3,7 +3,9 @@
   [deferRendering]="false"
   [showCloseButton]="true"
   [resizeEnabled]="true"
-  [wrapperAttr]="{ class: '' }"
+  [width]="width"
+  [height]="height"
+  [wrapperAttr]="{ class: 'modal-window__popup' }"
   [toolbarItems]="[{ visible: !!title, location: 'left', text: title }]"
   (onHiding)="handleClosePopup($event)"
 >

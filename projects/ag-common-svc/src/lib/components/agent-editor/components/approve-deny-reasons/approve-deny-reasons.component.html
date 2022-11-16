@@ -5,14 +5,20 @@
 <ag-shr-modal-window
   #editApproveDenyReasonModalRef
   [title]="'Add / Edit Approve / Deny Reason'"
+  [width]="500"
+  [height]="'auto'"
   [inProgress]="inProgress$ | async"
   (onSaveClick)="handleSaveApproveDenyReason($event)"
   (onPopupClose)="handleApproveDenyReasonFormPopupClose($event)"
 >
-  <dx-form #approveDenyReasonFormRef [formData]="approveDenyReasonFormData" [colCount]="2" labelMode="floating">
-    <dxi-item dataField="created_by" [label]="{ text: 'Created By' }" [editorOptions]="{ readOnly: true }"></dxi-item>
+  <dx-form #approveDenyReasonFormRef [formData]="approveDenyReasonFormData" labelMode="floating">
     <dxi-item
-      dataField="created_date"
+      [dataField]="BaseModelKeys.createdBy"
+      [label]="{ text: 'Created By' }"
+      [editorOptions]="{ readOnly: true }"
+    ></dxi-item>
+    <dxi-item
+      [dataField]="BaseModelKeys.createdDate"
       [label]="{ text: 'Created Date' }"
       editorType="dxDateBox"
       [editorOptions]="{
@@ -24,12 +30,24 @@
     ></dxi-item>
 
     <dxi-item
-      dataField="reason"
+      [dataField]="ApproveDenyReasonKeys.visibilityLevel"
+      [label]="{ text: 'View Type' }"
+      editorType="dxSelectBox"
+      [editorOptions]="{
+        items: approveDenyReasonVisibilityLevelLookup,
+        valueExpr: 'value',
+        displayExpr: 'description',
+        searchEnabled: true,
+        placeholder: ''
+      }"
+    ></dxi-item>
+
+    <dxi-item
+      [dataField]="ApproveDenyReasonKeys.activity"
       [isRequired]="true"
-      [colSpan]="2"
-      [label]="{ text: 'Reason' }"
+      [label]="{ text: 'Activity' }"
       [editorType]="'dxTextArea'"
-      [editorOptions]="{ height: 100 }"
+      [editorOptions]="{ height: 150 }"
     ></dxi-item>
   </dx-form>
 </ag-shr-modal-window>
@@ -47,7 +65,7 @@
     [showBorders]="isEdit"
     [showColumnLines]="isEdit"
     [columnAutoWidth]="false"
-    [wordWrapEnabled]="true"
+    [wordWrapEnabled]="false"
     [rowAlternationEnabled]="false"
     (onRowRemoving)="onRowRemoving($event)"
     height="100%"
@@ -80,9 +98,15 @@
     <dxo-editing mode="popup" [useIcons]="true" [allowUpdating]="false" [allowDeleting]="true" [allowAdding]="false">
     </dxo-editing>
 
-    <dxi-column dataField="created_by" [allowEditing]="false" [width]="'15%'"></dxi-column>
-    <dxi-column dataField="created_date" [allowEditing]="false" [dataType]="'date'" [sortOrder]="'desc'"></dxi-column>
-    <dxi-column dataField="reason"> </dxi-column>
+    <dxi-column [dataField]="BaseModelKeys.createdBy" [allowEditing]="false" [width]="'250px'"></dxi-column>
+    <dxi-column
+      [dataField]="BaseModelKeys.createdDate"
+      [allowEditing]="false"
+      [dataType]="'date'"
+      [sortOrder]="'desc'"
+      width="200px"
+    ></dxi-column>
+    <dxi-column [dataField]="ApproveDenyReasonKeys.activity"> </dxi-column>
 
     <dxi-column type="buttons" [visible]="isEdit">
       <dxi-button icon="edit" [onClick]="showEditPopup"></dxi-button>

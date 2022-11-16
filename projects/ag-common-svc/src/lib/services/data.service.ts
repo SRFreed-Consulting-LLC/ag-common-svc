@@ -32,6 +32,10 @@ export class DataService<T extends BaseModel> {
     return this.fsDao.getAll(this.collection, sortField);
   }
 
+  public getAllllllll(sortField: string, skip: number): Promise<T[]> {
+    return this.fsDao.getAllllllll(this.collection, sortField, skip);
+  }
+
   public create(value: T) {
     return this.fsDao.create(value, this.collection);
   }

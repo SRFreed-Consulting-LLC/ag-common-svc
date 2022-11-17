@@ -6,22 +6,41 @@
   [width]="width"
   [height]="height"
   [wrapperAttr]="{ class: 'modal-window__popup' }"
-  [toolbarItems]="[{ visible: !!title, location: 'left', text: title }]"
   (onHiding)="handleClosePopup($event)"
 >
-  <div class="modal-window-main-layout">
-    <div class="modal-window-main-layout__content modal-window-main-layout__content--modal">
-      <ng-content></ng-content>
+  <dxi-toolbar-item [visible]="!!title" location="before">
+    <div *dxTemplate>
+      <span class="modal-window__title">{{ title }}</span>
     </div>
-    <div class="modal-window-main-layout__buttons-container">
-      <dx-button text="CANCEL" stylingMode="contained" type="normal" (onClick)="popupRef.instance.hide()"></dx-button>
+  </dxi-toolbar-item>
 
+  <dxi-toolbar-item
+    widget="dxButton"
+    location="after"
+    toolbar="bottom"
+    [options]="{
+      text: 'CANCEL',
+      onClick: hideModal,
+      elementAttr: {
+        class: 'modal-window__toolbar-button'
+      }
+    }"
+  >
+  </dxi-toolbar-item>
+
+  <dxi-toolbar-item [visible]="showSaveButton" widget="dxButton" location="after" toolbar="bottom">
+    <div *dxTemplate>
       <shr-button-with-indicator
-        *ngIf="showSaveButton"
-        [title]="'SAVE'"
+        [title]="actionTitle"
         [isInProgress]="inProgress"
         (onClick)="handelSaveClick()"
       ></shr-button-with-indicator>
+    </div>
+  </dxi-toolbar-item>
+
+  <div class="modal-window-main-layout">
+    <div class="modal-window-main-layout__content modal-window-main-layout__content--modal">
+      <ng-content></ng-content>
     </div>
   </div>
 </dx-popup>

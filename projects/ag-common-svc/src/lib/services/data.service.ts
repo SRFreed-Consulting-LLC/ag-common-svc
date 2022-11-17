@@ -9,7 +9,7 @@ export class DataService<T extends BaseModel> {
   constructor(
     fireBaseApp: FirebaseApp,
     fromFirestore: (data: Partial<T>) => T = null,
-    toFirestore: (item: T) => T = null
+    toFirestore: (item: T) => T = null,
   ) {
     this.fsDao = new CommonFireStoreDao<T>(fireBaseApp, fromFirestore, toFirestore);
   }
@@ -30,10 +30,6 @@ export class DataService<T extends BaseModel> {
 
   public getAll(sortField?: string): Promise<T[]> {
     return this.fsDao.getAll(this.collection, sortField);
-  }
-
-  public getAllllllll(sortField: string, skip: number): Promise<T[]> {
-    return this.fsDao.getAllllllll(this.collection, sortField, skip);
   }
 
   public create(value: T) {

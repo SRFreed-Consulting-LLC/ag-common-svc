@@ -20,13 +20,13 @@ export class ApproveDenyReasonFormService {
 
   constructor(
     @Optional() @Inject(LOGGED_IN_USER_EMAIL) private loggedInUserEmail: string,
-    private agentApproveDenyReasonsService: AgentApproveDenyReasonsService
+    private agentApproveDenyReasonsService: AgentApproveDenyReasonsService,
   ) {
     this.inProgress$ = this._inProgress$.asObservable();
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
         return this.formChangesDetector.hasChanges;
-      })
+      }),
     );
   }
 
@@ -53,23 +53,23 @@ export class ApproveDenyReasonFormService {
   };
 
   public getFormData = (association?: Partial<ApproveDenyReason>) => {
-    const initialTaskTemplate = Object.assign(
+    const initialData = Object.assign(
       {
         [BaseModelKeys.createdDate]: new Date(),
         [BaseModelKeys.createdBy]: this.loggedInUserEmail,
-        [ApproveDenyReasonKeys.visibilityLevel]: ApproveDenyReasonVisibilityLevel.AllianceGroupLevel
+        [ApproveDenyReasonKeys.visibilityLevel]: ApproveDenyReasonVisibilityLevel.AllianceGroupLevel,
       },
       new ApproveDenyReason(),
-      association
+      association,
     );
-    this.formData = new Proxy(initialTaskTemplate, {
+    this.formData = new Proxy(initialData, {
       set: (target, prop, value, receiver) => {
         const prevValue = target[prop];
         this.formChangesDetector.handleChange(prop, value, prevValue);
         Reflect.set(target, prop, value, receiver);
 
         return true;
-      }
+      },
     });
 
     return this.formData;

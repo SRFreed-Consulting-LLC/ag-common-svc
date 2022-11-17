@@ -5,7 +5,7 @@ import {
   ApproveDenyReasonKeys,
   ApproveDenyReasonVisibilityLevel,
   APPROVE_DENY_REASON_VISIBILITY_LEVEL_LOOKUP,
-  BaseModelKeys
+  BaseModelKeys,
 } from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
 import ArrayStore from 'devextreme/data/array_store';
@@ -20,7 +20,7 @@ import { ApproveDenyReasonFormService } from './approve-deny-reasons-form.servic
   selector: 'ag-shr-approve-deny-reasons',
   templateUrl: './approve-deny-reasons.component.html',
   styleUrls: ['./approve-deny-reasons.component.scss'],
-  providers: [ApproveDenyReasonFormService]
+  providers: [ApproveDenyReasonFormService],
 })
 export class ApproveDenyReasonsComponent {
   @HostBinding('class') className = 'approve-deny-reasons';
@@ -43,7 +43,7 @@ export class ApproveDenyReasonsComponent {
 
   constructor(
     private approveDenyReasonFormService: ApproveDenyReasonFormService,
-    private agentApproveDenyReasonsService: AgentApproveDenyReasonsService
+    private agentApproveDenyReasonsService: AgentApproveDenyReasonsService,
   ) {
     this.inProgress$ = this.approveDenyReasonFormService.inProgress$;
     this.approveDenyReasons$ = this.agentId$.pipe(
@@ -55,11 +55,11 @@ export class ApproveDenyReasonsComponent {
         return new DataSource({
           store: new ArrayStore({
             key: 'dbId',
-            data: Array.isArray(approveDenyReasons) ? approveDenyReasons : []
-          })
+            data: Array.isArray(approveDenyReasons) ? approveDenyReasons : [],
+          }),
         });
       }),
-      shareReplay(1)
+      shareReplay(1),
     );
   }
 

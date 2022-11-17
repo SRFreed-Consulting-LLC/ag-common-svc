@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { Agency } from 'ag-common-lib/public-api';
+import { Agency, AGENCY_TYPE } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
 import { QueryParam, WhereFilterOperandKeys } from '../../public-api';
 import { FIREBASE_APP } from '../injections/firebase-app';
@@ -25,5 +25,9 @@ export class AgencyService extends DataService<Agency> {
         return null;
       }
     })
+  }
+
+  getMGAAgencies(sortField: string): Promise<Agency[]>{
+    return this.getAllByValue([new QueryParam('agency_type', WhereFilterOperandKeys.equal, AGENCY_TYPE.MGA)], sortField);
   }
 }

@@ -1,4 +1,4 @@
-::ng-deep .associations {
+::ng-deep .approve-deny-reasons {
   &__data-grid {
     box-shadow: none;
 
@@ -20,9 +20,10 @@
       }
 
       .dx-datagrid-headers {
-        background-color: transparent;
-        color: #505d69;
         font-size: 14px;
+        font-weight: 700;
+        color: #333333;
+        background-color: transparent;
       }
 
       .dx-datagrid-rowsview,

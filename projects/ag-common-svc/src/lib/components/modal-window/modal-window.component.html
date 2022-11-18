@@ -1,0 +1,46 @@
+<dx-popup
+  #popupRef
+  [deferRendering]="false"
+  [showCloseButton]="true"
+  [resizeEnabled]="true"
+  [width]="width"
+  [height]="height"
+  [wrapperAttr]="{ class: 'modal-window__popup' }"
+  (onHiding)="handleClosePopup($event)"
+>
+  <dxi-toolbar-item [visible]="!!title" location="before">
+    <div *dxTemplate>
+      <span class="modal-window__title">{{ title }}</span>
+    </div>
+  </dxi-toolbar-item>
+
+  <dxi-toolbar-item
+    widget="dxButton"
+    location="after"
+    toolbar="bottom"
+    [options]="{
+      text: 'CANCEL',
+      onClick: hideModal,
+      elementAttr: {
+        class: 'modal-window__toolbar-button'
+      }
+    }"
+  >
+  </dxi-toolbar-item>
+
+  <dxi-toolbar-item [visible]="showSaveButton" widget="dxButton" location="after" toolbar="bottom">
+    <div *dxTemplate>
+      <shr-button-with-indicator
+        [title]="actionTitle"
+        [isInProgress]="inProgress"
+        (onClick)="handelSaveClick()"
+      ></shr-button-with-indicator>
+    </div>
+  </dxi-toolbar-item>
+
+  <div class="modal-window-main-layout">
+    <div class="modal-window-main-layout__content modal-window-main-layout__content--modal">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</dx-popup>

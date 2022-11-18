@@ -6,14 +6,17 @@ import { DxPopupComponent } from 'devextreme-angular';
 @Component({
   selector: 'ag-shr-modal-window',
   templateUrl: './modal-window.component.html',
-  styleUrls: ['./modal-window.component.scss']
+  styleUrls: ['./modal-window.component.scss'],
 })
 export class ModalWindowComponent {
   @HostBinding('class') className = 'modal-window';
   @ViewChild('popupRef', { static: true }) popupComponent: DxPopupComponent;
   @Input() inProgress: boolean;
   @Input() title: string;
+  @Input() actionTitle: string = 'SAVE';
   @Input() showSaveButton = true;
+  @Input() width: string | number = '80vw';
+  @Input() height: string | number = '80vh';
   @Output() onSaveClick = new EventEmitter<{ component: DxPopupComponent }>();
   @Output() onPopupClose = new EventEmitter<any>();
 
@@ -21,6 +24,10 @@ export class ModalWindowComponent {
 
   public showModal = () => {
     this.popupComponent.instance.show();
+  };
+
+  public hideModal = () => {
+    this.popupComponent.instance.hide();
   };
 
   public handelSaveClick = () => {

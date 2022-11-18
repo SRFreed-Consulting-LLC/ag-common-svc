@@ -1,0 +1,116 @@
+<ag-shr-modal-window #approveDenyReasonModalRef [title]="'Agent Portal Approve / Deny Reason'" [showSaveButton]="false">
+  <ng-container *ngTemplateOutlet="grid; context: { isEdit: true }"></ng-container>
+</ag-shr-modal-window>
+
+<ag-shr-modal-window
+  #editApproveDenyReasonModalRef
+  [title]="'Add / Edit Approve / Deny Reason'"
+  [width]="500"
+  [height]="'auto'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="handleSaveApproveDenyReason($event)"
+  (onPopupClose)="handleApproveDenyReasonFormPopupClose($event)"
+>
+  <dx-form #approveDenyReasonFormRef [formData]="approveDenyReasonFormData" labelMode="floating">
+    <dxi-item
+      [dataField]="BaseModelKeys.createdBy"
+      [label]="{ text: 'Created By' }"
+      [editorOptions]="{ readOnly: true }"
+    ></dxi-item>
+    <dxi-item
+      [dataField]="BaseModelKeys.createdDate"
+      [label]="{ text: 'Created Date' }"
+      editorType="dxDateBox"
+      [editorOptions]="{
+        readOnly: true,
+        displayFormat: 'M/d/yyyy, HH:mm:ss',
+        useMaskBehavior: true,
+        type: 'datetime'
+      }"
+    ></dxi-item>
+
+    <dxi-item
+      [dataField]="ApproveDenyReasonKeys.visibilityLevel"
+      [label]="{ text: 'View Type' }"
+      editorType="dxSelectBox"
+      [editorOptions]="{
+        items: approveDenyReasonVisibilityLevelLookup,
+        valueExpr: 'value',
+        displayExpr: 'description',
+        searchEnabled: true,
+        placeholder: ''
+      }"
+    ></dxi-item>
+
+    <dxi-item
+      [dataField]="ApproveDenyReasonKeys.activity"
+      [isRequired]="true"
+      [label]="{ text: 'Activity' }"
+      [editorType]="'dxTextArea'"
+      [editorOptions]="{ height: 150 }"
+    ></dxi-item>
+  </dx-form>
+</ag-shr-modal-window>
+
+<ng-container *ngTemplateOutlet="grid; context: { isEdit: false }"></ng-container>
+
+<ng-template #grid let-isEdit="isEdit">
+  <dx-data-grid
+    #dataGridRef
+    class="approve-deny-reasons__data-grid"
+    [ngClass]="{ 'approve-deny-reasons__data-grid--view': !isEdit }"
+    [dataSource]="approveDenyReasons$ | async"
+    [keyExpr]="BaseModelKeys.dbId"
+    [showRowLines]="isEdit"
+    [showBorders]="isEdit"
+    [showColumnLines]="isEdit"
+    [columnAutoWidth]="false"
+    [wordWrapEnabled]="false"
+    [rowAlternationEnabled]="false"
+    (onRowRemoving)="onRowRemoving($event)"
+    height="100%"
+  >
+    <dxo-toolbar>
+      <dxi-item location="before" [visible]="!isEdit">
+        <div *dxTemplate>
+          <div class="toolbar-label">
+            <b>Agent Portal Approve / Deny Reason</b>
+          </div>
+        </div>
+      </dxi-item>
+
+      <dxi-item
+        [visible]="isEdit"
+        location="after"
+        widget="dxButton"
+        [options]="{ icon: 'plus', onClick: showAddApproveDenyReasonPopup }"
+      ></dxi-item>
+
+      <dxi-item
+        [visible]="!isEdit"
+        location="after"
+        widget="dxButton"
+        [options]="{ icon: 'edit', stylingMode: 'text', onClick: showListPopup }"
+      >
+      </dxi-item>
+    </dxo-toolbar>
+
+    <dxo-editing mode="popup" [useIcons]="true" [allowUpdating]="false" [allowDeleting]="true" [allowAdding]="false">
+    </dxo-editing>
+
+    <dxi-column [dataField]="BaseModelKeys.createdBy" [allowEditing]="false" [width]="'250px'"></dxi-column>
+    <dxi-column
+      [dataField]="BaseModelKeys.createdDate"
+      [allowEditing]="false"
+      [dataType]="'date'"
+      [sortOrder]="'desc'"
+      width="200px"
+    ></dxi-column>
+    <dxi-column [dataField]="ApproveDenyReasonKeys.activity"> </dxi-column>
+
+    <dxi-column type="buttons" [visible]="isEdit">
+      <dxi-button icon="edit" [onClick]="showEditPopup"></dxi-button>
+      <dxi-button name="delete"></dxi-button>
+    </dxi-column>
+  </dx-data-grid>
+</ng-template>

@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
-import { Association, LookupKeys } from 'ag-common-lib/public-api';
+import { ApproveDenyReason } from 'ag-common-lib/lib/models/utils/approve-deny-reason.model';
 import { FirebaseApp } from 'firebase/app';
-import { updateDoc } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
 import { CommonFireStoreDao } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
@@ -9,13 +8,13 @@ import { FIREBASE_APP } from '../injections/firebase-app';
 @Injectable({
   providedIn: 'root'
 })
-export class AgentAssociationsService {
-  public readonly fsDao: CommonFireStoreDao<Association>;
+export class AgentApproveDenyReasonsService {
+  public readonly fsDao: CommonFireStoreDao<ApproveDenyReason>;
   private readonly agentCollectionPath = 'agents';
-  private readonly associationCollectionPath = 'associations';
+  private readonly associationCollectionPath = 'approve-deny-reason';
 
   constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp, private toastrService: ToastrService) {
-    this.fsDao = new CommonFireStoreDao<Association>(fireBaseApp, null, null);
+    this.fsDao = new CommonFireStoreDao<ApproveDenyReason>(fireBaseApp, null, null);
   }
 
   public getList(agentId: string) {
@@ -24,20 +23,19 @@ export class AgentAssociationsService {
     return this.fsDao.getList(table);
   }
 
-  public getAll(agentId: string): Promise<Association[]> {
+  public getAll(agentId: string): Promise<ApproveDenyReason[]> {
     const table = this.getCollectionPath(agentId);
 
     return this.fsDao.getAll(table);
   }
 
-  public create(agentId: string, data: Association) {
+  public create(agentId: string, data: ApproveDenyReason, silent = false) {
     const table = this.getCollectionPath(agentId);
 
     return this.fsDao
       .create(data, table)
       .then((response) => {
-        this.toastrService.success('Agent Association Successfully Created!');
-        this.lockLookup(data);
+        !silent && this.toastrService.success('Agent Approve / Deny Reason Successfully Created!');
         return response;
       })
 
@@ -46,14 +44,13 @@ export class AgentAssociationsService {
       });
   }
 
-  public update(agentId: string, documentId: any, updates: Partial<Association>) {
+  public update(agentId: string, documentId: any, updates: Partial<ApproveDenyReason>, silent = false) {
     const table = this.getCollectionPath(agentId);
 
     return this.fsDao
       .updateFields(updates, documentId, table)
       .then((response) => {
-        this.toastrService.success('Agent Association Successfully Updated!');
-        this.lockLookup(updates);
+        !silent && this.toastrService.success('Agent Approve / Deny Reason Successfully Updated!');
         return response;
       })
 
@@ -62,17 +59,11 @@ export class AgentAssociationsService {
       });
   }
 
-  public lockLookup = (data: Partial<Association>) => {
-    if (data?.associationTypeRef) {
-      updateDoc(data?.associationTypeRef, { [LookupKeys.isAssigned]: true });
-    }
-  };
-
   public delete(agentId: string, documentId: any) {
     const table = this.getCollectionPath(agentId);
 
     return this.fsDao.delete(documentId, table).then((response) => {
-      this.toastrService.success('Agent Association Removed!');
+      this.toastrService.success('Agent ApproveDenyReason Removed!');
       return response;
     });
   }

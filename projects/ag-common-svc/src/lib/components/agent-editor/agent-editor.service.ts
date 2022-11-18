@@ -21,8 +21,8 @@ import {
 } from 'ag-common-lib/public-api';
 import { Timestamp } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
-import { PortalDataService } from '../../lib/services/portal.service';
-import { AgentService, ProspectService } from '../../public-api';
+import { PortalDataService } from '../../services/portal.service';
+import { AgentService, ProspectService } from '../../../public-api';
 
 @Injectable()
 export class AgentEditorService {

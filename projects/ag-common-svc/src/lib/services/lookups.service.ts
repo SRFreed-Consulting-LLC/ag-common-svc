@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import {
   ActiveLookup,
-  Lookups,  LookupKeys,
+  Lookups,
+  LookupKeys,
   Lookup,
   BaseModelKeys
 } from 'ag-common-lib/public-api';

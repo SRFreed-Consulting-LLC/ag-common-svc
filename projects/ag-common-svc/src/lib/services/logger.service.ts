@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@angular/core";
 import { LogMessage } from "ag-common-lib/public-api";
 import { FirebaseApp } from "firebase/app";
-import { QueryParam } from "../dao/CommonFireStoreDao.dao";
+import { QueryParam, WhereFilterOperandKeys } from "../dao/CommonFireStoreDao.dao";
 import { FIREBASE_APP } from "../injections/firebase-app";
 import { DataService } from "./data.service";
 
@@ -16,30 +16,7 @@ export class LoggerService  extends DataService<LogMessage>{
     super.collection = 'log-messages';
   }
 
-  public getAll(sortField?: string): Promise<LogMessage[]> {
-    return this.fsDao.getAll(this.collection, sortField);
-  }
-
-  public getById(id: any): Promise<LogMessage> {
-    return this.fsDao.getById(this.collection, id);
-  }
-
-  public getAllByCondition(
-    qp: QueryParam[],
-    sortField?: string
-  ): Promise<LogMessage[]> {
-    return this.fsDao.getAllByQValue(this.collection, qp, sortField);
-  }
-
-  public add(message: LogMessage) {
-    return this.fsDao.create(message, this.collection);
-  }
-
-  public update(message: LogMessage) {
-    return this.fsDao.update(message, message.dbId, this.collection);
-  }
-
-  public delete(id: any) {
-    return this.fsDao.delete(id, this.collection);
+  getLogsByArchivedFlag(archived: boolean, sortField: string): Promise<LogMessage[]>{
+    return this.getAllByValue([new QueryParam('archived', WhereFilterOperandKeys.equal, archived)], sortField);
   }
 }

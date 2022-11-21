@@ -15,3 +15,5 @@ export * from './lib/services/lookups-manager.service';
 export * from './lib/ag-common-svc.module';
 
 export * from './lib/injections/firebase-app';
+
+export * from './lib/components';

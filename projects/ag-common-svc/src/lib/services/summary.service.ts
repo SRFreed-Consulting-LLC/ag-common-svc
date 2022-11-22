@@ -1,43 +1,19 @@
 import { formatPercent } from '@angular/common';
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { ReportSummary } from 'ag-common-lib/public-api';
+import { FirebaseApp } from 'firebase/app';
 import { collection, doc, getDocs, limit, query, where, writeBatch } from 'firebase/firestore';
+import { FIREBASE_APP } from '../../public-api';
 import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
+import { DataService } from './data.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class SummaryService {
-  constructor(public fsDao: CommonFireStoreDao<ReportSummary>){}
- 
-  public collection: string = "report_summaries";
-
-  public getSummaryById(id: any): Promise<ReportSummary> {
-    return this.fsDao.getById(this.collection, id);
-  }
-
-  public getAllSummariesByValue(qp: QueryParam[]): Promise<ReportSummary[]> {
-    return this.fsDao.getAllByQValue(this.collection, qp);
-  }
-
-  public getAllSummaries(sortField: string): Promise<ReportSummary[]> {
-    return this.fsDao.getAll(this.collection, sortField);
-  }
-
-  public createSummary(summary: ReportSummary){
-    return this.fsDao.create(summary, this.collection);
-  }
-
-  public createSummaryWithId(summary: ReportSummary, id: string){
-    return this.fsDao.createWithId(summary, this.collection, id);
-  }
-
-  public updateSummary(summary: ReportSummary){
-    return this.fsDao.update(summary, summary.dbId, this.collection);
-  }
-
-  public deleteSummary(id: any){
-    return this.fsDao.delete(id, this.collection);
+export class SummaryService extends DataService<ReportSummary>{
+  constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp) {
+    super(fireBaseApp);
+    super.collection = 'report_summaries';
   }
 
   public async deleteSummariesByYear(year: number, messages: String[]){

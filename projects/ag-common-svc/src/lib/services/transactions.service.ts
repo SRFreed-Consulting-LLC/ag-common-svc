@@ -1,39 +1,22 @@
 import { formatPercent } from '@angular/common';
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { PolicyTransaction } from 'ag-common-lib/lib/models/domain/policy-transaction.model';
+import { FirebaseApp } from 'firebase/app';
 import { collection, writeBatch, getDocs, limit, query, where, doc } from 'firebase/firestore';
-import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
+import { FIREBASE_APP } from '../../public-api';
+import { DataService } from './data.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class TransactionService {
-  constructor(public fsDao: CommonFireStoreDao<PolicyTransaction>) {}
-
-  private collection: string = 'transactions';
+export class TransactionService extends DataService<PolicyTransaction>{
+  constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp) {
+    super(fireBaseApp);
+    super.collection = 'transactions';
+  }
 
   public getTransactionById(id: any): Promise<PolicyTransaction> {
     return this.fsDao.getById(this.collection, id);
-  }
-
-  public getAllTransactions(sortField?: string): Promise<PolicyTransaction[]> {
-    return this.fsDao.getAll(this.collection, sortField);
-  }
-
-  public getAllTransactionsByValue(qp: QueryParam[]): Promise<PolicyTransaction[]> {
-    return this.fsDao.getAllByQValue(this.collection, qp);
-  }
-
-  public createTransaction(transaction: PolicyTransaction) {
-    return this.fsDao.create(transaction, this.collection);
-  }
-
-  public updateTransaction(transaction: PolicyTransaction) {
-    return this.fsDao.update(transaction, transaction.dbId, this.collection);
-  }
-
-  public deleteTransaction(id: any) {
-    return this.fsDao.delete(id, this.collection);
   }
 
   public deleteTransactionByYear(year: number, messages: String[]) {

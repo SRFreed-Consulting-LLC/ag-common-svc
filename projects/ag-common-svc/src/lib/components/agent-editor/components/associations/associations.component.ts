@@ -47,8 +47,6 @@ export class AssociationsComponent {
       filter(Boolean),
       switchMap((agentId: string) => this.agentAssociationsService.getList(agentId)),
       map((associations) => {
-        console.log('associations', associations);
-
         return new DataSource({
           store: new ArrayStore({
             key: 'dbId',

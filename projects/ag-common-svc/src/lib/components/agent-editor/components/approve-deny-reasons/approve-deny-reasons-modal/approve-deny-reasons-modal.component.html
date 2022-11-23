@@ -1,0 +1,59 @@
+<ag-shr-modal-window
+  #approveDenyReasonModalRef
+  [title]="title"
+  [width]="500"
+  [height]="'auto'"
+  [inProgress]="inProgress$ | async"
+  [showSaveButton]="approveDenyReasonFormData | approveDenyReasonsPermissions | async"
+  (onSaveClick)="handleSaveApproveDenyReason($event)"
+  (onPopupClose)="handleApproveDenyReasonFormPopupClose($event)"
+>
+  <dx-form #approveDenyReasonFormRef [formData]="approveDenyReasonFormData" labelMode="floating">
+    <dxi-item
+      [dataField]="BaseModelKeys.createdBy"
+      [label]="{ text: 'Created By' }"
+      editorType="dxSelectBox"
+      [editorOptions]="{
+        readOnly: true,
+        items: agentsDataSource$ | async,
+        valueExpr: 'value',
+        displayExpr: 'description',
+        placeholder: ''
+      }"
+    ></dxi-item>
+
+    <dxi-item
+      [dataField]="BaseModelKeys.createdDate"
+      [label]="{ text: 'Created Date' }"
+      editorType="dxDateBox"
+      [editorOptions]="{
+        readOnly: true,
+        displayFormat: 'M/d/yyyy, HH:mm:ss',
+        useMaskBehavior: true,
+        type: 'datetime'
+      }"
+    ></dxi-item>
+
+    <dxi-item
+      [dataField]="ApproveDenyReasonKeys.visibilityLevel"
+      [label]="{ text: 'View Type' }"
+      editorType="dxSelectBox"
+      [editorOptions]="{
+        readOnly: !(approveDenyReasonFormData | approveDenyReasonsPermissions | async) || isVisibilityTypeLocked,
+        items: approveDenyReasonVisibilityLevelLookup,
+        valueExpr: 'value',
+        displayExpr: 'description',
+        searchEnabled: true,
+        placeholder: ''
+      }"
+    ></dxi-item>
+
+    <dxi-item
+      [dataField]="ApproveDenyReasonKeys.activity"
+      [isRequired]="true"
+      [label]="{ text: 'Activity' }"
+      [editorType]="'dxTextArea'"
+      [editorOptions]="{ readOnly: !(approveDenyReasonFormData | approveDenyReasonsPermissions | async), height: 150 }"
+    ></dxi-item>
+  </dx-form>
+</ag-shr-modal-window>

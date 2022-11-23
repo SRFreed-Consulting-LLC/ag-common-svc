@@ -6,7 +6,7 @@ import { DxPopupComponent } from 'devextreme-angular';
 @Component({
   selector: 'ag-shr-modal-window',
   templateUrl: './modal-window.component.html',
-  styleUrls: ['./modal-window.component.scss'],
+  styleUrls: ['./modal-window.component.scss']
 })
 export class ModalWindowComponent {
   @HostBinding('class') className = 'modal-window';
@@ -17,6 +17,7 @@ export class ModalWindowComponent {
   @Input() showSaveButton = true;
   @Input() width: string | number = '80vw';
   @Input() height: string | number = '80vh';
+  @Input() extraToolbarItems = [];
   @Output() onSaveClick = new EventEmitter<{ component: DxPopupComponent }>();
   @Output() onPopupClose = new EventEmitter<any>();
 

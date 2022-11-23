@@ -1,0 +1,7 @@
+::ng-deep .agent-disposition-modal {
+  &__approve-deny-reasons-grid-container {
+    display: flex;
+    max-height: 250px;
+    overflow: hidden;
+  }
+}

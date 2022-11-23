@@ -29,8 +29,6 @@ export class AssociationFormService {
   };
 
   public onCancelEditAssociation = ({ event, component }) => {
-    console.log('this', this);
-
     if (!this.formChangesDetector?.hasChanges) {
       return;
     }

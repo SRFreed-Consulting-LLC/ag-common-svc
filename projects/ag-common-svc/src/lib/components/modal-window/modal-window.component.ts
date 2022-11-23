@@ -21,9 +21,12 @@ export class ModalWindowComponent {
   @Output() onSaveClick = new EventEmitter<{ component: DxPopupComponent }>();
   @Output() onPopupClose = new EventEmitter<any>();
 
+  public isFullScreen = false;
+
   constructor() {}
 
   public showModal = () => {
+    this.isFullScreen = false;
     this.popupComponent.instance.show();
   };
 
@@ -37,5 +40,9 @@ export class ModalWindowComponent {
 
   public handleClosePopup = (event?: any) => {
     this.onPopupClose.emit({ event, component: this.popupComponent });
+  };
+
+  public toggleScreenSize = () => {
+    this.isFullScreen = !this.isFullScreen;
   };
 }

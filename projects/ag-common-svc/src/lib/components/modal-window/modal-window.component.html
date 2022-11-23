@@ -15,6 +15,17 @@
   </dxi-toolbar-item>
 
   <dxi-toolbar-item
+    widget="dxButton"
+    location="after"
+    [options]="{
+      stylingMode: 'text',
+      icon: 'fullscreen',
+      onClick: toggleScreenSize
+    }"
+  >
+  </dxi-toolbar-item>
+
+  <dxi-toolbar-item
     *ngFor="let toolbarItem of extraToolbarItems"
     [widget]="toolbarItem.widget"
     [visible]="toolbarItem.visible"

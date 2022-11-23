@@ -44,5 +44,8 @@ export class ModalWindowComponent {
 
   public toggleScreenSize = () => {
     this.isFullScreen = !this.isFullScreen;
+    setTimeout(() => {
+      this.popupComponent.instance.repaint();
+    }, 0);
   };
 }

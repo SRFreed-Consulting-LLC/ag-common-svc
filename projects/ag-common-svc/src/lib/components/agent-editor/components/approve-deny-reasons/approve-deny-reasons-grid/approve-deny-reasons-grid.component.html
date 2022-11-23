@@ -50,17 +50,18 @@
   <dxo-paging [enabled]="false"></dxo-paging>
   <dxo-scrolling [mode]="'virtual'" [showScrollbar]="'always'"></dxo-scrolling>
 
-  <dxi-column [dataField]="BaseModelKeys.createdBy" [allowEditing]="false">
+  <dxi-column [width]="150" [dataField]="BaseModelKeys.createdBy" [allowEditing]="false">
     <dxo-lookup [dataSource]="agentsDataSource$ | async" valueExpr="value" displayExpr="description"></dxo-lookup>
   </dxi-column>
 
   <dxi-column
+    [width]="150"
     [dataField]="BaseModelKeys.createdDate"
     [allowEditing]="false"
     [dataType]="'date'"
     [sortOrder]="'desc'"
   ></dxi-column>
-  <dxi-column [dataField]="ApproveDenyReasonKeys.visibilityLevel">
+  <dxi-column [width]="150" [dataField]="ApproveDenyReasonKeys.visibilityLevel">
     <dxo-lookup
       [dataSource]="approveDenyReasonVisibilityLevelLookup"
       valueExpr="value"

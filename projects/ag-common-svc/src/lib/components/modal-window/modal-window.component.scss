@@ -6,7 +6,9 @@ $base-padding: 8px;
     flex-direction: column;
   }
   &__toolbar-button {
-    min-width: 150px;
+    &.dx-button {
+      min-width: 150px;
+    }
   }
   &__popup {
     .dx-popup-content {

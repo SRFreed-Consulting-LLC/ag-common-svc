@@ -5,6 +5,7 @@
   [resizeEnabled]="true"
   [width]="width"
   [height]="height"
+  [fullScreen]="isFullScreen"
   [wrapperAttr]="{ class: 'modal-window__popup' }"
   (onHiding)="handleClosePopup($event)"
 >
@@ -12,6 +13,27 @@
     <div *dxTemplate>
       <span class="modal-window__title">{{ title }}</span>
     </div>
+  </dxi-toolbar-item>
+
+  <dxi-toolbar-item
+    widget="dxButton"
+    location="after"
+    [options]="{
+      stylingMode: 'text',
+      icon: 'fullscreen',
+      onClick: toggleScreenSize
+    }"
+  >
+  </dxi-toolbar-item>
+
+  <dxi-toolbar-item
+    *ngFor="let toolbarItem of extraToolbarItems"
+    [widget]="toolbarItem.widget"
+    [visible]="toolbarItem.visible"
+    [location]="toolbarItem.location"
+    [toolbar]="toolbarItem.toolbar"
+    [options]="toolbarItem.options"
+  >
   </dxi-toolbar-item>
 
   <dxi-toolbar-item

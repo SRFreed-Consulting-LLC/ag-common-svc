@@ -1,0 +1,77 @@
+<ag-shr-approve-deny-reasons-modal
+  *ngIf="isEditable"
+  #approveDenyReasonModalRef
+  [title]="'Approve / Deny Reason'"
+></ag-shr-approve-deny-reasons-modal>
+
+<dx-data-grid
+  #dataGridRef
+  class="approve-deny-reasons-grid__data-grid"
+  [ngClass]="{ 'approve-deny-reasons-grid__data-grid--view': !isEditable }"
+  [dataSource]="approveDenyReasons$ | async"
+  [keyExpr]="BaseModelKeys.dbId"
+  [showRowLines]="true"
+  [showBorders]="true"
+  [showColumnLines]="true"
+  [columnAutoWidth]="true"
+  [wordWrapEnabled]="true"
+  [rowAlternationEnabled]="false"
+  (onRowRemoving)="onRowRemoving($event)"
+  height="100%"
+>
+  <dxo-toolbar>
+    <dxi-item location="before" [visible]="!!title">
+      <div *dxTemplate>
+        <div class="toolbar-label">
+          <b>{{ title }}</b>
+        </div>
+      </div>
+    </dxi-item>
+
+    <dxi-item
+      *ngFor="let toolbarItem of extraToolbarItems"
+      [widget]="toolbarItem?.widget"
+      [visible]="toolbarItem?.visible ?? true"
+      [location]="toolbarItem?.location"
+      [options]="toolbarItem?.options"
+    >
+    </dxi-item>
+
+    <dxi-item
+      [visible]="isEditable"
+      location="after"
+      widget="dxButton"
+      [options]="{ icon: 'plus', onClick: showAddApproveDenyReasonPopup }"
+    ></dxi-item>
+  </dxo-toolbar>
+
+  <dxo-editing mode="popup" [useIcons]="true" [allowUpdating]="false" [allowDeleting]="true" [allowAdding]="false">
+  </dxo-editing>
+  <dxo-paging [enabled]="false"></dxo-paging>
+  <dxo-scrolling [mode]="'virtual'" [showScrollbar]="'always'"></dxo-scrolling>
+
+  <dxi-column [width]="150" [dataField]="BaseModelKeys.createdBy" [allowEditing]="false">
+    <dxo-lookup [dataSource]="agentsDataSource$ | async" valueExpr="value" displayExpr="description"></dxo-lookup>
+  </dxi-column>
+
+  <dxi-column
+    [width]="150"
+    [dataField]="BaseModelKeys.createdDate"
+    [allowEditing]="false"
+    [dataType]="'date'"
+    [sortOrder]="'desc'"
+  ></dxi-column>
+  <dxi-column [width]="150" [dataField]="ApproveDenyReasonKeys.visibilityLevel">
+    <dxo-lookup
+      [dataSource]="approveDenyReasonVisibilityLevelLookup"
+      valueExpr="value"
+      displayExpr="description"
+    ></dxo-lookup>
+  </dxi-column>
+  <dxi-column [dataField]="ApproveDenyReasonKeys.activity"> </dxi-column>
+
+  <dxi-column type="buttons" [visible]="isEditable">
+    <dxi-button icon="edit" [onClick]="showEditPopup"></dxi-button>
+    <dxi-button [visible]="getIsEditingAllowed" name="delete"> </dxi-button>
+  </dxi-column>
+</dx-data-grid>

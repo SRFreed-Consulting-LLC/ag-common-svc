@@ -1,0 +1,146 @@
+<ag-shr-modal-window
+  #agentDispositionModalRef
+  [title]="'Agent Disposition'"
+  [width]="'74vw'"
+  [height]="'auto'"
+  [inProgress]="inProgress$ | async"
+  [showSaveButton]="showFullInfo"
+  (onSaveClick)="handleSave($event)"
+  (onPopupClose)="handleFormPopupClose($event)"
+  [extraToolbarItems]="
+    agentDispositionFormData?.agent_status | agentDispositionModalControls: handleChangeAgentStatusClick
+  "
+>
+  <dx-form #agentDispositionFormRef [formData]="agentDispositionFormData" labelMode="floating" [colCount]="2">
+    <dxi-item dataField="p_agent_first_name" [label]="{ text: 'First Name' }" [disabled]="true"></dxi-item>
+    <dxi-item dataField="p_agent_last_name" [label]="{ text: 'Last Name' }" [disabled]="true"></dxi-item>
+
+    <dxi-item [visible]="showFullInfo" [colCount]="2" [colSpan]="2" itemType="group">
+      <dxi-item dataField="p_agent_id" [label]="{ text: 'Agent ID' }" [disabled]="true"></dxi-item>
+      <dxi-item dataField="p_external_agent_id" [label]="{ text: 'External ID' }"></dxi-item>
+      <dxi-item dataField="p_email" [label]="{ text: 'Email' }" [colSpan]="2" [disabled]="true"></dxi-item>
+      <dxi-item dataField="p_mga_id" [label]="{ text: 'MGA' }" [disabled]="true"></dxi-item>
+      <dxi-item dataField="p_agency_id" [label]="{ text: 'Agency' }" [disabled]="isAgencyVisible"></dxi-item>
+      <dxi-item
+        dataField="is_manager"
+        [label]="{ text: 'Team Lead' }"
+        editorType="dxSwitch"
+        [editorOptions]="{ switchedOffText: 'No', switchedOnText: 'Yes' }"
+      ></dxi-item>
+      <dxi-item dataField="manager_id" [label]="{ text: 'Manager' }" [disabled]="isManagerVisible"></dxi-item>
+    </dxi-item>
+
+    <dxi-item [colSpan]="2">
+      <div *dxTemplate class="agent-disposition-modal__approve-deny-reasons-grid-container">
+        <ag-shr-approve-deny-reasons-grid
+          *ngIf="!!agentDispositionFormData?.dbId"
+          [agentId]="agentDispositionFormData?.dbId"
+          [title]="'Approve / Deny Reasons'"
+        ></ag-shr-approve-deny-reasons-grid>
+      </div>
+    </dxi-item>
+
+    <dxi-item dataField="agent_status" [label]="{ text: 'Agent Status' }" [colSpan]="2" [disabled]="true"></dxi-item>
+
+    <!--
+               <dxi-column dataField="p_agent_first_name" [caption]="'First Name'" [dataType]="'string'"></dxi-column>
+          <dxi-column dataField="p_agent_last_name" [caption]="'Last Name'" [dataType]="'string'"></dxi-column>
+          <dxi-column
+            dataField="is_manager"
+            [caption]="'Team Lead'"
+            [showEditorAlways]="false"
+            [dataType]="'boolean'"
+            [trueText]="'Yes'"
+            [falseText]="'No'"
+          ></dxi-column>
+          <dxi-column dataField="manager_id" [caption]="'[label]="{ text: 'Agency' }"'" [editCellTemplate]="'managerTemplate'">
+            <dxo-lookup
+              [dataSource]="agencyManagers | async"
+              [allowClearing]="true"
+              [displayExpr]="'p_agent_name'"
+              [valueExpr]="'p_agent_id'"
+            >
+            </dxo-lookup>
+          </dxi-column>
+          <dxi-column dataField="p_agent_id" [caption]="'Agent ID'"></dxi-column>
+          <dxi-column dataField="p_external_agent_id" [caption]="'External ID'"></dxi-column>
+          <dxi-column dataField="p_email" [caption]="'Email?'"></dxi-column>
+          <dxi-column
+            dataField="agent_approve_deny_reason"
+            [caption]="'Approve/Deny reason'"
+            [visible]="false"
+          ></dxi-column>
+          <dxi-column dataField="agent_status" [caption]="'Agent Status'">
+            <dxo-lookup [dataSource]="agentStatuses" [allowClearing]="false"> </dxo-lookup>
+          </dxi-column>
+          <dxi-column dataField="p_mga_id" [caption]="'MGA'" [allowEditing]="false" [visible]="false">
+            <dxo-lookup [dataSource]="agencies" [allowClearing]="true" [displayExpr]="'name'" [valueExpr]="'agency_id'">
+            </dxo-lookup>
+          </dxi-column>
+          <dxi-column dataField="p_agency_id" [caption]="'Agency'" [editCellTemplate]="'agencyTemplate'">
+            <dxo-lookup
+              [dataSource]="filteredAgencies"
+              [allowClearing]="true"
+              [displayExpr]="'name'"
+              [valueExpr]="'agency_id'"
+            >
+            </dxo-lookup>
+          </dxi-column>
+          <dxi-column type="buttons" [width]="75" [fixed]="true" [caption]="'Command'">
+            <dxi-button name="edit"></dxi-button>
+          </dxi-column>
+
+          <div *dxTemplate="let data of 'agencyTemplate'">
+            <dx-select-box
+              [(value)]="data.value"
+              [dataSource]="filteredAgencies"
+              [displayExpr]="'name'"
+              [valueExpr]="'agency_id'"
+              [label]="'Agency'"
+              [labelMode]="'floating'"
+              [searchEnabled]="true"
+              [showClearButton]="true"
+              (onValueChanged)="data.setValue($event.value)"
+              (onValueChanged)="onAgencyChanged($event)"
+            >
+            </dx-select-box>
+          </div>
+
+          <div *dxTemplate="let data of 'managerTemplate'">
+            <dx-select-box
+              #managerList
+              [(value)]="data.value"
+              [dataSource]="filteredManagers"
+              [displayExpr]="'p_agent_name'"
+              [valueExpr]="'p_agent_id'"
+              [label]="'Manager'"
+              [labelMode]="'floating'"
+              [searchEnabled]="true"
+              [showClearButton]="false"
+              (onValueChanged)="checkManager(data, $event)"
+            >
+            </dx-select-box>
+          </div>
+     -->
+  </dx-form>
+</ag-shr-modal-window>
+
+<ag-shr-modal-window
+  #updateAgentStatusModalRef
+  [width]="450"
+  [height]="'auto'"
+  [inProgress]="isUpdateStatusInProgress"
+  [title]="changeAgentStatusConfig?.title"
+  [actionTitle]="changeAgentStatusConfig?.actionTitle"
+  (onSaveClick)="handleChangeAgentStatus($event)"
+>
+  <dx-form #updateAgentStatusFormRef labelMode="floating">
+    <dxi-item
+      dataField="reason"
+      [isRequired]="changeAgentStatusConfig?.reasonRequired"
+      [label]="{ text: 'Reason' }"
+      [editorType]="'dxTextArea'"
+      [editorOptions]="{ height: 150 }"
+    ></dxi-item>
+  </dx-form>
+</ag-shr-modal-window>

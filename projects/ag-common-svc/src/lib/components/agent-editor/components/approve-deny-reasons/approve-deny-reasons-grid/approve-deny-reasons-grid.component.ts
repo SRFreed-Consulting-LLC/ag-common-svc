@@ -2,6 +2,7 @@ import { Component, HostBinding, Inject, Input, Optional, ViewChild } from '@ang
 import { filter, map, shareReplay, switchMap } from 'rxjs/operators';
 import {
   Agent,
+  ApproveDenyReason,
   ApproveDenyReasonKeys,
   APPROVE_DENY_REASON_VISIBILITY_LEVEL_LOOKUP,
   BaseModelKeys,
@@ -33,6 +34,11 @@ export class ApproveDenyReasonsGridComponent {
   @Input() title: string;
   @Input() isEditable: boolean = true;
   @Input() extraToolbarItems = [];
+  @Input() editModalOptions: {
+    title?: string;
+    isVisibilityTypeLocked?: boolean;
+    initialApproveDenyReason?: Partial<ApproveDenyReason>;
+  };
 
   public agentsDataSource$: Observable<any>;
   public BaseModelKeys = BaseModelKeys;
@@ -88,7 +94,10 @@ export class ApproveDenyReasonsGridComponent {
   };
 
   public showAddApproveDenyReasonPopup = () => {
-    this.approveDenyReasonsModalComponent.showModal(this.agentId$.value);
+    this.approveDenyReasonsModalComponent.showModal(
+      this.agentId$.value,
+      this.editModalOptions?.initialApproveDenyReason as ApproveDenyReason
+    );
   };
 
   public showEditPopup = ({ row: { data } }) => {

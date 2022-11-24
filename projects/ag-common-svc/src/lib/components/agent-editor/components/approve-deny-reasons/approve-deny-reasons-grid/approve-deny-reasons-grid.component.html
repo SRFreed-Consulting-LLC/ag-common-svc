@@ -1,7 +1,8 @@
 <ag-shr-approve-deny-reasons-modal
   *ngIf="isEditable"
   #approveDenyReasonModalRef
-  [title]="'Approve / Deny Reason'"
+  [title]="editModalOptions?.title ?? 'Approve / Deny Reason'"
+  [isVisibilityTypeLocked]="editModalOptions?.isVisibilityTypeLocked"
 ></ag-shr-approve-deny-reasons-modal>
 
 <dx-data-grid

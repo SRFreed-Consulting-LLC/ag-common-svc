@@ -2,11 +2,11 @@ import { Inject, Injectable } from '@angular/core';
 import { ApproveDenyReason } from 'ag-common-lib/lib/models/utils/approve-deny-reason.model';
 import { FirebaseApp } from 'firebase/app';
 import { ToastrService } from 'ngx-toastr';
-import { CommonFireStoreDao } from '../dao/CommonFireStoreDao.dao';
+import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AgentApproveDenyReasonsService {
   public readonly fsDao: CommonFireStoreDao<ApproveDenyReason>;
@@ -17,10 +17,10 @@ export class AgentApproveDenyReasonsService {
     this.fsDao = new CommonFireStoreDao<ApproveDenyReason>(fireBaseApp, null, null);
   }
 
-  public getList(agentId: string) {
+  public getList(agentId: string, qp: QueryParam[] = []) {
     const table = this.getCollectionPath(agentId);
 
-    return this.fsDao.getList(table);
+    return this.fsDao.getList(table, qp);
   }
 
   public getAll(agentId: string): Promise<ApproveDenyReason[]> {

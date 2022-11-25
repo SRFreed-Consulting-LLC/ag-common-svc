@@ -4,25 +4,27 @@ import {
   Agent,
   ApproveDenyReason,
   ApproveDenyReasonKeys,
+  ApproveDenyReasonVisibilityLevel,
   APPROVE_DENY_REASON_VISIBILITY_LEVEL_LOOKUP,
   BaseModelKeys,
   Lookup,
-  LookupKeys
+  LookupKeys,
 } from 'ag-common-lib/public-api';
 import ArrayStore from 'devextreme/data/array_store';
 import DataSource from 'devextreme/data/data_source';
 import { AgentApproveDenyReasonsService } from '../../../../../services/agent-approve-deny-reason.service';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { AgentService } from '../../../../../services/agent.service';
 import { ApproveDenyReasonsModalComponent } from '../approve-deny-reasons-modal/approve-deny-reasons-modal.component';
 import { LOGGED_IN_USER_EMAIL } from '../../../agent-editor.model';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { QueryParam, WhereFilterOperandKeys } from '../../../../../dao/CommonFireStoreDao.dao';
 
 @UntilDestroy()
 @Component({
   selector: 'ag-shr-approve-deny-reasons-grid',
   templateUrl: './approve-deny-reasons-grid.component.html',
-  styleUrls: ['./approve-deny-reasons-grid.component.scss']
+  styleUrls: ['./approve-deny-reasons-grid.component.scss'],
 })
 export class ApproveDenyReasonsGridComponent {
   @HostBinding('class') className = 'approve-deny-reasons-grid';
@@ -39,6 +41,11 @@ export class ApproveDenyReasonsGridComponent {
     isVisibilityTypeLocked?: boolean;
     initialApproveDenyReason?: Partial<ApproveDenyReason>;
   };
+  @Input() set allowedVisibilityLevels(data: ApproveDenyReasonVisibilityLevel[]) {
+    if (Array.isArray(data)) {
+      this.allowedVisibilityLevels$.next(data);
+    }
+  }
 
   public agentsDataSource$: Observable<any>;
   public BaseModelKeys = BaseModelKeys;
@@ -48,27 +55,41 @@ export class ApproveDenyReasonsGridComponent {
 
   private readonly agentId$ = new BehaviorSubject<string>(undefined);
   private loggedInUserEmail = undefined;
+  private allowedVisibilityLevels$ = new BehaviorSubject<ApproveDenyReasonVisibilityLevel[]>([]);
 
   constructor(
     private agentService: AgentService,
     private agentApproveDenyReasonsService: AgentApproveDenyReasonsService,
-    @Optional() @Inject(LOGGED_IN_USER_EMAIL) private loggedInUserEmail$: Observable<string>
+    @Optional() @Inject(LOGGED_IN_USER_EMAIL) private loggedInUserEmail$: Observable<string>,
   ) {
     this.loggedInUserEmail$?.pipe(untilDestroyed(this)).subscribe((loggedInUserEmail) => {
       this.loggedInUserEmail = loggedInUserEmail;
     });
-    this.approveDenyReasons$ = this.agentId$.pipe(
+    this.approveDenyReasons$ = combineLatest([this.agentId$, this.allowedVisibilityLevels$]).pipe(
       filter(Boolean),
-      switchMap((agentId: string) => this.agentApproveDenyReasonsService.getList(agentId)),
+      switchMap(([agentId, allowedVisibilityLevels]) => {
+        const qp: QueryParam[] = [];
+        debugger;
+        if (Array.isArray(allowedVisibilityLevels) && allowedVisibilityLevels?.length) {
+          const visibilityLevelsQueryParam = new QueryParam(
+            ApproveDenyReasonKeys.visibilityLevel,
+            WhereFilterOperandKeys.in,
+            allowedVisibilityLevels,
+          );
+          qp.push(visibilityLevelsQueryParam);
+        }
+
+        return this.agentApproveDenyReasonsService.getList(agentId, qp);
+      }),
       map((approveDenyReasons) => {
         return new DataSource({
           store: new ArrayStore({
             key: 'dbId',
-            data: Array.isArray(approveDenyReasons) ? approveDenyReasons : []
-          })
+            data: Array.isArray(approveDenyReasons) ? approveDenyReasons : [],
+          }),
         });
       }),
-      shareReplay(1)
+      shareReplay(1),
     );
 
     this.agentsDataSource$ = this.agentService.getList().pipe(
@@ -81,11 +102,11 @@ export class ApproveDenyReasonsGridComponent {
               return {
                 key: agent?.dbId,
                 [LookupKeys.value]: value,
-                [LookupKeys.description]: description
+                [LookupKeys.description]: description,
               };
             })
-          : []
-      )
+          : [],
+      ),
     );
   }
 
@@ -96,7 +117,7 @@ export class ApproveDenyReasonsGridComponent {
   public showAddApproveDenyReasonPopup = () => {
     this.approveDenyReasonsModalComponent.showModal(
       this.agentId$.value,
-      this.editModalOptions?.initialApproveDenyReason as ApproveDenyReason
+      this.editModalOptions?.initialApproveDenyReason as ApproveDenyReason,
     );
   };
 

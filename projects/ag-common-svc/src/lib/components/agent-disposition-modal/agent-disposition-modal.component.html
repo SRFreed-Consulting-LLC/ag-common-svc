@@ -8,7 +8,8 @@
   (onSaveClick)="handleSave($event)"
   (onPopupClose)="handleFormPopupClose($event)"
   [extraToolbarItems]="
-    agentDispositionFormData?.agent_status | agentDispositionModalControls: handleChangeAgentStatusClick
+    agentDispositionFormData?.agent_status
+      | agentDispositionModalControls: approveDenyReasonVisibilityLevel:handleChangeAgentStatusClick
   "
 >
   <dx-form #agentDispositionFormRef [formData]="agentDispositionFormData" labelMode="floating" [colCount]="2">

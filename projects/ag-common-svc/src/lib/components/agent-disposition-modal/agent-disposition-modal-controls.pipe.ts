@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { AGENT_STATUS } from 'ag-common-lib/public-api';
+import { AGENT_STATUS, ApproveDenyReasonVisibilityLevel } from 'ag-common-lib/public-api';
 import { ModalWindowComponent } from '../modal-window/modal-window.component';
 import { AgentDispositionModalService, ChangeAgentStatusConfig } from './agent-disposition-modal.service';
 
@@ -9,6 +9,7 @@ export class AgentDispositionModalControlsPipe implements PipeTransform {
 
   transform(
     agentStatus: AGENT_STATUS,
+    approveDenyReasonVisibilityLevel: ApproveDenyReasonVisibilityLevel,
     handleChangeAgentStatusClick: (changeAgentStatusConfig: ChangeAgentStatusConfig) => void
   ): any[] {
     return [
@@ -25,6 +26,7 @@ export class AgentDispositionModalControlsPipe implements PipeTransform {
               reasonRequired: false,
               title: 'Approve Agent',
               actionTitle: 'APPROVE',
+              approveDenyReasonVisibilityLevel,
               agentStatus: AGENT_STATUS.APPROVED
             };
             handleChangeAgentStatusClick(changeAgentStatusConfig);
@@ -47,6 +49,7 @@ export class AgentDispositionModalControlsPipe implements PipeTransform {
               reasonRequired: true,
               title: 'Deactivate Agent',
               actionTitle: 'DEACTIVATE',
+              approveDenyReasonVisibilityLevel,
               agentStatus: AGENT_STATUS.INACTIVE
             };
             handleChangeAgentStatusClick(changeAgentStatusConfig);
@@ -69,6 +72,7 @@ export class AgentDispositionModalControlsPipe implements PipeTransform {
               reasonRequired: true,
               title: 'Deny Agent',
               actionTitle: 'DENY',
+              approveDenyReasonVisibilityLevel,
               agentStatus: AGENT_STATUS.DENIED
             };
             handleChangeAgentStatusClick(changeAgentStatusConfig);

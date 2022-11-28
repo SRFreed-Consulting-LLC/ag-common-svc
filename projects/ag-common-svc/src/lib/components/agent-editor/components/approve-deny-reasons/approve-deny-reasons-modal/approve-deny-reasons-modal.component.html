@@ -8,7 +8,12 @@
   (onSaveClick)="handleSaveApproveDenyReason($event)"
   (onPopupClose)="handleApproveDenyReasonFormPopupClose($event)"
 >
-  <dx-form #approveDenyReasonFormRef [formData]="approveDenyReasonFormData" labelMode="floating">
+  <dx-form
+    *ngIf="approveDenyReasonModalRef?.popupComponent?.visible"
+    #approveDenyReasonFormRef
+    [formData]="approveDenyReasonFormData"
+    labelMode="floating"
+  >
     <dxi-item
       [dataField]="BaseModelKeys.createdBy"
       [label]="{ text: 'Created By' }"

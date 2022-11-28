@@ -34,6 +34,7 @@ export class AgentDispositionModalComponent {
   @Input() showFullInfo = true;
   @Input() isManagerVisible = false;
   @Input() isAgencyVisible = false;
+  @Input() approveDenyReasonVisibilityLevel: ApproveDenyReasonVisibilityLevel;
   @Output() onAgentUpdated = new EventEmitter();
 
   public agentDispositionFormData: Partial<Agent>;
@@ -72,7 +73,7 @@ export class AgentDispositionModalComponent {
           [BaseModelKeys.createdDate]: new Date(),
           [BaseModelKeys.createdBy]: loggedInUserEmail,
           [ApproveDenyReasonKeys.activity]: formData?.reason ?? null,
-          [ApproveDenyReasonKeys.visibilityLevel]: ApproveDenyReasonVisibilityLevel.AgencyLevel
+          [ApproveDenyReasonKeys.visibilityLevel]: this.changeAgentStatusConfig.approveDenyReasonVisibilityLevel
         },
         new ApproveDenyReason()
       );

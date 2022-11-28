@@ -6,7 +6,7 @@ import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class AgentApproveDenyReasonsService {
   public readonly fsDao: CommonFireStoreDao<ApproveDenyReason>;
@@ -35,7 +35,7 @@ export class AgentApproveDenyReasonsService {
     return this.fsDao
       .create(data, table)
       .then((response) => {
-        !silent && this.toastrService.success('Agent Approve / Deny Reason Successfully Created!');
+        !silent && this.toastrService.success('Agent Status Activity Successfully Created!');
         return response;
       })
 
@@ -50,7 +50,7 @@ export class AgentApproveDenyReasonsService {
     return this.fsDao
       .updateFields(updates, documentId, table)
       .then((response) => {
-        !silent && this.toastrService.success('Agent Approve / Deny Reason Successfully Updated!');
+        !silent && this.toastrService.success('Agent Status Activity Successfully Updated!');
         return response;
       })
 

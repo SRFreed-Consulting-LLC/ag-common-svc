@@ -34,7 +34,7 @@ const localeCompareOptions = {
   ignorePunctuation: true
 };
 export class CommonFireStoreDao<T> {
-  private readonly db: Firestore;
+  readonly db: Firestore;
   private fromFirestore: (documentData: DocumentData) => T = null;
   private toFirestore: (item: T) => T = null;
 

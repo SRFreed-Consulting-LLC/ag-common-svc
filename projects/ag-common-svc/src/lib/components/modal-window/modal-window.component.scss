@@ -6,7 +6,9 @@ $base-padding: 8px;
     flex-direction: column;
   }
   &__toolbar-button {
-    min-width: 150px;
+    &.dx-button {
+      min-width: 150px;
+    }
   }
   &__popup {
     .dx-popup-content {
@@ -26,6 +28,7 @@ $base-padding: 8px;
   flex-direction: column;
   flex-grow: 1;
   height: 100%;
+  min-height: 0;
 
   &__title {
     margin: 0;

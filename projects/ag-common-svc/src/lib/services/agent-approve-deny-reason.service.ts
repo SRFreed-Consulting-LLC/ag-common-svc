@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { ApproveDenyReason } from 'ag-common-lib/lib/models/utils/approve-deny-reason.model';
 import { FirebaseApp } from 'firebase/app';
 import { ToastrService } from 'ngx-toastr';
-import { CommonFireStoreDao } from '../dao/CommonFireStoreDao.dao';
+import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
 
 @Injectable({
@@ -17,10 +17,10 @@ export class AgentApproveDenyReasonsService {
     this.fsDao = new CommonFireStoreDao<ApproveDenyReason>(fireBaseApp, null, null);
   }
 
-  public getList(agentId: string) {
+  public getList(agentId: string, qp: QueryParam[] = []) {
     const table = this.getCollectionPath(agentId);
 
-    return this.fsDao.getList(table);
+    return this.fsDao.getList(table, qp);
   }
 
   public getAll(agentId: string): Promise<ApproveDenyReason[]> {
@@ -35,7 +35,7 @@ export class AgentApproveDenyReasonsService {
     return this.fsDao
       .create(data, table)
       .then((response) => {
-        !silent && this.toastrService.success('Agent Approve / Deny Reason Successfully Created!');
+        !silent && this.toastrService.success('Agent Status Activity Successfully Created!');
         return response;
       })
 
@@ -50,7 +50,7 @@ export class AgentApproveDenyReasonsService {
     return this.fsDao
       .updateFields(updates, documentId, table)
       .then((response) => {
-        !silent && this.toastrService.success('Agent Approve / Deny Reason Successfully Updated!');
+        !silent && this.toastrService.success('Agent Status Activity Successfully Updated!');
         return response;
       })
 

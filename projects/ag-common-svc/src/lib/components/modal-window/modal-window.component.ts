@@ -6,7 +6,7 @@ import { DxPopupComponent } from 'devextreme-angular';
 @Component({
   selector: 'ag-shr-modal-window',
   templateUrl: './modal-window.component.html',
-  styleUrls: ['./modal-window.component.scss'],
+  styleUrls: ['./modal-window.component.scss']
 })
 export class ModalWindowComponent {
   @HostBinding('class') className = 'modal-window';
@@ -17,12 +17,16 @@ export class ModalWindowComponent {
   @Input() showSaveButton = true;
   @Input() width: string | number = '80vw';
   @Input() height: string | number = '80vh';
+  @Input() extraToolbarItems = [];
   @Output() onSaveClick = new EventEmitter<{ component: DxPopupComponent }>();
   @Output() onPopupClose = new EventEmitter<any>();
+
+  public isFullScreen = false;
 
   constructor() {}
 
   public showModal = () => {
+    this.isFullScreen = false;
     this.popupComponent.instance.show();
   };
 
@@ -36,5 +40,12 @@ export class ModalWindowComponent {
 
   public handleClosePopup = (event?: any) => {
     this.onPopupClose.emit({ event, component: this.popupComponent });
+  };
+
+  public toggleScreenSize = () => {
+    this.isFullScreen = !this.isFullScreen;
+    setTimeout(() => {
+      this.popupComponent.instance.repaint();
+    }, 0);
   };
 }

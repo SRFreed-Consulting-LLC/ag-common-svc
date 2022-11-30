@@ -19,6 +19,7 @@ export interface ChangeAgentStatusConfig {
   title: string;
   actionTitle: string;
   agentStatus: AGENT_STATUS;
+  approveDenyReasonVisibilityLevel: ApproveDenyReasonVisibilityLevel;
 }
 
 @Injectable()

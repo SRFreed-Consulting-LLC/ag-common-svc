@@ -1,10 +1,10 @@
-<ag-shr-modal-window #approveDenyReasonModalRef [title]="'Agent Portal Approve / Deny Reason'" [showSaveButton]="false">
+<ag-shr-modal-window #approveDenyReasonModalRef [title]="'Agent Status Activity'" [showSaveButton]="false">
   <ag-shr-approve-deny-reasons-grid [agentId]="agentId$ | async"></ag-shr-approve-deny-reasons-grid>
 </ag-shr-modal-window>
 
 <ag-shr-approve-deny-reasons-grid
   class="approve-deny-reasons__data-grid"
-  [title]="'Agent Portal Approve / Deny Reason'"
+  [title]="'Agent Status Activity'"
   [agentId]="agentId$ | async"
   [isEditable]="false"
   [extraToolbarItems]="[

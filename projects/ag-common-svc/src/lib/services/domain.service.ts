@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
   ImportFieldRule,
+  ImportListRule,
   ImportRuleSet,
   ImportRuleSetKeys,
   PrimaryFieldRule
@@ -13,6 +14,8 @@ import {
   AgentKeys,
   AGENT_STATUS,
   AGENT_TYPE,
+  ApproveDenyReason,
+  ApproveDenyReasonVisibilityLevel,
   Association,
   AssociationKeys,
   BaseModelKeys,
@@ -32,6 +35,7 @@ import {
 } from 'ag-common-lib/public-api';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { AgentApproveDenyReasonsService } from './agent-approve-deny-reason.service';
 import { AgentAssociationsService } from './agent-associations.service';
 import { AgentService } from './agent.service';
 import { LookupsService } from './lookups.service';
@@ -44,7 +48,8 @@ export class DomainService {
   constructor(
     private agentService: AgentService,
     private lookupsService: LookupsService,
-    private agentAssociationsService: AgentAssociationsService
+    private agentAssociationsService: AgentAssociationsService,
+    private approveDenyReasonService: AgentApproveDenyReasonsService
   ) {
     this.associationTypeLookup$ = this.lookupsService.associationTypeLookup$;
   }
@@ -82,7 +87,7 @@ export class DomainService {
           if (!response) {
             return this.createAgent(data, messages, createdBy, agencies);
           } else {
-            return this.updateAgent(data, messages, response, selectedRuleSet, agencies);
+            return this.updateAgent(data, messages, response, selectedRuleSet, agencies, createdBy);
           }
         });
 
@@ -351,9 +356,6 @@ export class DomainService {
     if (line_data.has(AgentKeys.agency_approve_deny_reason)) {
       agent[AgentKeys.agency_approve_deny_reason] = line_data.get(AgentKeys.agency_approve_deny_reason);
     }
-    if (line_data.has(AgentKeys.approve_deny_reason)) {
-      agent[AgentKeys.approve_deny_reason] = line_data.get(AgentKeys.approve_deny_reason);
-    }
     if (line_data.has(AgentKeys.awb_site_id)) {
       agent[AgentKeys.awb_site_id] = line_data.get(AgentKeys.awb_site_id);
     }
@@ -536,6 +538,17 @@ export class DomainService {
     agent[AgentKeys.p_email] = loginAddress.address;
 
     return this.agentService.create(agent).then((agent) => {
+      if (line_data.has(AgentKeys.approve_deny_reason)) {
+        let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+        approve_deny_reason.created_by = createdBy;
+        approve_deny_reason.created_date = new Date();
+        approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AllianceGroupLevel;
+        approve_deny_reason.isDeleted = false;
+        approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason);
+  
+        this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason)
+      }
+
       const promises = agentAssociations.map((association) => {
         return this.agentAssociationsService.create(agent[BaseModelKeys.dbId], association);
       });
@@ -550,7 +563,8 @@ export class DomainService {
     messages: string[],
     agent: Agent,
     selectedRuleSet: ImportRuleSet,
-    agencies: Agency[]
+    agencies: Agency[],
+    updatedBy: string
   ): Promise<Agent> {
     if (line_data.has(AgentKeys.p_agent_id)) {
       this.updateField(
@@ -808,13 +822,15 @@ export class DomainService {
         line_data.get(AgentKeys.shoe_size).trim()
       );
     }
-    if (line_data.has(AgentKeys.approve_deny_reason)) {
-      this.updateField(
-        selectedRuleSet[ImportRuleSetKeys.approve_deny_reason],
-        agent,
-        AgentKeys.approve_deny_reason,
-        line_data.get(AgentKeys.approve_deny_reason).trim()
-      );
+    if (line_data.has(AgentKeys.approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.approve_deny_reason] == ImportListRule.ADD_TO_LIST) {
+      let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+      approve_deny_reason.created_by = updatedBy;
+      approve_deny_reason.created_date = new Date();
+      approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AllianceGroupLevel;
+      approve_deny_reason.isDeleted = false;
+      approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason).trim();
+
+      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason)
     }
     if (line_data.has(AgentKeys.agency_approve_deny_reason)) {
       this.updateField(

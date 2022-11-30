@@ -1,11 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ActiveLookup,
-  Lookups,
-  LookupKeys,
-  Lookup,
-  BaseModelKeys
-} from 'ag-common-lib/public-api';
+import { ActiveLookup, Lookups, LookupKeys, Lookup, BaseModelKeys } from 'ag-common-lib/public-api';
 import { Observable } from 'rxjs';
 import { map, shareReplay, tap } from 'rxjs/operators';
 import { QueryParam, WhereFilterOperandKeys } from '../../public-api';
@@ -20,7 +14,7 @@ export class LookupsService {
   constructor(private lookupsManagerService: LookupsManagerService) {
     this.taskCategoryLookup$ = this.lookupsManagerService
       .getList(Lookups.TaskCategory)
-      .pipe(map(this.normalizeLookup), tap(console.log), shareReplay(1));
+      .pipe(map(this.normalizeLookup), shareReplay(1));
     this.taskSubcategoryLookup$ = this.lookupsManagerService
       .getList(Lookups.TaskSubcategory)
       .pipe(map(this.normalizeLookup), shareReplay(1));

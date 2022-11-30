@@ -19,6 +19,7 @@ import { ApproveDenyReasonsModalComponent } from '../approve-deny-reasons-modal/
 import { LOGGED_IN_USER_EMAIL } from '../../../agent-editor.model';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { QueryParam, WhereFilterOperandKeys } from '../../../../../dao/CommonFireStoreDao.dao';
+import { ApproveDenyReasonEditorConfig } from './approve-deny-reasons-grid.model';
 
 @UntilDestroy()
 @Component({
@@ -36,11 +37,7 @@ export class ApproveDenyReasonsGridComponent {
   @Input() title: string;
   @Input() isEditable: boolean = true;
   @Input() extraToolbarItems = [];
-  @Input() editModalOptions: {
-    title?: string;
-    isVisibilityTypeLocked?: boolean;
-    initialApproveDenyReason?: Partial<ApproveDenyReason>;
-  };
+  @Input() editModalOptions: ApproveDenyReasonEditorConfig;
   @Input() set allowedVisibilityLevels(data: ApproveDenyReasonVisibilityLevel[]) {
     if (Array.isArray(data)) {
       this.allowedVisibilityLevels$.next(data);
@@ -69,7 +66,7 @@ export class ApproveDenyReasonsGridComponent {
       filter(Boolean),
       switchMap(([agentId, allowedVisibilityLevels]) => {
         const qp: QueryParam[] = [];
-        debugger;
+
         if (Array.isArray(allowedVisibilityLevels) && allowedVisibilityLevels?.length) {
           const visibilityLevelsQueryParam = new QueryParam(
             ApproveDenyReasonKeys.visibilityLevel,

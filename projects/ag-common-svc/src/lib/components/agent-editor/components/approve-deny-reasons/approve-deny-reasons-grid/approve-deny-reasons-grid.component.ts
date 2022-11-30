@@ -66,7 +66,7 @@ export class ApproveDenyReasonsGridComponent {
       this.loggedInUserEmail = loggedInUserEmail;
     });
     this.approveDenyReasons$ = combineLatest([this.agentId$, this.allowedVisibilityLevels$]).pipe(
-      filter(Boolean),
+      filter(([agentId]) => !!agentId),
       switchMap(([agentId, allowedVisibilityLevels]) => {
         const qp: QueryParam[] = [];
         if (Array.isArray(allowedVisibilityLevels) && allowedVisibilityLevels?.length) {

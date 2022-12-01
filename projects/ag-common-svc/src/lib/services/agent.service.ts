@@ -61,6 +61,10 @@ export class AgentService extends DataService<Agent> {
     })
   }
 
+  getAgentForChristmasCardList(): Promise<Agent[]>{
+    return this.getAllByValue([new QueryParam(AgentKeys.christmasCard, WhereFilterOperandKeys.equal, true)]);
+  }
+
   getAgentsByAgencyId(id: string, sortField: string): Promise<Agent[]>{
     return this.getAllByValue([new QueryParam('p_agency_id', WhereFilterOperandKeys.equal, id)], sortField);
   }

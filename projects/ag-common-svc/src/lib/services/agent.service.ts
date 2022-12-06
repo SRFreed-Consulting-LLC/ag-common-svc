@@ -48,6 +48,19 @@ export class AgentService extends DataService<Agent> {
     })
   }
 
+  getAgentByAnyEmailIn(email: string[]): Promise<Agent>{
+    return this.getAllByValue([new QueryParam('email_Addresses.address', WhereFilterOperandKeys.arrayContainsAny, email)]).then(agents => {
+      if(agents.length == 0){
+        return null;
+      } else if (agents.length == 1){
+        return agents[0];
+      } else {
+        console.error("More than 1 agent found with this email address");
+        return null;
+      }
+    })
+  }
+
   getAgentByAgentId(id: string): Promise<Agent>{
     return this.getAllByValue([new QueryParam('p_agent_id', WhereFilterOperandKeys.equal, id)]).then(agents => {
       if(agents.length == 0){

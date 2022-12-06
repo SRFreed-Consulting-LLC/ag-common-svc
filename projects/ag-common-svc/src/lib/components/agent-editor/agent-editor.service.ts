@@ -143,6 +143,12 @@ export class AgentEditorService {
     }
   }
 
+  validatePhoneNumbers(agent: Agent){
+    if(agent.phone_numbers.length == 1) {
+      agent.phone_numbers[0].is_primary = true;
+    }
+  }
+
   //used by dropdown OnValueChanged.
   //to use this.. place the email address in the object passed into first param like this
   // {

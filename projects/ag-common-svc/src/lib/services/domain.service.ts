@@ -65,20 +65,14 @@ export class DomainService {
   //          validating incoming Agency ID's are correct
   //  selectedRuleSet: ImportRuleSet: Rulset to apply
   //          to import
-  //  createdBy: string: EMail address of person
+  //  createdBy: string: Email address of person
   //          performing import to be added to "created_by"
   //          and "approved_by"
   //  messages: string[]: Array of messges to be displayed
   //          in import process. Used to return messages
   //          back to user
   //************************************************************* */
-  createAgentsArray(
-    agents: Map<string, string>[],
-    agencies: Agency[],
-    selectedRuleSet: ImportRuleSet,
-    createdBy: string,
-    messages: string[]
-  ): Promise<Agent[]> {
+  createAgentsArray(agents: Map<string, string>[], agencies: Agency[], selectedRuleSet: ImportRuleSet, createdBy: string, messages: string[]): Promise<Agent[]> {
     const promises: Promise<Agent>[] = [];
 
     agents.forEach((data) => {
@@ -97,198 +91,7 @@ export class DomainService {
     return Promise.all(promises).then((response) => (Array.isArray(response) ? response.filter(Boolean) : []));
   }
 
-  createGuestsArray(agents: Agent[], data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[]) {
-    data.forEach((registrant_data) => {
-      let invitees = agents.filter((a) => a.p_email == registrant_data.get('invitee_email'));
-
-      if (invitees.length == 1) {
-        // TODO
-        // this.updateAssociations(registrant_data, invitees[0], selectedRuleSet, messages);
-      }
-    });
-  }
-
-  createRegistrantArray(
-    registrant_data: Map<string, string>[],
-    selectedConference: string,
-    createdBy: string,
-    messages: string[]
-  ): Registrant[] {
-    let retval: Registrant[] = [];
-
-    registrant_data.forEach((data) => {
-      let registrant: Registrant = { ...new Registrant() };
-
-      registrant.registration_source = 'Conference Import';
-      registrant.event_id = selectedConference;
-      registrant.created_date = new Date();
-      registrant.created_by = createdBy;
-
-      registrant.approved_by = createdBy;
-      registrant.approved_date = new Date();
-      registrant.registered_date = new Date();
-      registrant.invitee_guest = data.get('invitee_guest');
-
-      if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
-        registrant.approved = true;
-      } else {
-        registrant.approved = false;
-      }
-
-      registrant.registration_type = data.get('registration_type');
-
-      if (registrant.invitee_guest?.toLowerCase() == 'guest') {
-        registrant.invitee_email = data.get('invitee_email');
-
-        // TODO
-        // let guests: Association[] = this.extractAssociations(data);
-
-        // if (guests.length == 1) {
-        //   let guest: Association = guests[0];
-
-        //   if (guest.email_address) {
-        //     registrant.email_address = guest.email_address;
-        //   }
-
-        //   if (guest.first_name) {
-        //     registrant.first_name = guest.first_name;
-        //   }
-
-        //   if (guest.last_name) {
-        //     registrant.last_name = guest.last_name;
-        //   }
-
-        //   if (guest.email_address) {
-        //     registrant.email_address = guest.email_address;
-        //   }
-
-        //   if (guest.association_type) {
-        //     registrant.relationship = guest.association_type;
-        //   }
-
-        //   if (guest.p_nick_first_name) {
-        //     registrant.p_nick_name = guest.p_nick_first_name;
-        //   }
-
-        //   if (guest.p_nick_last_name) {
-        //     registrant.p_nick_last_name = guest.p_nick_last_name;
-        //   }
-
-        //   if (guest.dietary_or_personal_considerations) {
-        //     registrant.dietary_or_personal_considerations = this.getYesNoValue(
-        //       guest.dietary_or_personal_considerations.trim()
-        //     );
-        //   }
-
-        //   if (guest.dietary_consideration_type) {
-        //     registrant.dietary_consideration_type = guest.dietary_consideration_type;
-        //   }
-
-        //   if (guest.dietary_consideration) {
-        //     registrant.dietary_consideration = guest.dietary_consideration;
-        //   }
-
-        //   if (guest.p_tshirt_size) {
-        //     registrant.tshirt_size = guest.p_tshirt_size;
-        //   }
-
-        //   if (guest.address) {
-        //     registrant.address = guest.address;
-        //   }
-
-        //   if (guest.contact_number) {
-        //     let pn: PhoneNumber = { ...new PhoneNumber() };
-        //     pn.number = guest.contact_number;
-        //     registrant.phone_number1 = pn;
-        //   }
-        // }
-      } else {
-        if (data.has('p_email')) {
-          registrant.email_address = data.get('p_email');
-        }
-
-        if (data.has('p_agent_first_name')) {
-          registrant.first_name = data.get('p_agent_first_name');
-        }
-
-        if (data.has('p_agent_last_name')) {
-          registrant.last_name = data.get('p_agent_last_name');
-        }
-
-        if (data.has('p_prefix')) {
-          registrant.p_prefix = data.get('p_prefix');
-        }
-
-        if (data.has('p_nick_name')) {
-          registrant.p_nick_name = data.get('p_nick_name');
-        }
-
-        if (data.has('p_nick_last_name')) {
-          registrant.p_nick_last_name = data.get('p_nick_last_name');
-        }
-
-        if (data.has('dietary_or_personal_considerations')) {
-          registrant.dietary_or_personal_considerations = this.getYesNoValue(
-            data.get('dietary_or_personal_considerations').trim()
-          );
-        }
-
-        if (data.has('dietary_consideration_type')) {
-          registrant.dietary_consideration_type = data.get('dietary_consideration_type');
-        }
-
-        if (data.has('dietary_consideration')) {
-          registrant.dietary_consideration = data.get('dietary_consideration');
-        }
-
-        if (data.has('p_tshirt_size')) {
-          registrant.tshirt_size = data.get('p_tshirt_size');
-        }
-
-        let addresses: Address[] = this.extractAddresses(data);
-
-        if (addresses[0]) {
-          registrant.address = addresses[0];
-        }
-
-        let phone_numbers: PhoneNumber[] = this.extractPhoneNumbers(data);
-
-        if (phone_numbers[0]) {
-          registrant.phone_number1 = phone_numbers[0];
-        }
-
-        if (phone_numbers[1]) {
-          registrant.phone_number2 = phone_numbers[1];
-        }
-
-        // TODO
-        // let emergency_contacts: Association[] = this.extractAssociations(data);
-
-        // if (emergency_contacts[0]) {
-        //   registrant.emergency_contact = emergency_contacts[0];
-        // }
-      }
-
-      data.forEach((value, key) => {
-        if (key.startsWith('custom.')) {
-          registrant[key.split('.')[1]] = value;
-        }
-      });
-
-      messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
-
-      retval.push(registrant);
-    });
-
-    return retval;
-  }
-
-  async createAgent(
-    line_data: Map<string, string>,
-    messages: string[],
-    createdBy: string,
-    agencies: Agency[]
-  ): Promise<Agent> {
+  async createAgent(line_data: Map<string, string>, messages: string[], createdBy: string, agencies: Agency[]): Promise<Agent> {
     const agent = { ...new Agent() };
 
     if (line_data.has(AgentKeys.p_agent_id)) {
@@ -514,9 +317,8 @@ export class DomainService {
     agent[AgentKeys.is_credited] = false;
 
     const agentAssociations = await this.extractAssociations(splitVals);
-    const isAgencyValid = this.validateAgency(agent, agencies, messages);
 
-    if (!isAgencyValid) {
+    if (!this.validateAgency(agent, agencies, messages)) {
       return null;
     }
 
@@ -558,14 +360,7 @@ export class DomainService {
     });
   }
 
-  async updateAgent(
-    line_data: Map<string, string>,
-    messages: string[],
-    agent: Agent,
-    selectedRuleSet: ImportRuleSet,
-    agencies: Agency[],
-    updatedBy: string
-  ): Promise<Agent> {
+  async updateAgent(line_data: Map<string, string>, messages: string[], agent: Agent, selectedRuleSet: ImportRuleSet, agencies: Agency[], updatedBy: string): Promise<Agent> {
     if (line_data.has(AgentKeys.p_agent_id)) {
       this.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_agent_id],
@@ -1001,6 +796,187 @@ export class DomainService {
     });
   }
 
+  createGuestsArray(agents: Agent[], data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[]) {
+    data.forEach((registrant_data) => {
+      let invitees = agents.filter((a) => a.p_email == registrant_data.get('invitee_email'));
+
+      if (invitees.length == 1) {
+        // TODO
+        // this.updateAssociations(registrant_data, invitees[0], selectedRuleSet, messages);
+      }
+    });
+  }
+
+  createRegistrantArray(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, messages: string[]): Registrant[] {
+    let retval: Registrant[] = [];
+
+    registrant_data.forEach((data) => {
+      let registrant: Registrant = { ...new Registrant() };
+
+      registrant.registration_source = 'Conference Import';
+      registrant.event_id = selectedConference;
+      registrant.created_date = new Date();
+      registrant.created_by = createdBy;
+
+      registrant.approved_by = createdBy;
+      registrant.approved_date = new Date();
+      registrant.registered_date = new Date();
+      registrant.invitee_guest = data.get('invitee_guest');
+
+      if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
+        registrant.approved = true;
+      } else {
+        registrant.approved = false;
+      }
+
+      registrant.registration_type = data.get('registration_type');
+
+      if (registrant.invitee_guest?.toLowerCase() == 'guest') {
+        registrant.invitee_email = data.get('invitee_email');
+
+        // TODO
+        // let guests: Association[] = this.extractAssociations(data);
+
+        // if (guests.length == 1) {
+        //   let guest: Association = guests[0];
+
+        //   if (guest.email_address) {
+        //     registrant.email_address = guest.email_address;
+        //   }
+
+        //   if (guest.first_name) {
+        //     registrant.first_name = guest.first_name;
+        //   }
+
+        //   if (guest.last_name) {
+        //     registrant.last_name = guest.last_name;
+        //   }
+
+        //   if (guest.email_address) {
+        //     registrant.email_address = guest.email_address;
+        //   }
+
+        //   if (guest.association_type) {
+        //     registrant.relationship = guest.association_type;
+        //   }
+
+        //   if (guest.p_nick_first_name) {
+        //     registrant.p_nick_name = guest.p_nick_first_name;
+        //   }
+
+        //   if (guest.p_nick_last_name) {
+        //     registrant.p_nick_last_name = guest.p_nick_last_name;
+        //   }
+
+        //   if (guest.dietary_or_personal_considerations) {
+        //     registrant.dietary_or_personal_considerations = this.getYesNoValue(
+        //       guest.dietary_or_personal_considerations.trim()
+        //     );
+        //   }
+
+        //   if (guest.dietary_consideration_type) {
+        //     registrant.dietary_consideration_type = guest.dietary_consideration_type;
+        //   }
+
+        //   if (guest.dietary_consideration) {
+        //     registrant.dietary_consideration = guest.dietary_consideration;
+        //   }
+
+        //   if (guest.p_tshirt_size) {
+        //     registrant.tshirt_size = guest.p_tshirt_size;
+        //   }
+
+        //   if (guest.address) {
+        //     registrant.address = guest.address;
+        //   }
+
+        //   if (guest.contact_number) {
+        //     let pn: PhoneNumber = { ...new PhoneNumber() };
+        //     pn.number = guest.contact_number;
+        //     registrant.phone_number1 = pn;
+        //   }
+        // }
+      } else {
+        if (data.has('p_email')) {
+          registrant.email_address = data.get('p_email');
+        }
+
+        if (data.has('p_agent_first_name')) {
+          registrant.first_name = data.get('p_agent_first_name');
+        }
+
+        if (data.has('p_agent_last_name')) {
+          registrant.last_name = data.get('p_agent_last_name');
+        }
+
+        if (data.has('p_prefix')) {
+          registrant.p_prefix = data.get('p_prefix');
+        }
+
+        if (data.has('p_nick_name')) {
+          registrant.p_nick_name = data.get('p_nick_name');
+        }
+
+        if (data.has('p_nick_last_name')) {
+          registrant.p_nick_last_name = data.get('p_nick_last_name');
+        }
+
+        if (data.has('dietary_or_personal_considerations')) {
+          registrant.dietary_or_personal_considerations = this.getYesNoValue(
+            data.get('dietary_or_personal_considerations').trim()
+          );
+        }
+
+        if (data.has('dietary_consideration_type')) {
+          registrant.dietary_consideration_type = data.get('dietary_consideration_type');
+        }
+
+        if (data.has('dietary_consideration')) {
+          registrant.dietary_consideration = data.get('dietary_consideration');
+        }
+
+        if (data.has('p_tshirt_size')) {
+          registrant.tshirt_size = data.get('p_tshirt_size');
+        }
+
+        let addresses: Address[] = this.extractAddresses(data);
+
+        if (addresses[0]) {
+          registrant.address = addresses[0];
+        }
+
+        let phone_numbers: PhoneNumber[] = this.extractPhoneNumbers(data);
+
+        if (phone_numbers[0]) {
+          registrant.phone_number1 = phone_numbers[0];
+        }
+
+        if (phone_numbers[1]) {
+          registrant.phone_number2 = phone_numbers[1];
+        }
+
+        // TODO
+        // let emergency_contacts: Association[] = this.extractAssociations(data);
+
+        // if (emergency_contacts[0]) {
+        //   registrant.emergency_contact = emergency_contacts[0];
+        // }
+      }
+
+      data.forEach((value, key) => {
+        if (key.startsWith('custom.')) {
+          registrant[key.split('.')[1]] = value;
+        }
+      });
+
+      messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
+
+      retval.push(registrant);
+    });
+
+    return retval;
+  }
+
   validateAgency(agent: Agent, agencies: Agency[], messages: string[]): boolean {
     let retval: boolean = true;
 
@@ -1079,12 +1055,7 @@ export class DomainService {
     return a;
   }
 
-  updateAddresses(
-    data: Map<string, string>,
-    agent: Agent,
-    selectedRuleSet: ImportRuleSet,
-    messages: string[]
-  ): boolean {
+  updateAddresses(data: Map<string, string>,agent: Agent,selectedRuleSet: ImportRuleSet,messages: string[]): boolean {
     let incoming_addresses: Address[] = this.extractAddresses(data);
 
     if (incoming_addresses.length > 0 && this.validateAddresses(incoming_addresses, selectedRuleSet, agent, messages)) {
@@ -1466,22 +1437,19 @@ export class DomainService {
   updatePhoneNumbers(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]) {
     let incoming_phone_numbers: PhoneNumber[] = this.extractPhoneNumbers(data);
 
-    if (
-      incoming_phone_numbers.length > 0 &&
-      this.validatePhoneNumbers(incoming_phone_numbers, selectedRuleSet, agent, messages)
-    ) {
+    if (incoming_phone_numbers.length > 0) {
       if (!agent[AgentKeys.phone_numbers]) {
         agent[AgentKeys.phone_numbers] = [];
       }
 
-      let required_to_update_primary =
-        selectedRuleSet[ImportRuleSetKeys.primary_phone_number] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+      //checks to see if ruleset allows for updating primary
+      //will return false if no incoming primary is set (or more than 1 is set)
+      let required_to_update_primary = this.updatePrimaryPhoneNumberRequired(incoming_phone_numbers, selectedRuleSet, agent, messages);
 
-      //if primary currently set, set any incoming is_primary flags to false
-      let primary_already_exists = agent[AgentKeys.phone_numbers].filter((a) => a.is_primary)?.length > 0;
-
-      if (primary_already_exists) {
-        incoming_phone_numbers.forEach((a) => (a.is_primary = false));
+      //if update of primary is required (and priimary is provided)
+      //set all existing primary numbers to false
+      if (required_to_update_primary) {
+        agent.phone_numbers.forEach((a) => (a.is_primary = false));
       }
 
       //look at each incoming and update if matching or add to list
@@ -1507,20 +1475,10 @@ export class DomainService {
 
         if (matching_phone) {
           if (incoming_phone.phone_type) {
-            this.updateField(
-              selectedRuleSet[ImportRuleSetKeys.phone_phone_type],
-              matching_phone,
-              'phone_type',
-              incoming_phone.phone_type
-            );
+            this.updateField(selectedRuleSet[ImportRuleSetKeys.phone_phone_type],matching_phone,'phone_type',incoming_phone.phone_type);
           }
           if (incoming_phone.is_primary && required_to_update_primary) {
-            this.updateField(
-              selectedRuleSet[ImportRuleSetKeys.phone_is_primary],
-              matching_phone,
-              'is_primary',
-              incoming_phone.is_primary
-            );
+            this.updateField(selectedRuleSet[ImportRuleSetKeys.phone_is_primary],matching_phone,'is_primary',incoming_phone.is_primary);
           }
         } else {
           agent[AgentKeys.phone_numbers].push(incoming_phone);
@@ -1541,12 +1499,8 @@ export class DomainService {
     }
   }
 
-  validatePhoneNumbers(
-    incoming_phone_numbers: PhoneNumber[],
-    selectedRuleSet: ImportRuleSet,
-    agent: Agent,
-    messages: string[]
-  ) {
+  //checks to see if update of Primary is required and incoming primary exists
+  updatePrimaryPhoneNumberRequired(incoming_phone_numbers: PhoneNumber[],selectedRuleSet: ImportRuleSet,agent: Agent,messages: string[]): boolean {
     let phone_number_rule = selectedRuleSet[ImportRuleSetKeys.primary_phone_number];
 
     let required_to_update_primary = PrimaryFieldRule[phone_number_rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
@@ -1562,7 +1516,6 @@ export class DomainService {
         );
         return false;
       } else if (incoming_has_primary.length == 1) {
-        agent.phone_numbers.forEach((add) => (add.is_primary = false));
         return true;
       } else if (incoming_has_primary.length == 2) {
         messages.push(

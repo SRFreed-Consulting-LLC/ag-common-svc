@@ -17,6 +17,7 @@ import {
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AgentAssociationsService } from './agent-associations.service';
+import { DomainUtilService } from './domain-util.service';
 import { LookupsService } from './lookups.service';
 
 @Injectable({
@@ -27,13 +28,14 @@ export class DomainAssociationsService {
   constructor(
     private lookupsService: LookupsService,
     private agentAssociationsService: AgentAssociationsService,
+    private domainUtilService: DomainUtilService
   ) {
     this.associationTypeLookup$ = this.lookupsService.associationTypeLookup$;
   }
 
   async extractAssociations(invals: Map<string, string>): Promise<Association[]> {
     const associations: Association[] = [];
-    const incomingAssociationsMap: Map<string, string> = this.getCount(invals, 'association');
+    const incomingAssociationsMap: Map<string, string> = this.domainUtilService.getCount(invals, 'association');
 
     for (const iterator of incomingAssociationsMap) {
       const association: Association = await this.createAssociation(invals, iterator[1]);
@@ -123,7 +125,7 @@ export class DomainAssociationsService {
     }
 
     if (invals.has('association.' + key + '.dietary_or_personal_considerations')) {
-      association.dietary_or_personal_considerations = this.getYesNoValue(
+      association.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
         invals.get('association.' + key + '.dietary_or_personal_considerations').trim()
       );
     }
@@ -181,7 +183,7 @@ export class DomainAssociationsService {
 
       if (matchingAssociation) {
         if (incomingAssociation.email_address) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.email_address_address],
             matchingAssociation,
             'email_address',
@@ -189,7 +191,7 @@ export class DomainAssociationsService {
           );
         }
         if (incomingAssociation.contact_number) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_contact_number],
             matchingAssociation,
             'contact_number',
@@ -197,7 +199,7 @@ export class DomainAssociationsService {
           );
         }
         if (incomingAssociation.is_emergency_contact) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_is_emergency_contact],
             matchingAssociation,
             'is_emergency_contact',
@@ -206,15 +208,15 @@ export class DomainAssociationsService {
         }
 
         if (incomingAssociation.dietary_or_personal_considerations) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_dietary_or_personal_considerations],
             matchingAssociation,
             'dietary_or_personal_considerations',
-            this.getYesNoValue(incomingAssociation.dietary_or_personal_considerations.trim())
+            this.domainUtilService.getYesNoValue(incomingAssociation.dietary_or_personal_considerations.trim())
           );
         }
         if (incomingAssociation.dietary_consideration) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_dietary_consideration],
             matchingAssociation,
             'dietary_consideration',
@@ -222,7 +224,7 @@ export class DomainAssociationsService {
           );
         }
         if (incomingAssociation.dietary_consideration_type) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_dietary_consideration_type],
             matchingAssociation,
             'dietary_consideration_type',
@@ -233,7 +235,7 @@ export class DomainAssociationsService {
           matchingAssociation.address = { ...new Address() };
         }
         if (incomingAssociation.address.address1) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_address_address1],
             matchingAssociation.address,
             'address1',
@@ -241,7 +243,7 @@ export class DomainAssociationsService {
           );
         }
         if (incomingAssociation.address.address2) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_address_address2],
             matchingAssociation.address,
             'address2',
@@ -249,7 +251,7 @@ export class DomainAssociationsService {
           );
         }
         if (incomingAssociation.address.city) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_address_city],
             matchingAssociation.address,
             'city',
@@ -257,7 +259,7 @@ export class DomainAssociationsService {
           );
         }
         if (incomingAssociation.address.state) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_address_state],
             matchingAssociation.address,
             'state',
@@ -265,7 +267,7 @@ export class DomainAssociationsService {
           );
         }
         if (incomingAssociation.address.zip) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_address_zip],
             matchingAssociation.address,
             'zip',
@@ -273,7 +275,7 @@ export class DomainAssociationsService {
           );
         }
         if (incomingAssociation.address.county) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_address_county],
             matchingAssociation.address,
             'county',
@@ -281,7 +283,7 @@ export class DomainAssociationsService {
           );
         }
         if (incomingAssociation.address.country) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_address_country],
             matchingAssociation.address,
             'country',
@@ -290,7 +292,7 @@ export class DomainAssociationsService {
         }
 
         if (incomingAssociation[AssociationKeys.associationTypeRef]) {
-          this.updateField(
+          this.domainUtilService.updateField(
             selectedRuleSet[ImportRuleSetKeys.association_association_type],
             matchingAssociation,
             AssociationKeys.associationTypeRef,
@@ -315,80 +317,5 @@ export class DomainAssociationsService {
     Promise.all(promises);
 
     return true;
-  }
-
-  updateField(rule, itemToUpdate, field_name: string, value) {
-    if (ImportFieldRule[rule] == ImportFieldRule.APPEND_TO_EXISTING) {
-      itemToUpdate[field_name] = itemToUpdate[field_name] + ' ' + value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_EXISTING_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_IF_BLANK) {
-      if (!itemToUpdate[field_name] || itemToUpdate[field_name] == '') {
-        itemToUpdate[field_name] = value;
-      }
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    }
-  }
-
-  getCount(invals: Map<string, string>, type: string) {
-    let values: Map<string, string> = new Map<string, string>();
-
-    invals.forEach((value, key) => {
-      if (key.startsWith(type)) {
-        values.set(key.split('.')[1], key.split('.')[1]);
-      }
-    });
-
-    return values;
-  }
-
-  generateId() {
-    return 'xxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  }
-
-  getBoolean(value) {
-    switch (value) {
-      case true:
-      case 'true':
-      case 'True':
-      case 'TRUE':
-      case 1:
-      case '1':
-      case 'on':
-      case 'On':
-      case 'ON':
-      case 'yes':
-      case 'Yes':
-      case 'YES':
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  getYesNoValue(value) {
-    switch (value) {
-      case true:
-      case 'true':
-      case 'TRUE':
-      case 'T':
-      case 't':
-      case 'YES':
-      case 'yes':
-      case 'Y':
-      case 'y':
-        return 'Yes';
-      default:
-        return 'No';
-    }
   }
 }

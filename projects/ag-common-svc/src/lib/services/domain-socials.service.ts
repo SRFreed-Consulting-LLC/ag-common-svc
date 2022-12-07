@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
-  ImportFieldRule,
   ImportRuleSet,
   ImportRuleSetKeys,
-  PrimaryFieldRule
 } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {
   Agent,
@@ -12,17 +10,18 @@ import {
   Social,
   SOCIAL_MEDIA,
 } from 'ag-common-lib/public-api';
+import { DomainUtilService } from './domain-util.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DomainSocialsService {
-  constructor() {}
+  constructor(private domainUtilService: DomainUtilService) {}
 
   extractSocials(invals: Map<string, string>): Social[] {
     let retval: Social[] = [];
 
-    let i: Map<string, string> = this.getCount(invals, 'socials');
+    let i: Map<string, string> = this.domainUtilService.getCount(invals, 'socials');
 
     i.forEach((value, key) => {
       let a: Social = this.createSocial(invals, key);
@@ -34,7 +33,7 @@ export class DomainSocialsService {
 
   createSocial(invals: Map<string, string>, key: string): Social {
     let a: Social = { ...new Social() };
-    a.id = this.generateId();
+    a.id = this.domainUtilService.generateId();
 
     if (invals.has('socials.' + key + '.url')) {
       a.url = invals.get('socials.' + key + '.url');
@@ -65,7 +64,7 @@ export class DomainSocialsService {
 
         if (matching_social) {
           if (incoming_social.social_type) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.social_social_type],
               matching_social,
               'social_type',
@@ -74,7 +73,7 @@ export class DomainSocialsService {
           }
 
           if (incoming_social.social_media) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.social_social_media],
               matching_social,
               'social_media',
@@ -88,43 +87,5 @@ export class DomainSocialsService {
     }
 
     return true;
-  }
-
-  updateField(rule, itemToUpdate, field_name: string, value) {
-    if (ImportFieldRule[rule] == ImportFieldRule.APPEND_TO_EXISTING) {
-      itemToUpdate[field_name] = itemToUpdate[field_name] + ' ' + value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_EXISTING_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_IF_BLANK) {
-      if (!itemToUpdate[field_name] || itemToUpdate[field_name] == '') {
-        itemToUpdate[field_name] = value;
-      }
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    }
-  }
-
-  getCount(invals: Map<string, string>, type: string) {
-    let values: Map<string, string> = new Map<string, string>();
-
-    invals.forEach((value, key) => {
-      if (key.startsWith(type)) {
-        values.set(key.split('.')[1], key.split('.')[1]);
-      }
-    });
-
-    return values;
-  }
-
-  generateId() {
-    return 'xxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
   }
 }

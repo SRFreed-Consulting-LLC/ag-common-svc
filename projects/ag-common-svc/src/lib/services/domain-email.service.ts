@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import {
-  ImportFieldRule,
   ImportRuleSet,
   ImportRuleSetKeys,
   PrimaryFieldRule
@@ -11,21 +10,18 @@ import {
   BUSINESS_PERSONAL_TYPE,
   EmailAddress
 } from 'ag-common-lib/public-api';
-import { AgentApproveDenyReasonsService } from './agent-approve-deny-reason.service';
-import { AgentAssociationsService } from './agent-associations.service';
-import { AgentService } from './agent.service';
-import { DomainAddressService } from './domain-address.service';
+import { DomainUtilService } from './domain-util.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DomainEmailService {
-  constructor() {}
+  constructor(private domainUtilService: DomainUtilService) {}
 
   extractEmailAddresses(invals: Map<string, string>): EmailAddress[] {
     let retval: EmailAddress[] = [];
 
-    let i: Map<string, string> = this.getCount(invals, 'email_addresses');
+    let i: Map<string, string> = this.domainUtilService.getCount(invals, 'email_addresses');
 
     i.forEach((value, key) => {
       let a: EmailAddress = this.createEmailAddress(invals, key);
@@ -37,7 +33,7 @@ export class DomainEmailService {
 
   createEmailAddress(invals: Map<string, string>, key: string): EmailAddress {
     let a: EmailAddress = { ...new EmailAddress() };
-    a.id = this.generateId();
+    a.id = this.domainUtilService.generateId();
 
     if (invals.has('email_addresses.' + key + '.address'))
       a.address = invals.get('email_addresses.' + key + '.address');
@@ -88,7 +84,7 @@ export class DomainEmailService {
 
         if (matching_email) {
           if (incoming_email.email_type) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.email_address_email_type],
               matching_email,
               'email_type',
@@ -96,7 +92,7 @@ export class DomainEmailService {
             );
           }
           if (incoming_email.is_primary && required_to_update_primary) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.email_address_is_primary],
               matching_email,
               'is_primary',
@@ -118,11 +114,9 @@ export class DomainEmailService {
       if (!is_primary_set && agent[AgentKeys.email_addresses].length > 0) {
         agent[AgentKeys.email_addresses][0].is_primary = true;
       }
+    } 
 
-      return true;
-    } else {
-      return false;
-    }
+    return true;
   }
 
   validateEmail(incoming_emails: EmailAddress[], selectedRuleSet: ImportRuleSet, agent: Agent, messages: string[]) {
@@ -155,43 +149,5 @@ export class DomainEmailService {
     }
 
     return true;
-  }
-
-  updateField(rule, itemToUpdate, field_name: string, value) {
-    if (ImportFieldRule[rule] == ImportFieldRule.APPEND_TO_EXISTING) {
-      itemToUpdate[field_name] = itemToUpdate[field_name] + ' ' + value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_EXISTING_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_IF_BLANK) {
-      if (!itemToUpdate[field_name] || itemToUpdate[field_name] == '') {
-        itemToUpdate[field_name] = value;
-      }
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    }
-  }
-
-  getCount(invals: Map<string, string>, type: string) {
-    let values: Map<string, string> = new Map<string, string>();
-
-    invals.forEach((value, key) => {
-      if (key.startsWith(type)) {
-        values.set(key.split('.')[1], key.split('.')[1]);
-      }
-    });
-
-    return values;
-  }
-
-  generateId() {
-    return 'xxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
   }
 }

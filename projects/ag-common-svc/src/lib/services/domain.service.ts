@@ -32,6 +32,7 @@ import { DomainAssociationsService } from './domain-associations.service';
 import { DomainEmailService } from './domain-email.service';
 import { DomainPhoneNumberService } from './domain-phone-number.service';
 import { DomainSocialsService } from './domain-socials.service';
+import { DomainUtilService } from './domain-util.service';
 import { DomainWebsiteService } from './domain-website.service';
 
 @Injectable({
@@ -39,6 +40,8 @@ import { DomainWebsiteService } from './domain-website.service';
 })
 export class DomainService {
   PRIMARY_EMAIL_IDENTIFIER = 'email_addresses.1.address';
+
+  messages: string[];
 
   constructor(
     private agentService: AgentService,
@@ -49,7 +52,8 @@ export class DomainService {
     private domainPhoneNumberService: DomainPhoneNumberService,
     private domainWebsiteService: DomainWebsiteService,
     private domainSocialsService: DomainSocialsService,
-    private domainAssociationsService: DomainAssociationsService
+    private domainAssociationsService: DomainAssociationsService,
+    private domainUtilService: DomainUtilService
   ) {}
 
 
@@ -70,29 +74,35 @@ export class DomainService {
   //          back to user
   //************************************************************* */
   createAgentsArray(agents: Map<string, string>[], agencies: Agency[], selectedRuleSet: ImportRuleSet, createdBy: string, messages: string[]): Promise<Agent[]> {
+    this.messages = messages;
+
     const promises: Promise<Agent>[] = [];
 
     agents.forEach((data) => {
       let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + this.PRIMARY_EMAIL_IDENTIFIER + ')'
 
+      
       const promise: Promise<Agent> = this.agentService.getAgentByEmail(data.get(this.PRIMARY_EMAIL_IDENTIFIER).toLowerCase().trim())
         .then((response) => {
           if (!response) {
             messages.push(agent_name + ' does not currently exist and will be created.');
-            return this.createAgent(data, messages, createdBy, agencies);
+            return this.createAgent(data, createdBy, agencies);
           } else {
             messages.push(agent_name + ' exists and will be updated.');
-            return this.updateAgent(data, messages, response, selectedRuleSet, agencies, createdBy);
+            return this.updateAgent(data, response, selectedRuleSet, agencies, createdBy);
           }
         });
 
       promises.push(promise);
     });
 
-    return Promise.all(promises).then((response) => (Array.isArray(response) ? response.filter(Boolean) : []));
+    return Promise.all(promises).then((response) => {
+      console.log('response', response)
+      return Array.isArray(response) ? response.filter(Boolean) : [];
+    });
   }
 
-  async createAgent(line_data: Map<string, string>, messages: string[], createdBy: string, agencies: Agency[]): Promise<Agent> {
+  async createAgent(line_data: Map<string, string>, createdBy: string, agencies: Agency[]): Promise<Agent> {
     const agent = { ...new Agent() };
 
     if (line_data.has(AgentKeys.p_agent_id)) {
@@ -135,7 +145,7 @@ export class DomainService {
       agent[AgentKeys.npn] = line_data.get(AgentKeys.npn);
     }
     if (line_data.has(AgentKeys.dietary_or_personal_considerations)) {
-      agent[AgentKeys.dietary_or_personal_considerations] = this.getYesNoValue(
+      agent[AgentKeys.dietary_or_personal_considerations] = this.domainUtilService.getYesNoValue(
         line_data.get(AgentKeys.dietary_or_personal_considerations).trim()
       );
     }
@@ -208,24 +218,24 @@ export class DomainService {
     if (line_data.has(AgentKeys.shoe_size)) {
       agent[AgentKeys.shoe_size] = line_data.get(AgentKeys.shoe_size);
     }
-    if (line_data.has(AgentKeys.christmasCard)) {
-      agent[AgentKeys.christmasCard] = this.getBoolean(line_data.get(AgentKeys.christmasCard));
+    if (line_data.has(AgentKeys.christmas_card)) {
+      agent[AgentKeys.christmas_card] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.christmas_card));
     }
 
     if (line_data.has(AgentKeys.p_strategic_agent)) {
-      agent[AgentKeys.p_strategic_agent] = this.getBoolean(line_data.get(AgentKeys.p_strategic_agent));
+      agent[AgentKeys.p_strategic_agent] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.p_strategic_agent));
     }
     if (line_data.has(AgentKeys.alliance_group_employee)) {
-      agent[AgentKeys.alliance_group_employee] = this.getBoolean(line_data.get(AgentKeys.alliance_group_employee));
+      agent[AgentKeys.alliance_group_employee] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.alliance_group_employee));
     }
     if (line_data.has(AgentKeys.is_manager)) {
-      agent[AgentKeys.is_manager] = this.getBoolean(line_data.get(AgentKeys.is_manager));
+      agent[AgentKeys.is_manager] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.is_manager));
     }
     if (line_data.has(AgentKeys.is_acb_user)) {
-      agent[AgentKeys.is_acb_user] = this.getBoolean(line_data.get(AgentKeys.is_acb_user));
+      agent[AgentKeys.is_acb_user] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.is_acb_user));
     }
     if (line_data.has(AgentKeys.is_awb_user)) {
-      agent[AgentKeys.is_awb_user] = this.getBoolean(line_data.get(AgentKeys.is_awb_user));
+      agent[AgentKeys.is_awb_user] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.is_awb_user));
     }
 
     if (line_data.has(AgentKeys.prospect_referred_to_date)) {
@@ -319,14 +329,14 @@ export class DomainService {
 
     const agentAssociations = await this.domainAssociationsService.extractAssociations(splitVals);
 
-    if (!this.validateAgency(agent, agencies, messages)) {
+    if (!this.validateAgency(agent, agencies)) {
       return null;
     }
 
     const agentEmailAddresses = agent[AgentKeys.email_addresses];
 
     if (!Array.isArray(agentEmailAddresses) || agentEmailAddresses?.length == 0) {
-      messages.push('No Email Addresses were set for this agent. Not Importing ' + agent[AgentKeys.p_agent_name]);
+      this.messages.push('No Email Addresses were set for this agent. Not Importing ' + agent[AgentKeys.p_agent_name]);
 
       return null;
     }
@@ -355,15 +365,16 @@ export class DomainService {
       const promises = agentAssociations.map((association) => {
         return this.agentAssociationsService.create(agent[BaseModelKeys.dbId], association);
       });
-      messages.push(`Agent ${agent.p_email} was created`);
+
+      this.messages.push(`Agent ${agent.p_email} was created`);
 
       return Promise.all(promises).then(() => agent);
     });
   }
 
-  async updateAgent(line_data: Map<string, string>, messages: string[], agent: Agent, selectedRuleSet: ImportRuleSet, agencies: Agency[], updatedBy: string): Promise<Agent> {
+  async updateAgent(line_data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, agencies: Agency[], updatedBy: string): Promise<Agent> {
     if (line_data.has(AgentKeys.p_agent_id)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_agent_id],
         agent,
         AgentKeys.p_agent_id,
@@ -371,7 +382,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_external_agent_id)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_external_agent_id],
         agent,
         AgentKeys.p_external_agent_id,
@@ -379,7 +390,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_agent_first_name)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_agent_first_name],
         agent,
         AgentKeys.p_agent_first_name,
@@ -387,7 +398,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_agent_middle_name)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_agent_middle_name],
         agent,
         AgentKeys.p_agent_middle_name,
@@ -395,7 +406,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_agent_last_name)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_agent_last_name],
         agent,
         AgentKeys.p_agent_last_name,
@@ -403,7 +414,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_nick_name)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_nick_name],
         agent,
         AgentKeys.p_nick_name,
@@ -411,7 +422,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_nick_last_name)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_nick_last_name],
         agent,
         AgentKeys.p_nick_last_name,
@@ -419,7 +430,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.title)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.title],
         agent,
         AgentKeys.title,
@@ -427,7 +438,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_prefix)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_prefix],
         agent,
         AgentKeys.p_prefix,
@@ -435,7 +446,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_suffix)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_prefix],
         agent,
         AgentKeys.p_suffix,
@@ -443,7 +454,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_external_agent_id)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_external_agent_id],
         agent,
         AgentKeys.p_external_agent_id,
@@ -451,7 +462,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.npn)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_suffix],
         agent,
         AgentKeys.npn,
@@ -459,15 +470,15 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.dietary_or_personal_considerations)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.dietary_or_personal_considerations],
         agent,
         AgentKeys.dietary_or_personal_considerations,
-        this.getYesNoValue(line_data.get(AgentKeys.dietary_or_personal_considerations).trim())
+        this.domainUtilService.getYesNoValue(line_data.get(AgentKeys.dietary_or_personal_considerations).trim())
       );
     }
     if (line_data.has(AgentKeys.dietary_consideration)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.dietary_consideration],
         agent,
         AgentKeys.dietary_consideration,
@@ -475,7 +486,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.dietary_consideration_type)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.dietary_consideration_type],
         agent,
         AgentKeys.dietary_consideration_type,
@@ -483,7 +494,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.upline)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.upline],
         agent,
         AgentKeys.upline,
@@ -491,7 +502,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.agencyName)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.agencyName],
         agent,
         AgentKeys.agencyName,
@@ -499,7 +510,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.manager_id)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.manager_id],
         agent,
         AgentKeys.manager_id,
@@ -507,7 +518,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.awb_site_id)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.awb_site_id],
         agent,
         AgentKeys.awb_site_id,
@@ -515,7 +526,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.prospect_referred_to)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.prospect_referred_to],
         agent,
         AgentKeys.prospect_referred_to,
@@ -523,7 +534,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.campaigns_user_name)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.campaigns_user_name],
         agent,
         AgentKeys.campaigns_user_name,
@@ -531,7 +542,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.campaigns_address)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.campaigns_address],
         agent,
         AgentKeys.campaigns_address,
@@ -539,7 +550,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.race)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.race],
         agent,
         AgentKeys.race,
@@ -547,7 +558,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.ethnicity)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.ethnicity],
         agent,
         AgentKeys.ethnicity,
@@ -555,7 +566,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.gender)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.gender],
         agent,
         AgentKeys.gender,
@@ -563,7 +574,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.primary_language)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.primary_language],
         agent,
         AgentKeys.primary_language,
@@ -571,7 +582,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.secondary_language)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.secondary_language],
         agent,
         AgentKeys.secondary_language,
@@ -579,7 +590,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.hobbies)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.hobbies],
         agent,
         AgentKeys.hobbies,
@@ -587,7 +598,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_tshirt_size)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_tshirt_size],
         agent,
         AgentKeys.p_tshirt_size,
@@ -595,7 +606,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.unisex_tshirt_size)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.unisex_tshirt_size],
         agent,
         AgentKeys.unisex_tshirt_size,
@@ -603,7 +614,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.favorite_destination)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.favorite_destination],
         agent,
         AgentKeys.favorite_destination,
@@ -611,7 +622,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.shoe_size)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.shoe_size],
         agent,
         AgentKeys.shoe_size,
@@ -629,7 +640,7 @@ export class DomainService {
       this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason)
     }
     if (line_data.has(AgentKeys.agency_approve_deny_reason)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason],
         agent,
         AgentKeys.agency_approve_deny_reason,
@@ -637,7 +648,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.certifications)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.certifications],
         agent,
         AgentKeys.certifications,
@@ -645,7 +656,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.prospect_wrap_up_notes)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.prospect_wrap_up_notes],
         agent,
         AgentKeys.prospect_wrap_up_notes,
@@ -654,56 +665,56 @@ export class DomainService {
     }
 
     if (line_data.has(AgentKeys.p_strategic_agent)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_strategic_agent],
         agent,
         AgentKeys.p_strategic_agent,
-        this.getBoolean(line_data.get(AgentKeys.p_strategic_agent).trim())
+        this.domainUtilService.getBoolean(line_data.get(AgentKeys.p_strategic_agent).trim())
       );
     }
     if (line_data.has(AgentKeys.alliance_group_employee)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.alliance_group_employee],
         agent,
         AgentKeys.alliance_group_employee,
-        this.getBoolean(line_data.get(AgentKeys.alliance_group_employee).trim())
+        this.domainUtilService.getBoolean(line_data.get(AgentKeys.alliance_group_employee).trim())
       );
     }
     if (line_data.has(AgentKeys.is_manager)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.is_manager],
         agent,
         AgentKeys.is_manager,
-        this.getBoolean(line_data.get(AgentKeys.is_manager).trim())
+        this.domainUtilService.getBoolean(line_data.get(AgentKeys.is_manager).trim())
       );
     }
     if (line_data.has(AgentKeys.is_acb_user)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.is_acb_user],
         agent,
         AgentKeys.is_acb_user,
-        this.getBoolean(line_data.get(AgentKeys.is_acb_user).trim())
+        this.domainUtilService.getBoolean(line_data.get(AgentKeys.is_acb_user).trim())
       );
     }
     if (line_data.has(AgentKeys.is_awb_user)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.is_awb_user],
         agent,
         AgentKeys.is_awb_user,
-        this.getBoolean(line_data.get(AgentKeys.is_awb_user).trim())
+        this.domainUtilService.getBoolean(line_data.get(AgentKeys.is_awb_user).trim())
       );
     }
-    if (line_data.has(AgentKeys.christmasCard)) {
-      this.updateField(
-        selectedRuleSet[ImportRuleSetKeys.christmasCard],
+    if (line_data.has(AgentKeys.christmas_card)) {
+      this.domainUtilService.updateField(
+        selectedRuleSet[ImportRuleSetKeys.christmas_card],
         agent,
-        AgentKeys.christmasCard,
-        this.getBoolean(line_data.get(AgentKeys.christmasCard).trim())
+        AgentKeys.christmas_card,
+        this.domainUtilService.getBoolean(line_data.get(AgentKeys.christmas_card).trim())
       );
     }
 
     if (line_data.has(AgentKeys.prospect_referred_to_date)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.prospect_referred_to_date],
         agent,
         AgentKeys.prospect_referred_to_date,
@@ -711,7 +722,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.campaigns_user_since)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.campaigns_user_since],
         agent,
         AgentKeys.campaigns_user_since,
@@ -719,7 +730,7 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.dob)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.dob],
         agent,
         AgentKeys.dob,
@@ -728,7 +739,7 @@ export class DomainService {
     }
 
     if (line_data.has(AgentKeys.agent_status)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.agent_status],
         agent,
         AgentKeys.agent_status,
@@ -737,7 +748,7 @@ export class DomainService {
     }
 
     if (line_data.has(AgentKeys.prospect_status)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.prospect_status],
         agent,
         AgentKeys.prospect_status,
@@ -746,7 +757,7 @@ export class DomainService {
     }
 
     if (line_data.has(AgentKeys.prospect_priority)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.prospect_priority],
         agent,
         AgentKeys.prospect_priority,
@@ -755,7 +766,7 @@ export class DomainService {
     }
 
     if (line_data.has(AgentKeys.prospect_disposition)) {
-      this.updateField(
+      this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.prospect_disposition],
         agent,
         AgentKeys.prospect_disposition,
@@ -777,27 +788,28 @@ export class DomainService {
     }
 
     const shouldContinue = [
-      this.validateAgency(agent, agencies, messages),
-      this.domainAddressService.updateAddresses(line_data, agent, selectedRuleSet, messages),
-      this.domainEmailService.updateEmailAddresses(line_data, agent, selectedRuleSet, messages),
-      this.domainPhoneNumberService.updatePhoneNumbers(line_data, agent, selectedRuleSet, messages),
-      this.domainSocialsService.updateSocials(line_data, agent, selectedRuleSet, messages),
-      this.domainWebsiteService.updateWebsites(line_data, agent, selectedRuleSet, messages)
+      this.validateAgency(agent, agencies),
+      this.domainAddressService.updateAddresses(line_data, agent, selectedRuleSet, this.messages),
+      this.domainEmailService.updateEmailAddresses(line_data, agent, selectedRuleSet, this.messages),
+      this.domainPhoneNumberService.updatePhoneNumbers(line_data, agent, selectedRuleSet, this.messages),
+      this.domainSocialsService.updateSocials(line_data, agent, selectedRuleSet, this.messages),
+      this.domainWebsiteService.updateWebsites(line_data, agent, selectedRuleSet, this.messages)
     ].every(Boolean);
+    console.log('shouldContinue', shouldContinue)
 
     if (!shouldContinue) {
       return null;
     }
 
-    await this.domainAssociationsService.updateAssociations(line_data, agent, selectedRuleSet, messages);
+    await this.domainAssociationsService.updateAssociations(line_data, agent, selectedRuleSet, this.messages);
 
     return this.agentService.updateFields(agent[BaseModelKeys.dbId], agent).then((updatedAgent) => {
-      messages.push(`Agent ${agent.p_email} was updated`);
+      this.messages.push(`Agent ${agent.p_email} was updated`);
       return updatedAgent;
     });
   }
 
-  createGuestsArray(agents: Agent[], data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[]) {
+  createGuestsArray(agents: Agent[], data: Map<string, string>[]) {
     data.forEach((registrant_data) => {
       let invitees = agents.filter((a) => a.p_email == registrant_data.get('invitee_email'));
 
@@ -808,7 +820,7 @@ export class DomainService {
     });
   }
 
-  createRegistrantArray(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, messages: string[]): Registrant[] {
+  createRegistrantArray(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string): Registrant[] {
     let retval: Registrant[] = [];
 
     registrant_data.forEach((data) => {
@@ -923,7 +935,7 @@ export class DomainService {
         }
 
         if (data.has('dietary_or_personal_considerations')) {
-          registrant.dietary_or_personal_considerations = this.getYesNoValue(
+          registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
             data.get('dietary_or_personal_considerations').trim()
           );
         }
@@ -970,7 +982,7 @@ export class DomainService {
         }
       });
 
-      messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
+      this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
 
       retval.push(registrant);
     });
@@ -978,7 +990,7 @@ export class DomainService {
     return retval;
   }
 
-  validateAgency(agent: Agent, agencies: Agency[], messages: string[]): boolean {
+  validateAgency(agent: Agent, agencies: Agency[]): boolean {
     let retval: boolean = true;
 
     if (agent.p_agency_id) {
@@ -987,7 +999,7 @@ export class DomainService {
       if (a.length != 1) {
         retval = false;
 
-        messages.push(
+        this.messages.push(
           agent.email_addresses[0].address + ' has an value set for Agency Id that does not match an existing Agency!'
         );
       }
@@ -999,79 +1011,12 @@ export class DomainService {
       if (a.length != 1) {
         retval = false;
 
-        messages.push(
+        this.messages.push(
           agent.email_addresses[0].address + ' has an value set for MGA Id that does not match an existing Agency!'
         );
       }
     }
 
     return retval;
-  }
-
-  updateField(rule, itemToUpdate, field_name: string, value) {
-    if (ImportFieldRule[rule] == ImportFieldRule.APPEND_TO_EXISTING) {
-      itemToUpdate[field_name] = itemToUpdate[field_name] + ' ' + value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_EXISTING_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_IF_BLANK) {
-      if (!itemToUpdate[field_name] || itemToUpdate[field_name] == '') {
-        itemToUpdate[field_name] = value;
-      }
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    }
-  }
-
-  getCount(invals: Map<string, string>, type: string) {
-    let values: Map<string, string> = new Map<string, string>();
-
-    invals.forEach((value, key) => {
-      if (key.startsWith(type)) {
-        values.set(key.split('.')[1], key.split('.')[1]);
-      }
-    });
-
-    return values;
-  }
-
-  getBoolean(value) {
-    switch (value) {
-      case true:
-      case 'true':
-      case 'True':
-      case 'TRUE':
-      case 1:
-      case '1':
-      case 'on':
-      case 'On':
-      case 'ON':
-      case 'yes':
-      case 'Yes':
-      case 'YES':
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  getYesNoValue(value) {
-    switch (value) {
-      case true:
-      case 'true':
-      case 'TRUE':
-      case 'T':
-      case 't':
-      case 'YES':
-      case 'yes':
-      case 'Y':
-      case 'y':
-        return 'Yes';
-      default:
-        return 'No';
-    }
   }
 }

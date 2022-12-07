@@ -11,30 +11,33 @@ import {
   AgentKeys,
   BUSINESS_PERSONAL_TYPE
 } from 'ag-common-lib/public-api';
+import { DomainUtilService } from './domain-util.service';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class DomainAddressService {
-  constructor() {}
-
+  constructor(private domainUtilService: DomainUtilService) {}
+  
+  //create address objects from datamap
+  //Ensures address has address1, city, state, and zip
   extractAddresses(invals: Map<string, string>): Address[] {
     let retval: Address[] = [];
 
-    let i: Map<string, string> = this.getCount(invals, 'addresses');
+    let i: Map<string, string> = this.domainUtilService.getCount(invals, 'addresses');
 
     i.forEach((value, key) => {
       let a: Address = this.createAddress(invals, value, key);
-      if (a.address1 || a.address2 || a.city || a.state || a.zip || a.county || a.country) retval.push(a);
+      if (a.address1 || a.address2 || a.city || a.state || a.zip) retval.push(a);
     });
 
     return retval;
   }
 
-  createAddress(invals: Map<string, string>, value: string, key: string): Address {
+  private createAddress(invals: Map<string, string>, value: string, key: string): Address {
     let a: Address = { ...new Address() };
-    a.id = this.generateId();
+    a.id = this.domainUtilService.generateId();
 
     if (invals.has('addresses.' + key + '.address1')) a.address1 = invals.get('addresses.' + key + '.address1');
     if (invals.has('addresses.' + key + '.address2')) a.address2 = invals.get('addresses.' + key + '.address2');
@@ -67,31 +70,40 @@ export class DomainAddressService {
     return a;
   }
 
-  updateAddresses(data: Map<string, string>,agent: Agent,selectedRuleSet: ImportRuleSet,messages: string[]): boolean {
+  //If a match is found for incoming address, address will be updated with incoming data from datamap
+  //If a match is not found, address will be added to agents address list
+  //If the ruleset requires updating primary shipping (and a primary shipping is provided), primaryshipping  address will be set
+  //After all is done, a final check will ensure that at least 1 primary shipping is set (1st in list)
+
+  //If the ruleset requires updating primary billing (and a primary billing is provided), primary billing address will be set
+  //After all is done, a final check will ensure that at least 1 primary billing is set (1st in list)
+  updateAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]): boolean {
     let incoming_addresses: Address[] = this.extractAddresses(data);
 
-    if (incoming_addresses.length > 0 && this.validateAddresses(incoming_addresses, selectedRuleSet, agent, messages)) {
-      if (!agent[AgentKeys.addresses]) {
-        agent[AgentKeys.addresses] = [];
+    if (!agent[AgentKeys.addresses]) {
+      agent[AgentKeys.addresses] = [];
+    }
+
+    if (incoming_addresses.length > 0) {
+      let required_to_update_shipping = this.updatePrimaryShippingAddressRequired(incoming_addresses, selectedRuleSet, agent, messages);
+
+      if(required_to_update_shipping){
+        agent.addresses.forEach((a) => (a.is_primary_shipping = false));
       }
 
-      let required_to_update_shipping =
-        PrimaryFieldRule[selectedRuleSet[ImportRuleSetKeys.primary_shipping_address]] ==
-        PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+      let required_to_update_billing = this.updatePrimaryBillingAddressRequired(incoming_addresses, selectedRuleSet, agent, messages);
 
-      let required_to_update_billing =
-        PrimaryFieldRule[selectedRuleSet[ImportRuleSetKeys.primary_billing_address]] ==
-        PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
+      if(required_to_update_billing){
+        agent.addresses.forEach((a) => (a.is_primary_billing = false));
+      }
 
       //look at each incoming and update if matching or add to list
       incoming_addresses.forEach((incoming_address) => {
-        let matching_address: Address = agent[AgentKeys.addresses].find(
-          (address) => address.address1 == incoming_address.address1
-        );
+        let matching_address: Address = agent[AgentKeys.addresses].find(address => address.address1.split(' ')[0] == incoming_address.address1.split(' ')[0]);
 
         if (matching_address) {
           if (incoming_address.address2) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_address2],
               matching_address,
               'address2',
@@ -99,7 +111,7 @@ export class DomainAddressService {
             );
           }
           if (incoming_address.city) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_city],
               matching_address,
               'city',
@@ -107,7 +119,7 @@ export class DomainAddressService {
             );
           }
           if (incoming_address.state) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_state],
               matching_address,
               'state',
@@ -115,7 +127,7 @@ export class DomainAddressService {
             );
           }
           if (incoming_address.zip) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_zip],
               matching_address,
               'zip',
@@ -123,7 +135,7 @@ export class DomainAddressService {
             );
           }
           if (incoming_address.county) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_county],
               matching_address,
               'county',
@@ -131,7 +143,7 @@ export class DomainAddressService {
             );
           }
           if (incoming_address.country) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_country],
               matching_address,
               'country',
@@ -139,7 +151,7 @@ export class DomainAddressService {
             );
           }
           if (incoming_address.is_primary_billing && required_to_update_billing) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_is_primary_billing],
               matching_address,
               'is_primary_billing',
@@ -147,7 +159,7 @@ export class DomainAddressService {
             );
           }
           if (incoming_address.is_primary_shipping && required_to_update_shipping) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_is_primary_shipping],
               matching_address,
               'is_primary_shipping',
@@ -181,14 +193,14 @@ export class DomainAddressService {
       //if no primary billing set, set first email to primary billing
       if (!is_primary_billing_set && agent[AgentKeys.addresses].length > 0) {
         agent[AgentKeys.addresses][0].is_primary_billing = true;
-      }
-      return true;
-    } else {
-      return false;
-    }
+      }  
+    } 
+    
+    return true;
   }
 
-  validateAddresses(incoming_addresses: Address[], selectedRuleSet: ImportRuleSet, agent: Agent, messages: string[]) {
+  //checks to see if update of Shipping Primary is required and incoming Shipping Primary exists
+  private updatePrimaryShippingAddressRequired(incoming_addresses: Address[], selectedRuleSet: ImportRuleSet, agent: Agent, messages: string[]) {
     let returnVal: boolean = false;
 
     let shipping_rule = selectedRuleSet[ImportRuleSetKeys.primary_shipping_address];
@@ -198,27 +210,21 @@ export class DomainAddressService {
     if (required_to_update_shipping) {
       let incoming_has_primary_shipping = incoming_addresses.filter((add) => add.is_primary_shipping == true);
 
-      if (incoming_has_primary_shipping.length == 0) {
-        messages.push(
-          'Selected Rule Set requires Primary Shipping Address to be updated, but no Primary is set. Please set primary for ' +
-            agent.p_email +
-            ' or change the import rule.'
-        );
+      if (incoming_has_primary_shipping.length == 0) {// <---if 0 found in file, then do not update any primaries
         returnVal = false;
-      } else if (incoming_has_primary_shipping.length == 1) {
-        agent.addresses.forEach((add) => (add.is_primary_shipping = false));
+      } else if (incoming_has_primary_shipping.length == 1) {// <---if 1 found in file, then update the primary
         returnVal = true;
-      } else if (incoming_has_primary_shipping.length == 2) {
-        messages.push(
-          'Selected Rule Set requires Primary Shipping Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' +
-            agent.p_email +
-            ' or change the import rule.'
-        );
+      } else if (incoming_has_primary_shipping.length >= 2) {// <---if more than 1 found, this is an error -- should not occur from Data Validation check
         returnVal = false;
-      } else {
-        returnVal = true;
-      }
+      } 
     }
+
+    return returnVal;
+  }
+
+  //checks to see if update of Billing Primary is required and incoming Billing Primary exists
+  private updatePrimaryBillingAddressRequired(incoming_addresses: Address[], selectedRuleSet: ImportRuleSet, agent: Agent, messages: string[]) {
+    let returnVal: boolean = false;
 
     let billing_rule = selectedRuleSet[ImportRuleSetKeys.primary_billing_address];
 
@@ -227,66 +233,15 @@ export class DomainAddressService {
     if (required_to_update_billinging) {
       let incoming_has_primary_billing = incoming_addresses.filter((add) => add.is_primary_billing == true);
 
-      if (incoming_has_primary_billing.length == 0) {
-        messages.push(
-          'Selected Rule Set requires Primary Billing Address to be updated, but no Primary is set. Please set primary for ' +
-            agent.p_email +
-            ' or change the import rule.'
-        );
-        returnVal = returnVal && false;
-      } else if (incoming_has_primary_billing.length == 1) {
-        agent.addresses.forEach((add) => (add.is_primary_billing = false));
-        returnVal = returnVal && true;
-      } else if (incoming_has_primary_billing.length == 2) {
-        messages.push(
-          'Selected Rule Set requires Primary Billing Address to be updated, but 2 Primararies are set. Please set set only 1 primary for ' +
-            agent.p_email +
-            ' or change the import rule.'
-        );
-        returnVal = returnVal && false;
-      } else {
-        returnVal = returnVal && false;
+      if (incoming_has_primary_billing.length == 0) {// <---if 0 found in file, then do not update any primaries
+        returnVal = false;
+      } else if (incoming_has_primary_billing.length == 1) {// <---if 1 found in file, then update the primary
+        returnVal = true;
+      } else if (incoming_has_primary_billing.length >= 2) {// <---if more than 1 found, this is an error -- should not occur from Data Validation check
+        returnVal = false;
       }
     }
 
     return returnVal;
-  }
-
-  updateField(rule, itemToUpdate, field_name: string, value) {
-    if (ImportFieldRule[rule] == ImportFieldRule.APPEND_TO_EXISTING) {
-      itemToUpdate[field_name] = itemToUpdate[field_name] + ' ' + value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_EXISTING_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_IF_BLANK) {
-      if (!itemToUpdate[field_name] || itemToUpdate[field_name] == '') {
-        itemToUpdate[field_name] = value;
-      }
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    }
-  }
-
-  getCount(invals: Map<string, string>, type: string) {
-    let values: Map<string, string> = new Map<string, string>();
-
-    invals.forEach((value, key) => {
-      if (key.startsWith(type)) {
-        values.set(key.split('.')[1], key.split('.')[1]);
-      }
-    });
-
-    return values;
-  }
-
-  generateId() {
-    return 'xxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
   }
 }

@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import {
-  ImportFieldRule,
   ImportRuleSet,
   ImportRuleSetKeys,
   PrimaryFieldRule
@@ -11,17 +10,20 @@ import {
   BUSINESS_PERSONAL_TYPE,
   PhoneNumber,
 } from 'ag-common-lib/public-api';
+import { DomainUtilService } from './domain-util.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DomainPhoneNumberService {
-  constructor() {}
+  constructor(private domainUtilService: DomainUtilService) {}
 
+  //create phone number objects from datamap
+  //Ensures they are unique (In case 2 numbers come in with identical digits)
   extractPhoneNumbers(invals: Map<string, string>): PhoneNumber[] {
     let retval: PhoneNumber[] = [];
 
-    let i: Map<string, string> = this.getCount(invals, 'phone_numbers');
+    let i: Map<string, string> = this.domainUtilService.getCount(invals, 'phone_numbers');
 
     let tempMap: Map<string, PhoneNumber> = new Map<string, PhoneNumber>();
 
@@ -44,9 +46,9 @@ export class DomainPhoneNumberService {
     return retval;
   }
 
-  createPhoneNumber(invals: Map<string, string>, key: string): PhoneNumber {
+  private createPhoneNumber(invals: Map<string, string>, key: string): PhoneNumber {
     let a: PhoneNumber = { ...new PhoneNumber() };
-    a.id = this.generateId();
+    a.id = this.domainUtilService.generateId();
 
     if (invals.has('phone_numbers.' + key + '.number')) {
       a.number = invals
@@ -77,6 +79,10 @@ export class DomainPhoneNumberService {
     return a;
   }
 
+  //If a match is found for incoming phone number, phone number will be updated with incoming data from datamap
+  //If a match is not found, Phone number will be added to agents phone numbers list
+  //If the ruleset requires updating primary (and a primary is provided), primary phone number will be set
+  //After all is done, a final check will ensure that at least 1 primary is set (1st in list)
   updatePhoneNumbers(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]) {
     let incoming_phone_numbers: PhoneNumber[] = this.extractPhoneNumbers(data);
 
@@ -89,7 +95,7 @@ export class DomainPhoneNumberService {
       //will return false if no incoming primary is set (or more than 1 is set)
       let required_to_update_primary = this.updatePrimaryPhoneNumberRequired(incoming_phone_numbers, selectedRuleSet, agent, messages);
 
-      //if update of primary is required (and priimary is provided)
+      //if update of primary is required (and primary is provided)
       //set all existing primary numbers to false
       if (required_to_update_primary) {
         agent.phone_numbers.forEach((a) => (a.is_primary = false));
@@ -97,31 +103,14 @@ export class DomainPhoneNumberService {
 
       //look at each incoming and update if matching or add to list
       incoming_phone_numbers.forEach((incoming_phone) => {
-        let stripped = incoming_phone.number
-          .replace('(', '')
-          .replace(')', '')
-          .replace(' ', '')
-          .replace(' ', '')
-          .replace('-', '')
-          .replace('-', '');
-
-        let matching_phone: PhoneNumber = agent[AgentKeys.phone_numbers].find((phone) => {
-          let matched_strip = phone.number
-            .replace('(', '')
-            .replace(')', '')
-            .replace(' ', '')
-            .replace(' ', '')
-            .replace('-', '')
-            .replace('-', '');
-          return matched_strip == stripped;
-        });
+        let matching_phone: PhoneNumber = agent[AgentKeys.phone_numbers].find(phone => this.stripPhonNumber(phone.number) == this.stripPhonNumber(incoming_phone.number));
 
         if (matching_phone) {
           if (incoming_phone.phone_type) {
-            this.updateField(selectedRuleSet[ImportRuleSetKeys.phone_phone_type],matching_phone,'phone_type',incoming_phone.phone_type);
+            this.domainUtilService.updateField(selectedRuleSet[ImportRuleSetKeys.phone_phone_type],matching_phone,'phone_type',incoming_phone.phone_type);
           }
           if (incoming_phone.is_primary && required_to_update_primary) {
-            this.updateField(selectedRuleSet[ImportRuleSetKeys.phone_is_primary],matching_phone,'is_primary',incoming_phone.is_primary);
+            this.domainUtilService.updateField(selectedRuleSet[ImportRuleSetKeys.phone_is_primary],matching_phone,'is_primary',incoming_phone.is_primary);
           }
         } else {
           agent[AgentKeys.phone_numbers].push(incoming_phone);
@@ -135,15 +124,13 @@ export class DomainPhoneNumberService {
       if (!is_primary_set && agent[AgentKeys.phone_numbers].length > 0) {
         agent[AgentKeys.phone_numbers][0].is_primary = true;
       }
-
-      return true;
-    } else {
-      return false;
     }
+
+    return true;
   }
 
   //checks to see if update of Primary is required and incoming primary exists
-  updatePrimaryPhoneNumberRequired(incoming_phone_numbers: PhoneNumber[],selectedRuleSet: ImportRuleSet,agent: Agent,messages: string[]): boolean {
+  private updatePrimaryPhoneNumberRequired(incoming_phone_numbers: PhoneNumber[],selectedRuleSet: ImportRuleSet,agent: Agent,messages: string[]): boolean {
     let phone_number_rule = selectedRuleSet[ImportRuleSetKeys.primary_phone_number];
 
     let required_to_update_primary = PrimaryFieldRule[phone_number_rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
@@ -151,23 +138,11 @@ export class DomainPhoneNumberService {
     if (required_to_update_primary) {
       let incoming_has_primary: PhoneNumber[] = incoming_phone_numbers.filter((add) => add.is_primary == true);
 
-      if (incoming_has_primary.length == 0) {
-        messages.push(
-          'Selected Rule Set requires Primary Phone Number to be updated, but no Primary is set. Please set primary for ' +
-            agent.p_email +
-            ' or change the import rule.'
-        );
+      if (incoming_has_primary.length == 0) {// <---if 0 found in file, then do not update any primaries
         return false;
-      } else if (incoming_has_primary.length == 1) {
+      } else if (incoming_has_primary.length == 1) {// <---if 1 found in file, then update the primary
         return true;
-      } else if (incoming_has_primary.length == 2) {
-        messages.push(
-          'Selected Rule Set requires Primary Phone Number to be updated, but 2 Primararies are set. Please set set only 1 primary for ' +
-            agent.p_email +
-            ' or change the import rule.'
-        );
-        return false;
-      } else {
+      } else if (incoming_has_primary.length >= 2) {// <---if more than 1 found, this is an error -- should not occur from Data Validation check
         return false;
       }
     }
@@ -175,41 +150,13 @@ export class DomainPhoneNumberService {
     return true;
   }
 
-  updateField(rule, itemToUpdate, field_name: string, value) {
-    if (ImportFieldRule[rule] == ImportFieldRule.APPEND_TO_EXISTING) {
-      itemToUpdate[field_name] = itemToUpdate[field_name] + ' ' + value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_EXISTING_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_IF_BLANK) {
-      if (!itemToUpdate[field_name] || itemToUpdate[field_name] == '') {
-        itemToUpdate[field_name] = value;
-      }
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    }
-  }
-
-  getCount(invals: Map<string, string>, type: string) {
-    let values: Map<string, string> = new Map<string, string>();
-
-    invals.forEach((value, key) => {
-      if (key.startsWith(type)) {
-        values.set(key.split('.')[1], key.split('.')[1]);
-      }
-    });
-
-    return values;
-  }
-
-  generateId() {
-    return 'xxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
+  private stripPhonNumber(incoming_phone_number: string){
+    return incoming_phone_number
+          .replace('(', '')
+          .replace(')', '')
+          .replace(' ', '')
+          .replace(' ', '')
+          .replace('-', '')
+          .replace('-', '');
   }
 }

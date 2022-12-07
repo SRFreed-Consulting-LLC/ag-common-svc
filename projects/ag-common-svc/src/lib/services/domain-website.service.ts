@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
-  ImportFieldRule,
   ImportRuleSet,
   ImportRuleSetKeys,
-  PrimaryFieldRule
 } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {
   Agent,
@@ -11,17 +9,18 @@ import {
   BUSINESS_PERSONAL_TYPE,
   Website
 } from 'ag-common-lib/public-api';
+import { DomainUtilService } from './domain-util.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DomainWebsiteService {
-  constructor() {}
+  constructor(private domainUtilService: DomainUtilService) {}
 
   extractWebsites(invals: Map<string, string>): Website[] {
     let retval: Website[] = [];
 
-    let i: Map<string, string> = this.getCount(invals, 'websites');
+    let i: Map<string, string> = this.domainUtilService.getCount(invals, 'websites');
 
     i.forEach((value, key) => {
       let a: Website = this.createWebsite(invals, key);
@@ -33,7 +32,7 @@ export class DomainWebsiteService {
 
   createWebsite(invals: Map<string, string>, key: string): Website {
     let a: Website = { ...new Website() };
-    a.id = this.generateId();
+    a.id = this.domainUtilService.generateId();
 
     if (invals.has('websites.' + key + '.url')) {
       a.url = invals.get('websites.' + key + '.url');
@@ -60,7 +59,7 @@ export class DomainWebsiteService {
 
         if (matching_website) {
           if (incoming_website.website_type) {
-            this.updateField(
+            this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.website_website_type],
               matching_website,
               'website_type',
@@ -75,80 +74,5 @@ export class DomainWebsiteService {
     }
 
     return true;
-  }
-
-  updateField(rule, itemToUpdate, field_name: string, value) {
-    if (ImportFieldRule[rule] == ImportFieldRule.APPEND_TO_EXISTING) {
-      itemToUpdate[field_name] = itemToUpdate[field_name] + ' ' + value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_EXISTING_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (ImportFieldRule[rule] == ImportFieldRule.UPDATE_IF_BLANK) {
-      if (!itemToUpdate[field_name] || itemToUpdate[field_name] == '') {
-        itemToUpdate[field_name] = value;
-      }
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE) {
-      itemToUpdate[field_name] = value;
-    } else if (PrimaryFieldRule[rule] == PrimaryFieldRule.DO_NOT_UPDATE) {
-      itemToUpdate[field_name] = itemToUpdate[field_name];
-    }
-  }
-
-  getCount(invals: Map<string, string>, type: string) {
-    let values: Map<string, string> = new Map<string, string>();
-
-    invals.forEach((value, key) => {
-      if (key.startsWith(type)) {
-        values.set(key.split('.')[1], key.split('.')[1]);
-      }
-    });
-
-    return values;
-  }
-
-  generateId() {
-    return 'xxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  }
-
-  getBoolean(value) {
-    switch (value) {
-      case true:
-      case 'true':
-      case 'True':
-      case 'TRUE':
-      case 1:
-      case '1':
-      case 'on':
-      case 'On':
-      case 'ON':
-      case 'yes':
-      case 'Yes':
-      case 'YES':
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  getYesNoValue(value) {
-    switch (value) {
-      case true:
-      case 'true':
-      case 'TRUE':
-      case 'T':
-      case 't':
-      case 'YES':
-      case 'yes':
-      case 'Y':
-      case 'y':
-        return 'Yes';
-      default:
-        return 'No';
-    }
   }
 }

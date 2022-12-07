@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { Address, AgentKeys, EmailAddress } from 'ag-common-lib/public-api';
+import { Address, AgentKeys, EmailAddress, PhoneNumber } from 'ag-common-lib/public-api';
 import { AgentService } from './agent.service';
-import { DomainService } from './domain.service';
+import { DomainAddressService } from './domain-address.service';
+import { DomainEmailService } from './domain-email.service';
+import { DomainPhoneNumberService } from './domain-phone-number.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +11,11 @@ import { DomainService } from './domain.service';
 export class ImportService {
   PRIMARY_EMAIL_IDENTIFIER = 'email_addresses.1.address';
 
-  constructor(public agentService: AgentService, private domainService: DomainService) {}
+  constructor(public agentService: AgentService, 
+    private domainEmailService: DomainEmailService,
+    private domainPhoneNumberService: DomainPhoneNumberService,
+    private domainAddressService: DomainAddressService,
+  ) {}
 
   public importFileToString(file: File): Promise<string | ArrayBuffer> {
     return new Promise((resolve) => {
@@ -90,7 +96,7 @@ export class ImportService {
     }
   }
 
-  async validateData(data: Map<string, any>, messages: String[]) {
+  validateData(data: Map<string, any>, messages: String[]) {
     let isValid = true;
 
     let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + this.PRIMARY_EMAIL_IDENTIFIER + ')'
@@ -110,7 +116,7 @@ export class ImportService {
       isValid = false;
     }
 
-    let addresses: Address[] = this.domainService.extractAddresses(data);
+    let addresses: Address[] = this.domainAddressService.extractAddresses(data);
 
     if(addresses.filter(addresses => addresses.is_primary_billing == true).length > 1){
       messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Billing Address listed');
@@ -122,12 +128,14 @@ export class ImportService {
       isValid = false;
     }
 
-    if(this.domainService.extractPhoneNumbers(data).filter(phone => phone.is_primary == true).length > 1){
+    let phoneNumbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(data);
+
+    if(phoneNumbers.filter(phone => phone.is_primary == true).length > 1){
       messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Phone Number listed');
       isValid = false;
     }
 
-    let emailAddresses: EmailAddress[] = this.domainService.extractEmailAddresses(data);
+    let emailAddresses: EmailAddress[] = this.domainEmailService.extractEmailAddresses(data);
 
     if(emailAddresses.filter(email => email.is_primary == true).length > 1){
       messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Email listed');
@@ -140,23 +148,10 @@ export class ImportService {
       allEmails.push(email.address)
     })
 
-    //replace with this to check if exists?
-    //this.agentService.getAgentByAnyEmailIn(allEmails).then(agent => console.log(agent))
-
-    if(isValid){
-      await this.agentService.getAgentByEmail(data.get(this.PRIMARY_EMAIL_IDENTIFIER).toLowerCase().trim()).then((agents) => {
-        if (!agents) {
-          messages.push(agent_name + ' does not currently exist and will be created.');
-        } else if (agents) {
-          messages.push(agent_name + ' does exist and will be updated.');
-        }
-      });
-    }
-
     return isValid;
   }
   
-  isDate(date: string): boolean {
+  private isDate(date: string): boolean {
     return new Date(date).toString() != "Invalid Date";
   }
 }

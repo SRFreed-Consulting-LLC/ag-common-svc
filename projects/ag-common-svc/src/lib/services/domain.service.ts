@@ -97,7 +97,6 @@ export class DomainService {
     });
 
     return Promise.all(promises).then((response) => {
-      console.log('response', response)
       return Array.isArray(response) ? response.filter(Boolean) : [];
     });
   }
@@ -795,7 +794,6 @@ export class DomainService {
       this.domainSocialsService.updateSocials(line_data, agent, selectedRuleSet, this.messages),
       this.domainWebsiteService.updateWebsites(line_data, agent, selectedRuleSet, this.messages)
     ].every(Boolean);
-    console.log('shouldContinue', shouldContinue)
 
     if (!shouldContinue) {
       return null;

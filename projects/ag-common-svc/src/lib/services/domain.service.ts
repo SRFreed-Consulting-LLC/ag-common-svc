@@ -628,7 +628,8 @@ export class DomainService {
         line_data.get(AgentKeys.shoe_size).trim()
       );
     }
-    if (line_data.has(AgentKeys.approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.approve_deny_reason] == ImportListRule.ADD_TO_LIST) {
+
+    if (line_data.has(AgentKeys.approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.approve_deny_reason].valueOf() == 'ADD_TO_LIST') {
       let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
       approve_deny_reason.created_by = updatedBy;
       approve_deny_reason.created_date = new Date();
@@ -636,16 +637,20 @@ export class DomainService {
       approve_deny_reason.isDeleted = false;
       approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason).trim();
 
-      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason)
+      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
     }
-    if (line_data.has(AgentKeys.agency_approve_deny_reason)) {
-      this.domainUtilService.updateField(
-        selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason],
-        agent,
-        AgentKeys.agency_approve_deny_reason,
-        line_data.get(AgentKeys.agency_approve_deny_reason).trim()
-      );
+    console.log(line_data.has(AgentKeys.agency_approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST')
+    if (line_data.has(AgentKeys.agency_approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST') {
+      let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+      approve_deny_reason.created_by = updatedBy;
+      approve_deny_reason.created_date = new Date();
+      approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AgencyLevel;
+      approve_deny_reason.isDeleted = false;
+      approve_deny_reason.activity = line_data.get(AgentKeys.agency_approve_deny_reason).trim();
+
+      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
     }
+
     if (line_data.has(AgentKeys.certifications)) {
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.certifications],

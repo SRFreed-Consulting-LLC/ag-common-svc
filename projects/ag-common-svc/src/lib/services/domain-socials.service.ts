@@ -31,7 +31,11 @@ export class DomainSocialsService {
     return retval;
   }
 
-  createSocial(invals: Map<string, string>, key: string): Social {
+  createSocials(invals: Map<string, string>): Social[] {
+    return this.extractSocials(invals);
+  }
+
+  private createSocial(invals: Map<string, string>, key: string): Social {
     let a: Social = { ...new Social() };
     a.id = this.domainUtilService.generateId();
 

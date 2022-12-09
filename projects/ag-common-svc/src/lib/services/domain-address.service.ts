@@ -35,6 +35,25 @@ export class DomainAddressService {
     return retval;
   }
 
+  //creates list of address from datamap and assigns primaries if none assigned
+  createAddresses(invals: Map<string, string>): Address[] {
+    let addresses:Address[] =  this.extractAddresses(invals);
+
+    let primary_shipping: Address[] = addresses.filter(address => address.is_primary_shipping == true);
+    
+    if(addresses.length > 0 && primary_shipping.length == 0){
+      addresses[0].is_primary_shipping = true;
+    }
+
+    let primary_billing: Address[] = addresses.filter(address => address.is_primary_billing == true);
+    
+    if(addresses.length > 0 && primary_billing.length == 0){
+      addresses[0].is_primary_billing = true;
+    }
+
+    return addresses;
+  }
+
   private createAddress(invals: Map<string, string>, value: string, key: string): Address {
     let a: Address = { ...new Address() };
     a.id = this.domainUtilService.generateId();

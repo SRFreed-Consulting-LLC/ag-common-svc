@@ -31,12 +31,12 @@ export class DomainEmailService {
     return retval;
   }
 
-  createEmailAddress(invals: Map<string, string>, key: string): EmailAddress {
+  private createEmailAddress(invals: Map<string, string>, key: string): EmailAddress {
     let a: EmailAddress = { ...new EmailAddress() };
     a.id = this.domainUtilService.generateId();
 
     if (invals.has('email_addresses.' + key + '.address'))
-      a.address = invals.get('email_addresses.' + key + '.address');
+      a.address = invals.get('email_addresses.' + key + '.address').toLowerCase().trim();
     if (invals.has('email_addresses.' + key + '.email_type'))
       a.email_type = BUSINESS_PERSONAL_TYPE[invals.get('email_addresses.' + key + '.email_type').toUpperCase()];
 
@@ -61,6 +61,24 @@ export class DomainEmailService {
     return a;
   }
 
+  createEmailAddresses(invals: Map<string, string>): EmailAddress[] {
+    let addresses = this.extractEmailAddresses(invals);
+
+    let primary_addresses = addresses.filter(email => email.is_primary == true)
+
+    if(addresses.length > 0 && primary_addresses.length == 0){
+      addresses[0].is_primary = true
+    }
+
+    let login_addresses = addresses.filter(email => email.is_login == true)
+
+    if(addresses.length > 0 && login_addresses.length == 0){
+      addresses[0].is_login = true
+    }
+
+    return addresses;
+  }
+
   updateEmailAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]) {
     let incoming_emails: EmailAddress[] = this.extractEmailAddresses(data);
 
@@ -79,7 +97,7 @@ export class DomainEmailService {
       //look at each incoming and update if matching or add to list
       incoming_emails.forEach((incoming_email) => {
         let matching_email: EmailAddress = agent[AgentKeys.email_addresses].find(
-          (email) => email.address == incoming_email.address
+          (email) => email.address.toLowerCase().trim() == incoming_email.address.toLowerCase().trim()
         );
 
         if (matching_email) {

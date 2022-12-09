@@ -48,6 +48,18 @@ export class DomainPhoneNumberService {
     return retval;
   }
 
+  createPhoneNumbers(invals: Map<string, string>): PhoneNumber[] {
+    let phone_numbers = this.extractPhoneNumbers(invals);;
+
+    let is_primary = phone_numbers.filter(phone => phone.is_primary == true)
+
+    if(phone_numbers.length > 0 && is_primary.length == 0){
+      phone_numbers[0].is_primary = true
+    }
+
+    return this.extractPhoneNumbers(invals);
+  }
+
   private createPhoneNumber(invals: Map<string, string>, key: string): PhoneNumber {
     let a: PhoneNumber = { ...new PhoneNumber() };
     a.id = this.domainUtilService.generateId();

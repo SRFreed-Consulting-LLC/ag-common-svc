@@ -30,7 +30,11 @@ export class DomainWebsiteService {
     return retval;
   }
 
-  createWebsite(invals: Map<string, string>, key: string): Website {
+  createWebsites(invals: Map<string, string>): Website[] {
+    return this.extractWebsites(invals);
+  }
+
+  private createWebsite(invals: Map<string, string>, key: string): Website {
     let a: Website = { ...new Website() };
     a.id = this.domainUtilService.generateId();
 

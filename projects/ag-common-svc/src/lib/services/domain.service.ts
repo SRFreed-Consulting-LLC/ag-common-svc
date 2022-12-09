@@ -271,11 +271,11 @@ export class DomainService {
       }
     });
 
-    agent[AgentKeys.addresses] = this.domainAddressService.extractAddresses(splitVals);
-    agent[AgentKeys.email_addresses] = this.domainEmailService.extractEmailAddresses(splitVals);
-    agent[AgentKeys.phone_numbers] = this.domainPhoneNumberService.extractPhoneNumbers(splitVals);
-    agent[AgentKeys.websites] = this.domainWebsiteService.extractWebsites(splitVals);
-    agent[AgentKeys.socials] = this.domainSocialsService.extractSocials(splitVals);
+    agent[AgentKeys.addresses] = this.domainAddressService.createAddresses(splitVals);
+    agent[AgentKeys.email_addresses] = this.domainEmailService.createEmailAddresses(splitVals);
+    agent[AgentKeys.phone_numbers] = this.domainPhoneNumberService.createPhoneNumbers(splitVals);
+    agent[AgentKeys.websites] = this.domainWebsiteService.createWebsites(splitVals);
+    agent[AgentKeys.socials] = this.domainSocialsService.createSocials(splitVals);
 
     //calculate p_agent_name
     if (agent[AgentKeys.p_agent_first_name]) {
@@ -347,7 +347,7 @@ export class DomainService {
       loginAddress = agentEmailAddresses[0];
     }
 
-    agent[AgentKeys.p_email] = loginAddress.address;
+    agent[AgentKeys.p_email] = loginAddress.address;    
 
     return this.agentService.create(agent).then((agent) => {
       if (line_data.has(AgentKeys.approve_deny_reason)) {

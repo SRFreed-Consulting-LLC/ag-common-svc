@@ -143,6 +143,12 @@ export class AgentEditorService {
     }
   }
 
+  validatePhoneNumbers(agent: Agent){
+    if(agent.phone_numbers.length == 1) {
+      agent.phone_numbers[0].is_primary = true;
+    }
+  }
+
   //used by dropdown OnValueChanged.
   //to use this.. place the email address in the object passed into first param like this
   // {
@@ -181,6 +187,13 @@ export class AgentEditorService {
     }
   }
 
+  validateEmailAddresses(agent: Agent){
+    if(agent.email_addresses.length == 1) {
+      agent.email_addresses[0].is_primary = true;
+      agent.email_addresses[0].is_login = true;
+    }
+  }
+
   getPrimaryShippingAddress(agent: Agent) {
     if (agent.addresses) {
       let addresses: Address[] = agent.addresses.filter((address) => address.is_primary_shipping == true);
@@ -212,6 +225,13 @@ export class AgentEditorService {
       }
     } else {
       return '';
+    }
+  }
+
+  validateAddresses(agent: Agent){
+    if(agent.addresses.length == 1){
+      agent.addresses[0].is_primary_billing = true;
+      agent.addresses[0].is_primary_shipping = true;
     }
   }
 

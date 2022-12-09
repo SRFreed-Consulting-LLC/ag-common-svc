@@ -1,0 +1,152 @@
+<div class="mt-2">
+  <div class="row my-2 px-3">
+    <div class="col-12 text-start editToolbar">
+      <dx-toolbar>
+        <dxi-item location="before" widget="dxButton" locateInMenu="never">
+          <div *dxTemplate>
+            <div class="toolbar-label"><b>Addresses</b></div>
+          </div>
+        </dxi-item>
+        <dxi-item location="after" locateInMenu="never">
+          <div *dxTemplate>
+            <dx-button
+              [icon]="'edit'"
+              [stylingMode]="'text'"
+              (onClick)="addressesModalComponent.showModal()"
+            ></dx-button>
+          </div>
+        </dxi-item>
+      </dx-toolbar>
+    </div>
+  </div>
+  <div class="row my-2 px-3" *ngIf="addresses.length > 0">
+    <div class="col-5 text-start"></div>
+    <div class="col-3 text-start"></div>
+    <div class="col-2 text-center">
+      <span style="font-weight: bold">Shipping</span>
+    </div>
+    <div class="col-2 text-center">
+      <span style="font-weight: bold">Billing</span>
+    </div>
+  </div>
+  <div class="row my-2 px-3 text-center" *ngIf="addresses.length == 0">
+    <div class="col-12" style="text-align: center">
+      <span>No Addresses Currently Exist</span>
+    </div>
+  </div>
+  <ng-container *ngFor="let address of addresses">
+    <div class="row mb-2 px-3 py-1">
+      <div class="col-5 text-start">
+        {{ address | fullAddress }}
+      </div>
+      <div class="col-3 text-start">
+        {{ address.address_type }}
+      </div>
+      <div class="col-2 text-center">
+        <i *ngIf="address.is_primary_shipping" class="dx-icon-check"></i>
+      </div>
+      <div class="col-2 text-center">
+        <i *ngIf="address.is_primary_billing" class="dx-icon-check"></i>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<ag-shr-modal-window #addressesModalRef [title]="'Addresses'" [showSaveButton]="false">
+  <dx-data-grid
+    #addressesGridREf
+    [dataSource]="addresses"
+    [showRowLines]="true"
+    [showBorders]="true"
+    [columnAutoWidth]="true"
+    [wordWrapEnabled]="true"
+    (onEditorPreparing)="onEditorPreparing($event)"
+    (onInitNewRow)="onInitNewRow($event)"
+    (onRowInserting)="onRowInserting($event)"
+    (onRowUpdating)="onRowUpdating($event)"
+    (onRowRemoving)="onRowRemoving($event)"
+  >
+    <dxo-toolbar>
+      <dxi-item location="before">
+        <div *dxTemplate>
+          <b>Addresses</b>
+        </div>
+      </dxi-item>
+      <dxi-item name="addRowButton"></dxi-item>
+    </dxo-toolbar>
+    <dxo-editing mode="popup" [useIcons]="true" [allowUpdating]="true" [allowDeleting]="true" [allowAdding]="true">
+      <dxo-popup title="Address" [showTitle]="true" [width]="'80vw'" [height]="'auto'">
+        <dxi-toolbar-item
+          widget="dxButton"
+          location="after"
+          toolbar="bottom"
+          [options]="{
+            text: 'CANCEL',
+            onClick: addressesGridREf.instance.cancelEditData,
+            elementAttr: {
+              class: 'modal-window__toolbar-button'
+            }
+          }"
+        >
+        </dxi-toolbar-item>
+
+        <dxi-toolbar-item widget="dxButton" location="after" toolbar="bottom">
+          <div *dxTemplate>
+            <shr-button-with-indicator
+              [isInProgress]="inProgress"
+              (onClick)="addressesGridREf.instance.saveEditData()"
+            ></shr-button-with-indicator>
+          </div>
+        </dxi-toolbar-item>
+      </dxo-popup>
+
+      <dxo-form [colCount]="12" [labelMode]="'floating'">
+        <dxi-item dataField="address_type" [colSpan]="4"></dxi-item>
+        <dxi-item
+          dataField="is_primary_shipping"
+          [alignItemLabels]="'left'"
+          [colSpan]="4"
+          editorType="dxSwitch"
+          [editorOptions]="{ switchedOffText: 'No', switchedOnText: 'Yes' }"
+        ></dxi-item>
+        <dxi-item
+          dataField="is_primary_billing"
+          [alignItemLabels]="'left'"
+          [colSpan]="4"
+          editorType="dxSwitch"
+          [editorOptions]="{ switchedOffText: 'No', switchedOnText: 'Yes' }"
+        ></dxi-item>
+        <dxi-item dataField="address1" [colSpan]="12"></dxi-item>
+        <dxi-item dataField="address2" [colSpan]="12"></dxi-item>
+        <dxi-item dataField="city" [colSpan]="4"></dxi-item>
+        <dxi-item dataField="state" [colSpan]="4"></dxi-item>
+        <dxi-item dataField="zip" [colSpan]="4"></dxi-item>
+        <dxi-item dataField="country" [colSpan]="4"></dxi-item>
+        <dxi-item dataField="county" [colSpan]="4"></dxi-item>
+      </dxo-form>
+    </dxo-editing>
+
+    <dxi-column dataField="address1" [calculateDisplayValue]="fullAddressPipe.transform" [caption]="'Address'">
+      <dxi-validation-rule type="required" [message]="'Address 1 is Required'"></dxi-validation-rule>
+    </dxi-column>
+    <dxi-column dataField="address2" [visible]="false"></dxi-column>
+    <dxi-column dataField="city" [visible]="false"></dxi-column>
+    <dxi-column dataField="state" [visible]="false">
+      <dxo-lookup [dataSource]="states" [displayExpr]="'name'" [valueExpr]="'abbreviation'"></dxo-lookup>
+    </dxi-column>
+    <dxi-column dataField="zip" [visible]="false"></dxi-column>
+    <dxi-column dataField="country" [visible]="false">
+      <dxo-lookup [dataSource]="countries" [displayExpr]="'name'" [valueExpr]="'code'"></dxo-lookup>
+    </dxi-column>
+    <dxi-column dataField="county" [visible]="false"></dxi-column>
+    <dxi-column dataField="address_type" caption="Type">
+      <dxo-lookup [dataSource]="businessPersonalTypes"></dxo-lookup>
+    </dxi-column>
+    <dxi-column dataField="is_primary_shipping" caption="Shipping"></dxi-column>
+    <dxi-column dataField="is_primary_billing" caption="Billing"></dxi-column>
+    <dxi-column type="buttons">
+      <dxi-button name="edit" style="color: #091d45b5 !important"></dxi-button>
+      <dxi-button name="delete" [visible]="canDeleteRow"></dxi-button>
+    </dxi-column>
+  </dx-data-grid>
+</ag-shr-modal-window>

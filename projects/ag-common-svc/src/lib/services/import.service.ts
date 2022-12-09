@@ -1,19 +1,21 @@
 import { Injectable } from '@angular/core';
-import { ImportRuleSet } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
-import { AgentKeys } from 'ag-common-lib/public-api';
+import { Address, AgentKeys, EmailAddress, PhoneNumber } from 'ag-common-lib/public-api';
 import { AgentService } from './agent.service';
+import { DomainAddressService } from './domain-address.service';
+import { DomainEmailService } from './domain-email.service';
+import { DomainPhoneNumberService } from './domain-phone-number.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ImportService {
-  constructor(public agentService: AgentService) {}
+  PRIMARY_EMAIL_IDENTIFIER = 'email_addresses.1.address';
 
-  convertFileToDataMapArray(file: File): Promise<Map<string, string>[]> {
-    return this.importFileToString(file).then((csvText) => {
-      return this.createDataMap(csvText);
-    });
-  }
+  constructor(public agentService: AgentService, 
+    private domainEmailService: DomainEmailService,
+    private domainPhoneNumberService: DomainPhoneNumberService,
+    private domainAddressService: DomainAddressService,
+  ) {}
 
   public importFileToString(file: File): Promise<string | ArrayBuffer> {
     return new Promise((resolve) => {
@@ -30,7 +32,7 @@ export class ImportService {
     });
   }
 
-  private createDataMap(csvText): Map<string, string>[] {
+  public createDataMap(csvText): Map<string, string>[] {
     let retval: Map<string, string>[] = [];
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
@@ -51,8 +53,7 @@ export class ImportService {
     return retval;
   }
 
-  validateFile(csvText, messages: String[], importRuleSet: ImportRuleSet, import_type: string): Promise<boolean>{
-
+  validateFile(csvText, messages: String[], import_type: string): Promise<boolean>{
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
 
@@ -66,10 +67,10 @@ export class ImportService {
       }
     }
 
-    let email_address = headers.filter((h) => h == 'email_addresses.1.address').length > 0;
+    let email_address = headers.filter((h) => h == this.PRIMARY_EMAIL_IDENTIFIER).length > 0;
 
     if (!email_address) {
-      messages.push("The import must contain a field called 'email_addresses.1.address'");
+      messages.push("The import must contain a field called '" + this.PRIMARY_EMAIL_IDENTIFIER + "'");
     }
 
     if(import_type == "registration"){
@@ -96,74 +97,61 @@ export class ImportService {
   }
 
   validateData(data: Map<string, any>, messages: String[]) {
-    let promises: Promise<boolean>[] = [];
+    let isValid = true;
+
+    let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + this.PRIMARY_EMAIL_IDENTIFIER + ')'
 
     if(data.has(AgentKeys.campaigns_user_name) && !this.isDate(data.get(AgentKeys.campaigns_user_since))){
-      messages.push('ERROR: ' +
-        data.get('p_agent_first_name') +
-          ' ' +
-          data.get('p_agent_last_name') +
-          " has an invalid date in " + AgentKeys.campaigns_user_name
-      );
+      messages.push('ERROR: ' + agent_name + " has an invalid date in " + AgentKeys.campaigns_user_name);
+      isValid = false;
     }
 
     if(data.has(AgentKeys.dob) && !this.isDate(data.get(AgentKeys.dob))){
-      messages.push('ERROR: ' +
-        data.get('p_agent_first_name') +
-          ' ' +
-          data.get('p_agent_last_name') +
-          " has an invalid date in " + AgentKeys.dob
-      );
+      messages.push('ERROR: ' + agent_name + " has an invalid date in " + AgentKeys.dob);
+      isValid = false;
     }
 
     if(data.has(AgentKeys.prospect_referred_to_date) && !this.isDate(data.get(AgentKeys.prospect_referred_to_date))){
-      messages.push('ERROR: ' +
-        data.get('p_agent_first_name') +
-          ' ' +
-          data.get('p_agent_last_name') +
-          " has an invalid date in " + AgentKeys.prospect_referred_to_date
-      );
+      messages.push('ERROR: ' + agent_name + " has an invalid date in " + AgentKeys.prospect_referred_to_date);
+      isValid = false;
     }
 
-    if (data.has('email_addresses.1.address')) {
-      let p = this.agentService.getAgentByEmail(data.get('email_addresses.1.address').toLowerCase().trim())
-        .then((agents) => {
-          if (!agents) {
-            messages.push(
-              data.get('p_agent_first_name') +
-                ' ' +
-                data.get('p_agent_last_name') +
-                '(' +
-                data.get('email_addresses.1.address') +
-                ')' +
-                ' does not currently exist and will be created.'
-            );
-          } else if (agents) {
-            messages.push(
-              data.get('p_agent_first_name') +
-                ' ' +
-                data.get('p_agent_last_name') +
-                '(' +
-                data.get('email_addresses.1.address') +
-                ')' +
-                ' does exist and will be updated.'
-            );
-          }
+    let addresses: Address[] = this.domainAddressService.extractAddresses(data);
 
-          return true;
-        });
-      promises.push(p);
-    } else {
-      messages.push('ERROR: ' +
-        data.get('p_agent_first_name') +
-          ' ' +
-          data.get('p_agent_last_name') +
-          " does not have an 'email_addresses.1.address' field."
-      );
+    if(addresses.filter(addresses => addresses.is_primary_billing == true).length > 1){
+      messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Billing Address listed');
+      isValid = false;
     }
+
+    if(addresses.filter(addresses => addresses.is_primary_shipping == true).length > 1){
+      messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Shipping Address listed');
+      isValid = false;
+    }
+
+    let phoneNumbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(data);
+
+    if(phoneNumbers.filter(phone => phone.is_primary == true).length > 1){
+      messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Phone Number listed');
+      isValid = false;
+    }
+
+    let emailAddresses: EmailAddress[] = this.domainEmailService.extractEmailAddresses(data);
+
+    if(emailAddresses.filter(email => email.is_primary == true).length > 1){
+      messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Email listed');
+      isValid = false;
+    }
+
+    let allEmails: string[] = [];
+
+    emailAddresses.forEach(email => {
+      allEmails.push(email.address)
+    })
+
+    return isValid;
   }
   
-  isDate(date: string): boolean {
+  private isDate(date: string): boolean {
     return new Date(date).toString() != "Invalid Date";
   }
 }

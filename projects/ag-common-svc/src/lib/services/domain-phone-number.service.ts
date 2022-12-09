@@ -37,8 +37,10 @@ export class DomainPhoneNumberService {
       if (a.number) tempMap.set(a.number, a);
     });
 
-    tempMap.set(primary.number, primary);
-
+    if(primary){
+      tempMap.set(primary.number, primary);
+    }
+    
     tempMap.forEach((val, key) => {
       retval.push(val);
     });

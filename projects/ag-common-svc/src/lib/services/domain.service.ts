@@ -358,7 +358,7 @@ export class DomainService {
         approve_deny_reason.isDeleted = false;
         approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason);
   
-        this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason)
+        this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
       }
 
       const promises = agentAssociations.map((association) => {
@@ -639,7 +639,6 @@ export class DomainService {
 
       this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
     }
-    console.log(line_data.has(AgentKeys.agency_approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST')
     if (line_data.has(AgentKeys.agency_approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST') {
       let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
       approve_deny_reason.created_by = updatedBy;

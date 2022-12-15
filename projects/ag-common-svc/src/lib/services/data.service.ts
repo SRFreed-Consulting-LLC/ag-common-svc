@@ -2,6 +2,7 @@ import { BaseModel } from 'ag-common-lib/public-api';
 import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { FirebaseApp } from 'firebase/app';
 import { Observable } from 'rxjs';
+import { DocumentReference } from 'firebase/firestore';
 
 export class DataService<T extends BaseModel> {
   public readonly fsDao: CommonFireStoreDao<T>;
@@ -9,12 +10,16 @@ export class DataService<T extends BaseModel> {
   constructor(
     fireBaseApp: FirebaseApp,
     fromFirestore: (data: Partial<T>) => T = null,
-    toFirestore: (item: T) => T = null,
+    toFirestore: (item: T) => T = null
   ) {
     this.fsDao = new CommonFireStoreDao<T>(fireBaseApp, fromFirestore, toFirestore);
   }
 
   public collection: string;
+
+  public getDocReference(id: string): DocumentReference<T> {
+    return this.fsDao.getDocReference(this.collection, id);
+  }
 
   public getById(id: any): Promise<T> {
     return this.fsDao.getById(this.collection, id);

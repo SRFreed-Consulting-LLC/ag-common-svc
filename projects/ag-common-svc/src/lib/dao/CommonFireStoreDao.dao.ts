@@ -217,11 +217,15 @@ export class CommonFireStoreDao<T> {
     return docsData;
   }
 
-  public async getById(table: string, id: string): Promise<T> {
-    const ref = doc(this.db, table, id).withConverter({
+  public getDocReference(table: string, id: string) {
+    return doc(this.db, table, id).withConverter({
       toFirestore: null,
       fromFirestore: this.convertResponse
     });
+  }
+
+  public async getById(table: string, id: string): Promise<T> {
+    const ref = this.getDocReference(table, id);
 
     const snap = await getDoc(ref);
     const isExist = snap?.exists();

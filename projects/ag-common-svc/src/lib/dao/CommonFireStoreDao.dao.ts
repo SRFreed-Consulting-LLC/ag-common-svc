@@ -271,7 +271,7 @@ export class CommonFireStoreDao<T> {
       }
     });
 
-    await updateDoc(ref, value);
+    await setDoc(ref, value, { merge: true });
 
     return this.getById(table, id);
   }

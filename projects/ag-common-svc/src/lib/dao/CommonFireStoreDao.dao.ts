@@ -287,7 +287,7 @@ export class CommonFireStoreDao<T> {
     const ref = doc(this.db, table, id).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {
-        return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
+        return Object.assign(item, {
           [BaseModelKeys.updatedDate]: new Date()
         });
       }

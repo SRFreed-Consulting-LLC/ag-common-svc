@@ -1,0 +1,187 @@
+<div class="mt-2">
+  <div class="row my-2 px-3">
+    <div class="col-12 text-start editToolbar">
+      <dx-toolbar>
+        <dxi-item location="before" widget="dxButton" locateInMenu="never">
+          <div *dxTemplate>
+            <div class="toolbar-label"><b>Agent Portal</b></div>
+          </div>
+        </dxi-item>
+        <dxi-item location="after" locateInMenu="never">
+          <div *dxTemplate>
+            <dx-button [icon]="'edit'" [stylingMode]="'text'" (onClick)="showPortalEditorModal()"></dx-button>
+          </div>
+        </dxi-item>
+      </dx-toolbar>
+    </div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3"><b>Agent ID:</b></div>
+    <div class="col-3">{{ agent?.p_agent_id }}</div>
+    <div class="col-3"><b>Registered:</b></div>
+    <div class="col-3">{{ agent?.p_registered_user | yesNo }}</div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3"><b>Agent Status:</b></div>
+    <div class="col-3">{{ agent?.agent_status }}</div>
+    <div class="col-3"><b>Strategic Agent:</b></div>
+    <div class="col-3">{{ agent?.p_strategic_agent | yesNo }}</div>
+  </div>
+  <div *ngIf="isReviewLevelVisible$ | async" class="row my-2 px-3">
+    <div class="col-3"><b>Agent Review Level:</b></div>
+    <div class="col-3">{{ agent?.agent_review_level | reviewLevel }}</div>
+    <div class="col-3"></div>
+    <div class="col-3"></div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3"><b>Prospect Status:</b></div>
+    <div class="col-3">{{ agent?.prospect_status }}</div>
+    <div class="col-3"><b>AG Employee:</b></div>
+    <div class="col-3">{{ agent?.alliance_group_employee | yesNo }}</div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3"><b>Role:</b></div>
+    <div class="col-3">
+      <div *ngFor="let r of agent?.role">
+        {{ r }}
+      </div>
+    </div>
+    <div class="col-3"><b>Force PW Reset:</b></div>
+    <div class="col-3">?</div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3"><b>Agent Type:</b></div>
+    <div class="col-3">{{ agent?.agent_type }}</div>
+    <div class="col-3"><b>RMD:</b></div>
+    <div class="col-3">{{ agent?.is_rmd | yesNo }}</div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3"></div>
+    <div class="col-3"></div>
+    <div class="col-3"><b>Christmas Card:</b></div>
+    <div class="col-3">{{ agent?.christmas_card | yesNo }}</div>
+  </div>
+</div>
+
+<ag-shr-modal-window
+  [width]="'50vw'"
+  [height]="'auto'"
+  #portalEditorModalRef
+  [title]="'Portal Information'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="handelSaveClick()"
+  (onPopupClose)="handleClosePopup($event)"
+>
+  <dx-form
+    *ngIf="portalEditorModalRef?.popupComponent?.visible"
+    #portalEditorFormRef
+    [formData]="agent"
+    [colCount]="3"
+    labelMode="floating"
+  >
+    <dxi-item itemType="group" [colSpan]="2">
+      <dxi-item
+        dataField="p_agent_id"
+        [editorOptions]="{
+          buttons: [
+            {
+              name: 'generateAgentId',
+              options: {
+                icon: 'key',
+                disabled: inProgress,
+                visible: !agent?.p_agent_id,
+                hint: 'Generate Agent ID',
+                onClick: generateAgentId
+              }
+            }
+          ]
+        }"
+      >
+        <dxo-label [text]="'Agent ID'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item
+        [dataField]="AgentKeys.agent_status"
+        editorType="dxSelectBox"
+        [editorOptions]="{ items: agentStatuses }"
+      >
+        <dxo-label [text]="'Agent Status'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item
+        [dataField]="AgentKeys.agent_review_level"
+        [visible]="isReviewLevelVisible$ | async"
+        editorType="dxSelectBox"
+        [editorOptions]="{ items: agentReviewLevelLookup, valueExpr: 'value', displayExpr: 'description' }"
+      >
+        <dxo-label [text]="'Review Level'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item dataField="prospect_status" editorType="dxSelectBox" [editorOptions]="{ items: prospectStatuses }">
+        <dxo-label [text]="'Prospect Status'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item dataField="agent_type" editorType="dxSelectBox" [editorOptions]="{ items: agentTypes }">
+        <dxo-label [text]="'Agent Type'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item dataField="role" [colSpan]="3" [template]="'roleTemplate'">
+        <dxo-label [text]="'Roles'"></dxo-label>
+      </dxi-item>
+    </dxi-item>
+    <dxi-item itemType="group">
+      <dxi-item
+        dataField="p_registered_user"
+        editorType="dxSwitch"
+        [editorOptions]="{ switchedOffText: 'No', switchedOnText: 'Yes' }"
+      >
+        <dxo-label [text]="'Registered User'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item
+        dataField="p_strategic_agent"
+        editorType="dxSwitch"
+        [editorOptions]="{ switchedOffText: 'No', switchedOnText: 'Yes' }"
+      >
+        <dxo-label [text]="'Strategic Agent'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item
+        dataField="alliance_group_employee"
+        editorType="dxSwitch"
+        [editorOptions]="{ switchedOffText: 'No', switchedOnText: 'Yes' }"
+      >
+        <dxo-label [text]="'AG Employee'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item
+        dataField="is_rmd"
+        editorType="dxSwitch"
+        [editorOptions]="{ switchedOffText: 'No', switchedOnText: 'Yes' }"
+      >
+        <dxo-label [text]="'Is RMD'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item
+        dataField="christmas_card"
+        editorType="dxSwitch"
+        [editorOptions]="{ switchedOffText: 'No', switchedOnText: 'Yes' }"
+      >
+        <dxo-label [text]="'Christmas Card'"></dxo-label>
+      </dxi-item>
+    </dxi-item>
+
+    <div *dxTemplate="let data of 'roleTemplate'">
+      <!-- <dx-tag-box
+        [(value)]="agent?.role"
+        [items]="roles"
+        [label]="'Roles'"
+        [labelMode]="'floating'"
+        [showSelectionControls]="true"
+        applyValueMode="useButtons"
+        [searchEnabled]="true"
+      >
+      </dx-tag-box> -->
+    </div>
+  </dx-form>
+</ag-shr-modal-window>

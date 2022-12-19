@@ -80,8 +80,4 @@ export class PortalComponent {
   public handleClosePopup = (e) => {
     this.portalService.onCancel(e);
   };
-
-  public onRolesChanged = (e) => {
-    Object.assign(this.agent, { roles: [...(e?.value ?? [])] });
-  };
 }

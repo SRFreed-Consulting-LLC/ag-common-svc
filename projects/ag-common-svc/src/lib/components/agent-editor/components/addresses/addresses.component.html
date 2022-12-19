@@ -80,9 +80,10 @@
           widget="dxButton"
           location="after"
           toolbar="bottom"
+          *ngIf="!!addressesGridREf.instance"
           [options]="{
             text: 'CANCEL',
-            onClick: addressesGridREf.instance.cancelEditData,
+            onClick: onCancel,
             elementAttr: {
               class: 'modal-window__toolbar-button'
             }

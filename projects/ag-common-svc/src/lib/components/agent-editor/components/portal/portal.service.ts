@@ -105,7 +105,7 @@ export class PortalService {
         const prevValue = target[prop];
         this.formChangesDetector.handleChange(prop, value, prevValue);
         Reflect.set(target, prop, value, receiver);
-
+        debugger;
         switch (prop) {
           case AgentKeys.agent_status:
             if (value !== AGENT_STATUS.IN_REVIEW) {

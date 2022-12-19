@@ -73,7 +73,7 @@
   (onPopupClose)="handleClosePopup($event)"
 >
   <dx-form
-    *ngIf="portalEditorModalRef?.popupComponent?.visible"
+    *ngIf="portalEditorModalRef?.popupComponent?.visible ?? false"
     #portalEditorFormRef
     [formData]="agent"
     [colCount]="3"
@@ -173,8 +173,7 @@
 
     <div *dxTemplate="let data of 'roleTemplate'">
       <dx-tag-box
-        [value]="agent?.role"
-        (onValueChanged)="onRolesChanged($event)"
+        [(value)]="agent.role"
         [items]="roles"
         [label]="'Roles'"
         [labelMode]="'floating'"

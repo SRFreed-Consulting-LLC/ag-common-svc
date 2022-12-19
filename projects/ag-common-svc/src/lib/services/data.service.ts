@@ -21,6 +21,10 @@ export class DataService<T extends BaseModel> {
     return this.fsDao.getDocReference(this.collection, id);
   }
 
+  public getDocument(id: string): Observable<any> {
+    return this.fsDao.getDocument(this.collection, id);
+  }
+
   public getById(id: any): Promise<T> {
     return this.fsDao.getById(this.collection, id);
   }

@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { AgentService } from '../../../../services/agent.service';
 import { FullAddressPipe } from '../../../../../shared/pipes/full-address.pipe';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
+import { DxDataGridComponent } from 'devextreme-angular';
 
 @Component({
   selector: 'ag-shr-addresses',
@@ -14,6 +15,7 @@ import { ModalWindowComponent } from '../../../modal-window/modal-window.compone
 })
 export class AddressesComponent implements OnInit {
   @ViewChild('addressesModalRef') addressesModalComponent: ModalWindowComponent;
+  @ViewChild('addressesGridREf', { static: false }) addressGridComponent: DxDataGridComponent;
   @Input() agentId: string;
   @Input() addresses: Address[] = [];
   @Output() addressesChange = new EventEmitter();
@@ -99,6 +101,10 @@ export class AddressesComponent implements OnInit {
 
   public canDeleteRow = (e) => {
     return !e.row.data.is_primary_billing && !e.row.data.is_primary_shipping;
+  };
+
+  public onCancel = (e) => {
+    this.addressGridComponent?.instance?.cancelEditData();
   };
 
   private checkIsAddressUniq = (data, key?: Address) => {

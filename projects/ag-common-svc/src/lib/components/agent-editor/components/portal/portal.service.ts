@@ -69,6 +69,12 @@ export class PortalService {
     const result = confirm('<i>Are you sure you want to Cancel without Saving?</i>', 'Confirm');
     result.then((dialogResult) => {
       if (dialogResult) {
+        const changes = this.formChangesDetector.getAllChanges();
+
+        changes.forEach(([key, value]) => {
+          Object.assign(this.formData, { [key]: value });
+        });
+
         this.formChangesDetector?.clear();
         component.instance.hide();
       }

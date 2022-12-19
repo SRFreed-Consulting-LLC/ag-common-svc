@@ -42,8 +42,8 @@
   <div class="row my-2 px-3">
     <div class="col-3"><b>Role:</b></div>
     <div class="col-3">
-      <div *ngFor="let r of agent?.role">
-        {{ r }}
+      <div *ngFor="let r of agent?.role; let isLast = last">
+        <span>{{ r }}<ng-container *ngIf="!isLast">;</ng-container></span>
       </div>
     </div>
     <div class="col-3"><b>Force PW Reset:</b></div>
@@ -172,8 +172,9 @@
     </dxi-item>
 
     <div *dxTemplate="let data of 'roleTemplate'">
-      <!-- <dx-tag-box
-        [(value)]="agent?.role"
+      <dx-tag-box
+        [value]="agent?.role"
+        (onValueChanged)="onRolesChanged($event)"
         [items]="roles"
         [label]="'Roles'"
         [labelMode]="'floating'"
@@ -181,7 +182,7 @@
         applyValueMode="useButtons"
         [searchEnabled]="true"
       >
-      </dx-tag-box> -->
+      </dx-tag-box>
     </div>
   </dx-form>
 </ag-shr-modal-window>

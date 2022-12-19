@@ -12,7 +12,7 @@ import { DataService } from './data.service';
 })
 export class AgentService extends DataService<Agent> {
   constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp) {
-    super(fireBaseApp, AgentService.fromFirestore, AgentService.toFirestore);
+    super(fireBaseApp, AgentService.fromFirestore);
     super.collection = 'agents';
   }
 
@@ -21,19 +21,29 @@ export class AgentService extends DataService<Agent> {
       reason.created_date = dateFromTimestamp(reason.created_date as Timestamp);
     });
 
+    const fullName = [data[AgentKeys.p_agent_first_name], data[AgentKeys.p_agent_last_name]].filter(Boolean).join(' ');
+
     return Object.assign({}, data, {
+      [AgentKeys.p_agent_name]: fullName,
+      [AgentKeys.registrant_review_level_update_date]: dateFromTimestamp(
+        data?.registrant_review_level_update_date as Timestamp
+      ),
       [AgentKeys.prospect_status_update_date]: dateFromTimestamp(data?.prospect_status_update_date as Timestamp),
       [AgentKeys.campaigns_user_since]: dateFromTimestamp(data?.campaigns_user_since as Timestamp)
     });
   };
 
-  static readonly toFirestore = (data: Agent): Agent => {
-    const fullName = [data[AgentKeys.p_agent_first_name], data[AgentKeys.p_agent_last_name]].filter(Boolean).join(' ');
+  public updateFields(documentId: string, data: Partial<Agent>): Promise<Agent> {
+    if (AgentKeys.agent_review_level in data) {
+      Object.assign(data, { [AgentKeys.registrant_review_level_update_date]: new Date() });
+    }
 
-    return Object.assign(data, {
-      [AgentKeys.p_agent_name]: fullName
-    });
-  };
+    if (AgentKeys.prospect_status in data) {
+      Object.assign(data, { [AgentKeys.prospect_status_update_date]: new Date() });
+    }
+
+    return super.updateFields(documentId, data);
+  }
 
   getAgentByEmail(email: string): Promise<Agent> {
     return this.getAllByValue([new QueryParam('p_email', WhereFilterOperandKeys.equal, email)]).then((agents) => {

@@ -6,6 +6,7 @@ import { FormateLogDatePipe } from './format-log-date.pipe';
 import { FullAddressPipe } from './full-address.pipe';
 import { FullNamePipe } from './full-name.pipe';
 import { PathPipe } from './path.pipe';
+import { YesNoPipe } from './yes-no.pipe';
 import { PhoneNumberMaskPipe } from './phone-number-mask.pipe';
 import { PrimaryPhoneNumberPipe } from './primary-phone-number.pipe';
 import { SafeHTMLPipe } from './safe-html.pipe';
@@ -25,7 +26,8 @@ import { TimestampPipe } from './timestamp.pipe';
     TaskWorkflowDetailsPipe,
     PrimaryPhoneNumberPipe,
     PhoneNumberMaskPipe,
-    FullAddressPipe
+    FullAddressPipe,
+    YesNoPipe
   ],
   exports: [
     SafeHTMLPipe,
@@ -39,7 +41,8 @@ import { TimestampPipe } from './timestamp.pipe';
     TaskWorkflowDetailsPipe,
     PrimaryPhoneNumberPipe,
     PhoneNumberMaskPipe,
-    FullAddressPipe
+    FullAddressPipe,
+    YesNoPipe
   ]
 })
 export class PipesModule {}

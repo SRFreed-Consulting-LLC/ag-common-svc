@@ -118,7 +118,7 @@ export class DomainAddressService {
 
       //look at each incoming and update if matching or add to list
       incoming_addresses.forEach((incoming_address) => {
-        let matching_address: Address = agent[AgentKeys.addresses].find(address => address.address1.split(' ')[0] == incoming_address.address1.split(' ')[0]);
+        let matching_address: Address = agent[AgentKeys.addresses].find(address => address.address1?.split(' ')[0] == incoming_address.address1?.split(' ')[0]);
 
         if (matching_address) {
           if (incoming_address.address2) {

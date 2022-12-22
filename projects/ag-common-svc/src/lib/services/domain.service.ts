@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
-  ImportFieldRule,
-  ImportListRule,
   ImportRuleSet,
   ImportRuleSetKeys,
-  PrimaryFieldRule
 } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {
   Address,
@@ -15,7 +12,9 @@ import {
   AGENT_TYPE,
   ApproveDenyReason,
   ApproveDenyReasonVisibilityLevel,
+  Association,
   BaseModelKeys,
+  EmailAddress,
   Goal,
   PhoneNumber,
   PROSPECT_DISPOSITION,
@@ -34,6 +33,7 @@ import { DomainPhoneNumberService } from './domain-phone-number.service';
 import { DomainSocialsService } from './domain-socials.service';
 import { DomainUtilService } from './domain-util.service';
 import { DomainWebsiteService } from './domain-website.service';
+import { RegistrantsService } from './registrants.service';
 
 @Injectable({
   providedIn: 'root'
@@ -45,6 +45,7 @@ export class DomainService {
 
   constructor(
     private agentService: AgentService,
+    private registrantsService: RegistrantsService,
     private agentAssociationsService: AgentAssociationsService,
     private approveDenyReasonService: AgentApproveDenyReasonsService,
     private domainAddressService: DomainAddressService,
@@ -79,17 +80,17 @@ export class DomainService {
     const promises: Promise<Agent>[] = [];
 
     agents.forEach((data) => {
-      let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + this.PRIMARY_EMAIL_IDENTIFIER + ')'
-
+      let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + data.get(this.PRIMARY_EMAIL_IDENTIFIER) + ')'
       
       const promise: Promise<Agent> = this.agentService.getAgentByEmail(data.get(this.PRIMARY_EMAIL_IDENTIFIER).toLowerCase().trim())
-        .then((response) => {
-          if (!response) {
+        .then((agent) => {
+          if (!agent) {
             messages.push(agent_name + ' does not currently exist and will be created.');
             return this.createAgent(data, createdBy, agencies);
           } else {
             messages.push(agent_name + ' exists and will be updated.');
-            return this.updateAgent(data, response, selectedRuleSet, agencies, createdBy);
+            console.log('about to update', agent)
+            return this.updateAgent(data, agent, selectedRuleSet, agencies, createdBy);
           }
         });
 
@@ -822,9 +823,7 @@ export class DomainService {
     });
   }
 
-  createRegistrantArray(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string): Registrant[] {
-    let retval: Registrant[] = [];
-
+  createRegistrantArrayForInvitees(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string) {
     registrant_data.forEach((data) => {
       let registrant: Registrant = { ...new Registrant() };
 
@@ -844,138 +843,68 @@ export class DomainService {
         registrant.approved = false;
       }
 
-      registrant.registration_type = data.get('registration_type');
+      if(data.has('registration_type')){
+        registrant.registration_type = data.get('registration_type');
+      }
 
-      if (registrant.invitee_guest?.toLowerCase() == 'guest') {
-        registrant.invitee_email = data.get('invitee_email');
+      let primaryEmail: EmailAddress[] = this.domainEmailService.extractEmailAddresses(data).filter(email => email.is_primary);
 
-        // TODO
-        // let guests: Association[] = this.extractAssociations(data);
+      if (primaryEmail?.length == 1) {
+        registrant.email_address = primaryEmail[0].address;
+      }
 
-        // if (guests.length == 1) {
-        //   let guest: Association = guests[0];
+      if (data.has('p_agent_first_name')) {
+        registrant.first_name = data.get('p_agent_first_name');
+      }
 
-        //   if (guest.email_address) {
-        //     registrant.email_address = guest.email_address;
-        //   }
+      if (data.has('p_agent_last_name')) {
+        registrant.last_name = data.get('p_agent_last_name');
+      }
 
-        //   if (guest.first_name) {
-        //     registrant.first_name = guest.first_name;
-        //   }
+      if (data.has('p_prefix')) {
+        registrant.p_prefix = data.get('p_prefix');
+      }
 
-        //   if (guest.last_name) {
-        //     registrant.last_name = guest.last_name;
-        //   }
+      if (data.has('p_nick_name')) {
+        registrant.p_nick_name = data.get('p_nick_name');
+      }
 
-        //   if (guest.email_address) {
-        //     registrant.email_address = guest.email_address;
-        //   }
+      if (data.has('p_nick_last_name')) {
+        registrant.p_nick_last_name = data.get('p_nick_last_name');
+      }
 
-        //   if (guest.association_type) {
-        //     registrant.relationship = guest.association_type;
-        //   }
+      if (data.has('dietary_or_personal_considerations')) {
+        registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
+          data.get('dietary_or_personal_considerations').trim()
+        );
+      }
 
-        //   if (guest.p_nick_first_name) {
-        //     registrant.p_nick_name = guest.p_nick_first_name;
-        //   }
+      if (data.has('dietary_consideration_type')) {
+        registrant.dietary_consideration_type = data.get('dietary_consideration_type');
+      }
 
-        //   if (guest.p_nick_last_name) {
-        //     registrant.p_nick_last_name = guest.p_nick_last_name;
-        //   }
+      if (data.has('dietary_consideration')) {
+        registrant.dietary_consideration = data.get('dietary_consideration');
+      }
 
-        //   if (guest.dietary_or_personal_considerations) {
-        //     registrant.dietary_or_personal_considerations = this.getYesNoValue(
-        //       guest.dietary_or_personal_considerations.trim()
-        //     );
-        //   }
+      if (data.has('p_tshirt_size')) {
+        registrant.tshirt_size = data.get('p_tshirt_size');
+      }
 
-        //   if (guest.dietary_consideration_type) {
-        //     registrant.dietary_consideration_type = guest.dietary_consideration_type;
-        //   }
+      let addresses: Address[] = this.domainAddressService.extractAddresses(data);
 
-        //   if (guest.dietary_consideration) {
-        //     registrant.dietary_consideration = guest.dietary_consideration;
-        //   }
+      if (addresses[0]) {
+        registrant.address = addresses[0];
+      }
 
-        //   if (guest.p_tshirt_size) {
-        //     registrant.tshirt_size = guest.p_tshirt_size;
-        //   }
+      let phone_numbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(data);
 
-        //   if (guest.address) {
-        //     registrant.address = guest.address;
-        //   }
+      if (phone_numbers[0]) {
+        registrant.phone_number1 = phone_numbers[0];
+      }
 
-        //   if (guest.contact_number) {
-        //     let pn: PhoneNumber = { ...new PhoneNumber() };
-        //     pn.number = guest.contact_number;
-        //     registrant.phone_number1 = pn;
-        //   }
-        // }
-      } else {
-        if (data.has('p_email')) {
-          registrant.email_address = data.get('p_email');
-        }
-
-        if (data.has('p_agent_first_name')) {
-          registrant.first_name = data.get('p_agent_first_name');
-        }
-
-        if (data.has('p_agent_last_name')) {
-          registrant.last_name = data.get('p_agent_last_name');
-        }
-
-        if (data.has('p_prefix')) {
-          registrant.p_prefix = data.get('p_prefix');
-        }
-
-        if (data.has('p_nick_name')) {
-          registrant.p_nick_name = data.get('p_nick_name');
-        }
-
-        if (data.has('p_nick_last_name')) {
-          registrant.p_nick_last_name = data.get('p_nick_last_name');
-        }
-
-        if (data.has('dietary_or_personal_considerations')) {
-          registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
-            data.get('dietary_or_personal_considerations').trim()
-          );
-        }
-
-        if (data.has('dietary_consideration_type')) {
-          registrant.dietary_consideration_type = data.get('dietary_consideration_type');
-        }
-
-        if (data.has('dietary_consideration')) {
-          registrant.dietary_consideration = data.get('dietary_consideration');
-        }
-
-        if (data.has('p_tshirt_size')) {
-          registrant.tshirt_size = data.get('p_tshirt_size');
-        }
-
-        let addresses: Address[] = this.domainAddressService.extractAddresses(data);
-
-        if (addresses[0]) {
-          registrant.address = addresses[0];
-        }
-
-        let phone_numbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(data);
-
-        if (phone_numbers[0]) {
-          registrant.phone_number1 = phone_numbers[0];
-        }
-
-        if (phone_numbers[1]) {
-          registrant.phone_number2 = phone_numbers[1];
-        }
-
-        // TODO
-        // let emergency_contacts: Association[] = this.extractAssociations(data);
-
-        // if (emergency_contacts[0]) {
-        //   registrant.emergency_contact = emergency_contacts[0];
-        // }
+      if (phone_numbers[1]) {
+        registrant.phone_number2 = phone_numbers[1];
       }
 
       data.forEach((value, key) => {
@@ -986,10 +915,115 @@ export class DomainService {
 
       this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
 
-      retval.push(registrant);
-    });
+      
+      this.domainAssociationsService.extractAssociations(data).then(emergency_contacts => {
+        if (emergency_contacts.length == 1) {
+          registrant.emergency_contact = emergency_contacts[0];
+        }    
 
-    return retval;
+        this.registrantsService.create(registrant);
+      });
+    });
+  }
+
+  createRegistrantArrayForGuests(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string) {
+    registrant_data.forEach((data) => {
+      let registrant: Registrant = { ...new Registrant() };
+
+      registrant.registration_source = 'Conference Import';
+      registrant.event_id = selectedConference;
+      registrant.created_date = new Date();
+      registrant.created_by = createdBy;
+
+      registrant.approved_by = createdBy;
+      registrant.approved_date = new Date();
+      registrant.registered_date = new Date();
+      registrant.invitee_guest = data.get('invitee_guest');
+
+      if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
+        registrant.approved = true;
+      } else {
+        registrant.approved = false;
+      }
+
+      if(data.has('registration_type')){
+        registrant.registration_type = data.get('registration_type');
+      }
+
+      registrant.invitee_email = data.get('invitee_email');
+
+      this.domainAssociationsService.extractAssociations(data).then(guests => {
+        if (guests.length == 1) {
+          let guest: Association = guests[0];
+
+          if (guest.email_address) {
+            registrant.email_address = guest.email_address;
+          }
+
+          if (guest.first_name) {
+            registrant.first_name = guest.first_name;
+          }
+
+          if (guest.last_name) {
+            registrant.last_name = guest.last_name;
+          }
+
+          if (guest.email_address) {
+            registrant.email_address = guest.email_address;
+          }
+
+          if (guest.association_type) {
+            registrant.relationship = guest.association_type;
+          }
+
+          if (guest.p_nick_first_name) {
+            registrant.p_nick_name = guest.p_nick_first_name;
+          }
+
+          if (guest.p_nick_last_name) {
+            registrant.p_nick_last_name = guest.p_nick_last_name;
+          }
+
+          if (guest.dietary_or_personal_considerations) {
+            registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
+              guest.dietary_or_personal_considerations.trim()
+            );
+          }
+
+          if (guest.dietary_consideration_type) {
+            registrant.dietary_consideration_type = guest.dietary_consideration_type;
+          }
+
+          if (guest.dietary_consideration) {
+            registrant.dietary_consideration = guest.dietary_consideration;
+          }
+
+          if (guest.p_tshirt_size) {
+            registrant.tshirt_size = guest.p_tshirt_size;
+          }
+
+          if (guest.address) {
+            registrant.address = guest.address;
+          }
+
+          if (guest.contact_number) {
+            let pn: PhoneNumber = { ...new PhoneNumber() };
+            pn.number = guest.contact_number;
+            registrant.phone_number1 = pn;
+          }
+
+          data.forEach((value, key) => {
+            if (key.startsWith('custom.')) {
+              registrant[key.split('.')[1]] = value;
+            }
+          });
+    
+          this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
+    
+          this.registrantsService.create(registrant);
+        }
+      })
+    });
   }
 
   validateAgency(agent: Agent, agencies: Agency[]): boolean {

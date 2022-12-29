@@ -812,18 +812,17 @@ export class DomainService {
     });
   }
 
-  createGuestsArray(agents: Agent[], data: Map<string, string>[]) {
+  createGuestsArray(agents: Agent[], data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[]) {
     data.forEach((registrant_data) => {
       let invitees = agents.filter((a) => a.p_email == registrant_data.get('invitee_email'));
 
       if (invitees.length == 1) {
-        // TODO
-        // this.updateAssociations(registrant_data, invitees[0], selectedRuleSet, messages);
+        this.domainAssociationsService.updateAssociations(registrant_data, invitees[0], selectedRuleSet, messages);
       }
     });
   }
 
-  createRegistrantArrayForInvitees(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string) {
+  createRegistrantArrayForInvitees(agents: Agent[], registrant_data: Map<string, string>[], selectedConference: string, createdBy: string) {
     registrant_data.forEach((data) => {
       let registrant: Registrant = { ...new Registrant() };
 
@@ -837,6 +836,9 @@ export class DomainService {
       registrant.registered_date = new Date();
       registrant.invitee_guest = data.get('invitee_guest');
 
+      let agent: Agent[] = agents.filter(agent => agent.p_email == data.get('invitee_email'));
+      
+
       if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
         registrant.approved = true;
       } else {
@@ -847,10 +849,16 @@ export class DomainService {
         registrant.registration_type = data.get('registration_type');
       }
 
-      let primaryEmail: EmailAddress[] = this.domainEmailService.extractEmailAddresses(data).filter(email => email.is_primary);
+      let emailAddresses = this.domainEmailService.extractEmailAddresses(data);
+
+      let primaryEmail: EmailAddress[] = emailAddresses.filter(email => email.is_primary);
 
       if (primaryEmail?.length == 1) {
-        registrant.email_address = primaryEmail[0].address;
+        registrant.primary_email_address = primaryEmail[0];
+      }
+
+      if (emailAddresses?.length == 2) {
+        registrant.secondary_email_address = emailAddresses[1];
       }
 
       if (data.has('p_agent_first_name')) {
@@ -900,11 +908,11 @@ export class DomainService {
       let phone_numbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(data);
 
       if (phone_numbers[0]) {
-        registrant.phone_number1 = phone_numbers[0];
+        registrant.primary_phone_number = phone_numbers[0];
       }
 
       if (phone_numbers[1]) {
-        registrant.phone_number2 = phone_numbers[1];
+        registrant.secondary_phone_number = phone_numbers[1];
       }
 
       data.forEach((value, key) => {
@@ -956,10 +964,6 @@ export class DomainService {
         if (guests.length == 1) {
           let guest: Association = guests[0];
 
-          if (guest.email_address) {
-            registrant.email_address = guest.email_address;
-          }
-
           if (guest.first_name) {
             registrant.first_name = guest.first_name;
           }
@@ -969,7 +973,9 @@ export class DomainService {
           }
 
           if (guest.email_address) {
-            registrant.email_address = guest.email_address;
+            let address: EmailAddress = {...new EmailAddress()};
+            address.address = guest.email_address;
+            registrant.primary_email_address = address;
           }
 
           if (guest.association_type) {
@@ -1009,7 +1015,7 @@ export class DomainService {
           if (guest.contact_number) {
             let pn: PhoneNumber = { ...new PhoneNumber() };
             pn.number = guest.contact_number;
-            registrant.phone_number1 = pn;
+            registrant.primary_phone_number = pn;
           }
 
           data.forEach((value, key) => {

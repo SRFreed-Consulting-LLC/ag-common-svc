@@ -1,0 +1,24 @@
+<ag-shr-modal-window
+  #agentEditorModalRef
+  [title]="title"
+  [isFullScreen]="true"
+  [width]="'100vw'"
+  [height]="'100vh'"
+  [showSaveButton]="false"
+  [cancelButtonTitle]="'CLOSE'"
+  [extraToolbarItems]="[
+    {
+      widget: 'dxButton',
+      location: 'before',
+      toolbar: 'bottom',
+      visible: 'true',
+      options: {
+        text: 'VIEW PROSPECT',
+        type: 'default',
+        onClick: showProspectInfo
+      }
+    }
+  ]"
+>
+  <ng-content></ng-content>
+</ag-shr-modal-window>

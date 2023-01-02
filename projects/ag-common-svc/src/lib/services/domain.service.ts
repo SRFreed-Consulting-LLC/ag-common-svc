@@ -841,8 +841,8 @@ export class DomainService {
       
       let qp: QueryParam[] = [];
       qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
-      qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
       qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, data.get('p_agent_first_name')));
+      qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('p_agent_last_name')));
       qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
 
       

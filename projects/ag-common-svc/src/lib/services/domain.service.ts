@@ -836,126 +836,137 @@ export class DomainService {
 
   createRegistrantArrayForInvitees(agents: Agent[], registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, conferenceRegistrationPolicy: string) {
     registrant_data.forEach((data) => {
-      let registrant: Registrant = { ...new Registrant() };
+      let registrant: Registrant;
 
-      // if(conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE){
-      //   let qp: QueryParam[] = [];
-      //   qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
-      //   qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, data.get('first_name')));
-      //   qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('last_name')));
-
-      // }
       
+      let qp: QueryParam[] = [];
+      qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
+      qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
+      qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, data.get('p_agent_first_name')));
+      qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
 
-      registrant.registration_source = 'Conference Import';
-      registrant.event_id = selectedConference;
-      registrant.created_date = new Date();
-      registrant.created_by = createdBy;
-
-      registrant.approved_by = createdBy;
-      registrant.approved_date = new Date();
-      registrant.registered_date = new Date();
-      registrant.invitee_guest = data.get('invitee_guest');
-
-      registrant.last_eval_date = new Date();
-
-      let agent: Agent[] = agents.filter(agent => agent.p_email == data.get('invitee_email'));
       
+      this.registrantsService.getAllByValue(qp).then(registrants => {
+        if(registrants.length == 0){
+          registrant = {... new Registrant()};
+        } else if (registrants.length == 1){
+          registrant = registrants[0];
 
-      if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
-        registrant.approved = true;
-      } else {
-        registrant.approved = false;
-      }
-
-      if(data.has('registration_type')){
-        registrant.registration_type = data.get('registration_type');
-      }
-
-      registrant.invitee_email = data.get('invitee_email');
-
-      let emailAddresses = this.domainEmailService.extractEmailAddresses(data);
-
-      let primaryEmail: EmailAddress[] = emailAddresses.filter(email => email.is_primary);
-
-      if (primaryEmail?.length == 1) {
-        registrant.primary_email_address = primaryEmail[0];
-      }
-
-      if (emailAddresses?.length == 2) {
-        registrant.secondary_email_address = emailAddresses[1];
-      }
-
-      if (data.has('p_agent_first_name')) {
-        registrant.first_name = data.get('p_agent_first_name');
-      }
-
-      if (data.has('p_agent_last_name')) {
-        registrant.last_name = data.get('p_agent_last_name');
-      }
-
-      if (data.has('p_prefix')) {
-        registrant.p_prefix = data.get('p_prefix');
-      }
-
-      if (data.has('p_nick_name')) {
-        registrant.p_nick_name = data.get('p_nick_name');
-      }
-
-      if (data.has('p_nick_last_name')) {
-        registrant.p_nick_last_name = data.get('p_nick_last_name');
-      }
-
-      if (data.has('dietary_or_personal_considerations')) {
-        registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
-          data.get('dietary_or_personal_considerations').trim()
-        );
-      }
-
-      if (data.has('dietary_consideration_type')) {
-        registrant.dietary_consideration_type = data.get('dietary_consideration_type');
-      }
-
-      if (data.has('dietary_consideration')) {
-        registrant.dietary_consideration = data.get('dietary_consideration');
-      }
-
-      if (data.has('p_tshirt_size')) {
-        registrant.tshirt_size = data.get('p_tshirt_size');
-      }
-
-      let addresses: Address[] = this.domainAddressService.extractAddresses(data);
-
-      if (addresses[0]) {
-        registrant.address = addresses[0];
-      }
-
-      let phone_numbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(data);
-
-      if (phone_numbers[0]) {
-        registrant.primary_phone_number = phone_numbers[0];
-      }
-
-      if (phone_numbers[1]) {
-        registrant.secondary_phone_number = phone_numbers[1];
-      }
-
-      data.forEach((value, key) => {
-        if (key.startsWith('custom.')) {
-          registrant[key.split('.')[1]] = value;
+          if(conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE){
+            registrant = {... new Registrant()};
+            this.registrantsService.delete(registrants[0][BaseModelKeys.dbId]);
+          }
         }
-      });
 
-      this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
+        registrant.registration_source = 'Conference Import';
+        registrant.event_id = selectedConference;
+        registrant.created_date = new Date();
+        registrant.created_by = createdBy;
 
+        registrant.approved_by = createdBy;
+        registrant.approved_date = new Date();
+        registrant.registered_date = new Date();
+        registrant.invitee_guest = data.get('invitee_guest');
+
+        registrant.last_eval_date = new Date();
+
+        if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
+          registrant.approved = true;
+        } else {
+          registrant.approved = false;
+        }
+
+        if(data.has('registration_type')){
+          registrant.registration_type = data.get('registration_type');
+        }
+
+        registrant.invitee_email = data.get('invitee_email');
+
+        let emailAddresses = this.domainEmailService.extractEmailAddresses(data);
+
+        let primaryEmail: EmailAddress[] = emailAddresses.filter(email => email.is_primary);
+
+        if (primaryEmail?.length == 1) {
+          registrant.primary_email_address = primaryEmail[0];
+        }
+
+        if (emailAddresses?.length == 2) {
+          registrant.secondary_email_address = emailAddresses[1];
+        }
+
+        if (data.has('p_agent_first_name')) {
+          registrant.first_name = data.get('p_agent_first_name');
+        }
+
+        if (data.has('p_agent_last_name')) {
+          registrant.last_name = data.get('p_agent_last_name');
+        }
+
+        if (data.has('p_prefix')) {
+          registrant.p_prefix = data.get('p_prefix');
+        }
+
+        if (data.has('p_nick_name')) {
+          registrant.p_nick_name = data.get('p_nick_name');
+        }
+
+        if (data.has('p_nick_last_name')) {
+          registrant.p_nick_last_name = data.get('p_nick_last_name');
+        }
+
+        if (data.has('dietary_or_personal_considerations')) {
+          registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
+            data.get('dietary_or_personal_considerations').trim()
+          );
+        }
+
+        if (data.has('dietary_consideration_type')) {
+          registrant.dietary_consideration_type = data.get('dietary_consideration_type');
+        }
+
+        if (data.has('dietary_consideration')) {
+          registrant.dietary_consideration = data.get('dietary_consideration');
+        }
+
+        if (data.has('p_tshirt_size')) {
+          registrant.tshirt_size = data.get('p_tshirt_size');
+        }
+
+        let addresses: Address[] = this.domainAddressService.extractAddresses(data);
+
+        if (addresses[0]) {
+          registrant.address = addresses[0];
+        }
+
+        let phone_numbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(data);
+
+        if (phone_numbers[0]) {
+          registrant.primary_phone_number = phone_numbers[0];
+        }
+
+        if (phone_numbers[1]) {
+          registrant.secondary_phone_number = phone_numbers[1];
+        }
+
+        data.forEach((value, key) => {
+          if (key.startsWith('custom.')) {
+            registrant[key.split('.')[1]] = value;
+          }
+        });
       
-      this.domainAssociationsService.extractAssociations(data).then(emergency_contacts => {
-        if (emergency_contacts.length == 1) {
-          registrant.emergency_contact = emergency_contacts[0];
-        }    
-
-        this.registrantsService.create(registrant);
-      });
+        this.domainAssociationsService.extractAssociations(data).then(emergency_contacts => {
+          if (emergency_contacts.length == 1) {
+            registrant.emergency_contact = emergency_contacts[0];
+          }    
+          if(registrant[BaseModelKeys.dbId]){
+            this.messages.push('Registration Updated for ' + registrant.first_name + ' ' + registrant.last_name);
+            this.registrantsService.update(registrant);
+          } else {
+            this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
+            this.registrantsService.create(registrant);
+          }
+        });
+      })
     });
   }
 
@@ -963,99 +974,125 @@ export class DomainService {
     registrant_data.forEach((data) => {
       let registrant: Registrant = { ...new Registrant() };
 
-      registrant.registration_source = 'Conference Import';
-      registrant.event_id = selectedConference;
-      registrant.created_date = new Date();
-      registrant.created_by = createdBy;
 
-      registrant.approved_by = createdBy;
-      registrant.approved_date = new Date();
-      registrant.registered_date = new Date();
-      registrant.invitee_guest = data.get('invitee_guest');
+      let qp: QueryParam[] = [];
+      qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
+      qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, data.get('association.1.first_name')));
+      qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('association.1.last_name')));
+      qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
 
-      registrant.last_eval_date = new Date();
+      this.registrantsService.getAllByValue(qp).then(registrants => {
+        if(registrants.length == 0){
+          registrant = {... new Registrant()};
+        } else if (registrants.length == 1){
+          registrant = registrants[0];
 
-      if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
-        registrant.approved = true;
-      } else {
-        registrant.approved = false;
-      }
-
-      if(data.has('registration_type')){
-        registrant.registration_type = data.get('registration_type');
-      }
-
-      registrant.invitee_email = data.get('invitee_email');
-
-      this.domainAssociationsService.extractAssociations(data).then(guests => {
-        if (guests.length == 1) {
-          let guest: Association = guests[0];
-
-          if (guest.first_name) {
-            registrant.first_name = guest.first_name;
+          if(conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE){
+            registrant = {... new Registrant()};
+            this.registrantsService.delete(registrants[0][BaseModelKeys.dbId]);
           }
-
-          if (guest.last_name) {
-            registrant.last_name = guest.last_name;
-          }
-
-          if (guest.email_address) {
-            let address: EmailAddress = {...new EmailAddress()};
-            address.address = guest.email_address;
-            registrant.primary_email_address = address;
-          }
-
-          if (guest.association_type) {
-            registrant.relationship = guest.association_type;
-          }
-
-          if (guest.p_nick_first_name) {
-            registrant.p_nick_name = guest.p_nick_first_name;
-          }
-
-          if (guest.p_nick_last_name) {
-            registrant.p_nick_last_name = guest.p_nick_last_name;
-          }
-
-          if (guest.dietary_or_personal_considerations) {
-            registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
-              guest.dietary_or_personal_considerations.trim()
-            );
-          }
-
-          if (guest.dietary_consideration_type) {
-            registrant.dietary_consideration_type = guest.dietary_consideration_type;
-          }
-
-          if (guest.dietary_consideration) {
-            registrant.dietary_consideration = guest.dietary_consideration;
-          }
-
-          if (guest.p_tshirt_size) {
-            registrant.tshirt_size = guest.p_tshirt_size;
-          }
-
-          if (guest.address) {
-            registrant.address = guest.address;
-          }
-
-          if (guest.contact_number) {
-            let pn: PhoneNumber = { ...new PhoneNumber() };
-            pn.number = guest.contact_number;
-            registrant.primary_phone_number = pn;
-          }
-
-          data.forEach((value, key) => {
-            if (key.startsWith('custom.')) {
-              registrant[key.split('.')[1]] = value;
-            }
-          });
-    
-          this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
-    
-          this.registrantsService.create(registrant);
         }
-      })
+
+        registrant.registration_source = 'Conference Import';
+        registrant.event_id = selectedConference;
+        registrant.created_date = new Date();
+        registrant.created_by = createdBy;
+
+        registrant.approved_by = createdBy;
+        registrant.approved_date = new Date();
+        registrant.registered_date = new Date();
+        registrant.invitee_guest = data.get('invitee_guest');
+
+        registrant.last_eval_date = new Date();
+
+        if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
+          registrant.approved = true;
+        } else {
+          registrant.approved = false;
+        }
+
+        if(data.has('registration_type')){
+          registrant.registration_type = data.get('registration_type');
+        }
+
+        registrant.invitee_email = data.get('invitee_email');
+
+        this.domainAssociationsService.extractAssociations(data).then(guests => {
+          if (guests.length == 1) {
+            let guest: Association = guests[0];
+
+            if (guest.first_name) {
+              registrant.first_name = guest.first_name;
+            }
+
+            if (guest.last_name) {
+              registrant.last_name = guest.last_name;
+            }
+
+            if (guest.email_address) {
+              let address: EmailAddress = {...new EmailAddress()};
+              address.address = guest.email_address;
+              registrant.primary_email_address = address;
+            }
+
+            if (guest.association_type) {
+              registrant.relationship = guest.association_type;
+            }
+
+            if (guest.p_nick_first_name) {
+              registrant.p_nick_name = guest.p_nick_first_name;
+            }
+
+            if (guest.p_nick_last_name) {
+              registrant.p_nick_last_name = guest.p_nick_last_name;
+            }
+
+            if (guest.dietary_or_personal_considerations) {
+              registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
+                guest.dietary_or_personal_considerations.trim()
+              );
+            }
+
+            if (guest.dietary_consideration_type) {
+              registrant.dietary_consideration_type = guest.dietary_consideration_type;
+            }
+
+            if (guest.dietary_consideration) {
+              registrant.dietary_consideration = guest.dietary_consideration;
+            }
+
+            if (guest.p_tshirt_size) {
+              registrant.tshirt_size = guest.p_tshirt_size;
+            }
+
+            if (guest.address) {
+              registrant.address = guest.address;
+            }
+
+            if (guest.contact_number) {
+              let pn: PhoneNumber = { ...new PhoneNumber() };
+              pn.number = guest.contact_number;
+              registrant.primary_phone_number = pn;
+            }
+
+            data.forEach((value, key) => {
+              if (key.startsWith('custom.')) {
+                registrant[key.split('.')[1]] = value;
+              }
+            });
+      
+            if(registrant[BaseModelKeys.dbId]){
+              this.messages.push('Registration Updated for ' + registrant.first_name + ' ' + registrant.last_name);
+              this.registrantsService.update(registrant);
+            } else {
+              this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
+              this.registrantsService.create(registrant);
+            }
+            
+          }
+        })
+      });
+
     });
   }
 

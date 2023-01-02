@@ -173,9 +173,9 @@ export class DomainAssociationsService {
         promises.push(
           this.agentAssociationsService.create(agent[BaseModelKeys.dbId], incomingAssociation).then((association) => {
             if (association) {
-              messages.push(
-                'Associate created (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
-              );
+              // messages.push(
+              //   'Associate created (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
+              // );
             }
           })
         );
@@ -305,9 +305,9 @@ export class DomainAssociationsService {
             .update(agent[BaseModelKeys.dbId], matchingAssociation[BaseModelKeys.dbId], matchingAssociation)
             .then((association) => {
               if (association) {
-                messages.push(
-                  'Associate updated (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
-                );
+                // messages.push(
+                //   'Associate updated (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
+                // );
               }
             })
         );

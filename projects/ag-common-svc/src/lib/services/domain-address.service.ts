@@ -121,6 +121,14 @@ export class DomainAddressService {
         let matching_address: Address = agent[AgentKeys.addresses].find(address => address.address1?.split(' ')[0] == incoming_address.address1?.split(' ')[0]);
 
         if (matching_address) {
+          if (incoming_address.address1) {
+            this.domainUtilService.updateField(
+              selectedRuleSet[ImportRuleSetKeys.address_address1],
+              matching_address,
+              'address1',
+              incoming_address.address1
+            );
+          }
           if (incoming_address.address2) {
             this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_address2],

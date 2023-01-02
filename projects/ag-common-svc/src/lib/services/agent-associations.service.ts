@@ -36,7 +36,7 @@ export class AgentAssociationsService {
     return this.fsDao
       .create(data, table)
       .then((response) => {
-        this.toastrService.success('Agent Association Successfully Created!');
+        //this.toastrService.success('Agent Association Successfully Created!');
         this.lockLookup(data);
         return response;
       })
@@ -52,7 +52,7 @@ export class AgentAssociationsService {
     return this.fsDao
       .updateFields(updates, documentId, table)
       .then((response) => {
-        this.toastrService.success('Agent Association Successfully Updated!');
+        //this.toastrService.success('Agent Association Successfully Updated!');
         this.lockLookup(updates);
         return response;
       })

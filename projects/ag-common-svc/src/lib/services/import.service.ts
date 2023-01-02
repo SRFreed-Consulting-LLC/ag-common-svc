@@ -4,17 +4,20 @@ import { AgentService } from './agent.service';
 import { DomainAddressService } from './domain-address.service';
 import { DomainEmailService } from './domain-email.service';
 import { DomainPhoneNumberService } from './domain-phone-number.service';
+import { DomainUtilService } from './domain-util.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ImportService {
   PRIMARY_EMAIL_IDENTIFIER = 'email_addresses.1.address';
+  ASSOCIATE_EMAIL_IDENTIFIER = 'association.1.email_address';
 
   constructor(public agentService: AgentService, 
     private domainEmailService: DomainEmailService,
     private domainPhoneNumberService: DomainPhoneNumberService,
     private domainAddressService: DomainAddressService,
+    private domainUtilService: DomainUtilService
   ) {}
 
   public importFileToString(file: File): Promise<string | ArrayBuffer> {
@@ -96,27 +99,52 @@ export class ImportService {
     }
   }
 
-  validateData(data: Map<string, any>, messages: String[]) {
+  validateInvitee(invitee: Map<string, any>, messages: String[]) {
     let isValid = true;
 
-    let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + this.PRIMARY_EMAIL_IDENTIFIER + ')'
+    let agent_name = invitee.get('p_agent_first_name') + ' ' + invitee.get('p_agent_last_name') + '(' + invitee.get(this.PRIMARY_EMAIL_IDENTIFIER) + ')'
 
-    if(data.has(AgentKeys.campaigns_user_name) && !this.isDate(data.get(AgentKeys.campaigns_user_since))){
+    if(invitee.has(AgentKeys.campaigns_user_name) && !this.isDate(invitee.get(AgentKeys.campaigns_user_since))){
       messages.push('ERROR: ' + agent_name + " has an invalid date in " + AgentKeys.campaigns_user_name);
       isValid = false;
     }
 
-    if(data.has(AgentKeys.dob) && !this.isDate(data.get(AgentKeys.dob))){
+    if(invitee.has('invitee_email')){
+      if(invitee.get('invitee_email').trim() == ''){
+        messages.push('ERROR: ' + agent_name + " does not have an email address in 'invitee_email'");
+        isValid = false;      
+      }
+      
+      if(invitee.has('email_addresses.1.address')){
+        if(invitee.get('email_addresses.1.address').trim() != invitee.get('invitee_email').trim()){
+          messages.push('ERROR: ' + agent_name + " The Email Associated with this Registration and the Primary Login Email must be the same");
+          isValid = false;
+        }
+
+        if(!this.domainUtilService.getBoolean(invitee.get('email_addresses.1.is_login'))){
+          messages.push('ERROR: ' + agent_name + " The Login Email with this Registration must be associated with the first Address w/n the spreadsheet");
+          isValid = false;
+        }
+      } else {
+        messages.push('ERROR: ' + agent_name + " does not have an email address in 'address.1.address'");
+        isValid = false;   
+      }
+    } else {
+      messages.push('ERROR: ' + agent_name + " does not have an email address in 'invitee_email'");
+      isValid = false;   
+    }
+
+    if(invitee.has(AgentKeys.dob) && !this.isDate(invitee.get(AgentKeys.dob))){
       messages.push('ERROR: ' + agent_name + " has an invalid date in " + AgentKeys.dob);
       isValid = false;
     }
 
-    if(data.has(AgentKeys.prospect_referred_to_date) && !this.isDate(data.get(AgentKeys.prospect_referred_to_date))){
+    if(invitee.has(AgentKeys.prospect_referred_to_date) && !this.isDate(invitee.get(AgentKeys.prospect_referred_to_date))){
       messages.push('ERROR: ' + agent_name + " has an invalid date in " + AgentKeys.prospect_referred_to_date);
       isValid = false;
     }
 
-    let addresses: Address[] = this.domainAddressService.extractAddresses(data);
+    let addresses: Address[] = this.domainAddressService.extractAddresses(invitee);
 
     if(addresses.filter(addresses => addresses.is_primary_billing == true).length > 1){
       messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Billing Address listed');
@@ -128,25 +156,42 @@ export class ImportService {
       isValid = false;
     }
 
-    let phoneNumbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(data);
+    let phoneNumbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(invitee);
 
     if(phoneNumbers.filter(phone => phone.is_primary == true).length > 1){
       messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Phone Number listed');
       isValid = false;
     }
 
-    let emailAddresses: EmailAddress[] = this.domainEmailService.extractEmailAddresses(data);
+    let emailAddresses: EmailAddress[] = this.domainEmailService.extractEmailAddresses(invitee);
 
     if(emailAddresses.filter(email => email.is_primary == true).length > 1){
       messages.push('ERROR: ' + agent_name + ' has more than 1 Primary Email listed');
       isValid = false;
     }
 
-    let allEmails: string[] = [];
+    return isValid;
+  }
 
-    emailAddresses.forEach(email => {
-      allEmails.push(email.address)
-    })
+  validateGuest(guest: Map<string, any>, invitee_list: Map<string, any>[], messages: String[]) {
+    let isValid = true;
+
+    let guest_name = guest.get('association.1.first_name') + ' ' + guest.get('association.1.last_name') + '(' + guest.get(this.ASSOCIATE_EMAIL_IDENTIFIER) + ')'
+
+    if(guest.has('invitee_email')){
+      if(guest.get('invitee_email').trim() == ''){
+        messages.push('ERROR: ' + guest_name + " does not have an email address in 'invitee_email'");
+        isValid = false;
+      }
+
+      if(invitee_list.filter(invitee => invitee.get('invitee_email') == guest.get('invitee_email')).length == 0){
+        messages.push('ERROR: ' + guest_name + " does not have an email address in 'invitee_email' that matches an invitee in the list.");
+        isValid = false;
+      }
+    } else {
+      messages.push('ERROR: ' + guest_name + " does not have an email address in 'invitee_email'");
+      isValid = false;
+    }
 
     return isValid;
   }

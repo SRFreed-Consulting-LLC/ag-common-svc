@@ -23,6 +23,7 @@ import {
   Registrant,
   Role,
 } from 'ag-common-lib/public-api';
+import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { AgentApproveDenyReasonsService } from './agent-approve-deny-reason.service';
 import { AgentAssociationsService } from './agent-associations.service';
 import { AgentService } from './agent.service';
@@ -42,6 +43,9 @@ export class DomainService {
   PRIMARY_EMAIL_IDENTIFIER = 'email_addresses.1.address';
 
   messages: string[];
+
+  REGISTRATION_POLICY_REPLACE: string = 'Replace Existing Registrations';
+  REGISTRATION_POLICY_UPDATE: string = 'Update Existing Registrations';
 
   constructor(
     private agentService: AgentService,
@@ -249,18 +253,23 @@ export class DomainService {
     }
 
     if (line_data.has(AgentKeys.agent_status)) {
-      agent[AgentKeys.agent_status] = AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim()];
+      agent[AgentKeys.agent_status] = AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim().toUpperCase()];
     }
     if (line_data.has(AgentKeys.prospect_status)) {
-      agent[AgentKeys.prospect_status] = PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim()];
+      agent[AgentKeys.prospect_status] = PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim().toUpperCase()];
     }
     if (line_data.has(AgentKeys.prospect_priority)) {
-      agent[AgentKeys.prospect_priority] = PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim()];
+      agent[AgentKeys.prospect_priority] = PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim().toUpperCase()];
     }
     if (line_data.has(AgentKeys.prospect_disposition)) {
-      agent[AgentKeys.prospect_disposition] =
-        PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim()];
+      agent[AgentKeys.prospect_disposition] = PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim().toUpperCase()];
     }
+
+    if (line_data.has(AgentKeys.agent_type)) {
+      agent[AgentKeys.agent_type] = AGENT_TYPE[line_data.get(AgentKeys.agent_type).trim().toUpperCase()];
+    } else {
+      agent[AgentKeys.agent_type] = AGENT_TYPE.GENERAL_AGENT; 
+    }    
 
     let splitVals: Map<string, string> = new Map<string, string>();
 
@@ -323,7 +332,6 @@ export class DomainService {
     agent[AgentKeys.registrationDate] = new Date();
     agent[BaseModelKeys.createdBy] = createdBy;
     agent[AgentKeys.approvedBy] = createdBy;
-    agent[AgentKeys.agent_type] = AGENT_TYPE.GENERAL_AGENT;
     agent[AgentKeys.is_rmd] = false;
     agent[AgentKeys.is_credited] = false;
 
@@ -453,14 +461,7 @@ export class DomainService {
         line_data.get(AgentKeys.p_suffix).trim()
       );
     }
-    if (line_data.has(AgentKeys.p_external_agent_id)) {
-      this.domainUtilService.updateField(
-        selectedRuleSet[ImportRuleSetKeys.p_external_agent_id],
-        agent,
-        AgentKeys.p_external_agent_id,
-        line_data.get(AgentKeys.p_external_agent_id).trim()
-      );
-    }
+
     if (line_data.has(AgentKeys.npn)) {
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_suffix],
@@ -742,12 +743,23 @@ export class DomainService {
       );
     }
 
+    if (line_data.has(AgentKeys.agent_type)) {
+      this.domainUtilService.updateField(
+        selectedRuleSet[ImportRuleSetKeys.agent_type],
+        agent,
+        AgentKeys.agent_type,
+        AGENT_TYPE[line_data.get(AgentKeys.agent_type).trim().toUpperCase()]
+      );
+    } else {
+      agent.agent_type = AGENT_TYPE.GENERAL_AGENT;
+    }
+
     if (line_data.has(AgentKeys.agent_status)) {
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.agent_status],
         agent,
         AgentKeys.agent_status,
-        AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim()]
+        AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim().toUpperCase()]
       );
     }
 
@@ -756,7 +768,7 @@ export class DomainService {
         selectedRuleSet[ImportRuleSetKeys.prospect_status],
         agent,
         AgentKeys.prospect_status,
-        PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim()]
+        PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim().toUpperCase()]
       );
     }
 
@@ -765,7 +777,7 @@ export class DomainService {
         selectedRuleSet[ImportRuleSetKeys.prospect_priority],
         agent,
         AgentKeys.prospect_priority,
-        PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim()]
+        PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim().toUpperCase()]
       );
     }
 
@@ -774,7 +786,7 @@ export class DomainService {
         selectedRuleSet[ImportRuleSetKeys.prospect_disposition],
         agent,
         AgentKeys.prospect_disposition,
-        PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim()]
+        PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim().toUpperCase()]
       );
     }
 
@@ -822,9 +834,18 @@ export class DomainService {
     });
   }
 
-  createRegistrantArrayForInvitees(agents: Agent[], registrant_data: Map<string, string>[], selectedConference: string, createdBy: string) {
+  createRegistrantArrayForInvitees(agents: Agent[], registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, conferenceRegistrationPolicy: string) {
     registrant_data.forEach((data) => {
       let registrant: Registrant = { ...new Registrant() };
+
+      // if(conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE){
+      //   let qp: QueryParam[] = [];
+      //   qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
+      //   qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, data.get('first_name')));
+      //   qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('last_name')));
+
+      // }
+      
 
       registrant.registration_source = 'Conference Import';
       registrant.event_id = selectedConference;
@@ -835,6 +856,8 @@ export class DomainService {
       registrant.approved_date = new Date();
       registrant.registered_date = new Date();
       registrant.invitee_guest = data.get('invitee_guest');
+
+      registrant.last_eval_date = new Date();
 
       let agent: Agent[] = agents.filter(agent => agent.p_email == data.get('invitee_email'));
       
@@ -848,6 +871,8 @@ export class DomainService {
       if(data.has('registration_type')){
         registrant.registration_type = data.get('registration_type');
       }
+
+      registrant.invitee_email = data.get('invitee_email');
 
       let emailAddresses = this.domainEmailService.extractEmailAddresses(data);
 
@@ -934,7 +959,7 @@ export class DomainService {
     });
   }
 
-  createRegistrantArrayForGuests(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string) {
+  createRegistrantArrayForGuests(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, conferenceRegistrationPolicy: string) {
     registrant_data.forEach((data) => {
       let registrant: Registrant = { ...new Registrant() };
 
@@ -947,6 +972,8 @@ export class DomainService {
       registrant.approved_date = new Date();
       registrant.registered_date = new Date();
       registrant.invitee_guest = data.get('invitee_guest');
+
+      registrant.last_eval_date = new Date();
 
       if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
         registrant.approved = true;

@@ -85,9 +85,17 @@ export class DomainService {
     const promises: Promise<Agent>[] = [];
 
     agents.forEach((data) => {
-      let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + data.get(this.PRIMARY_EMAIL_IDENTIFIER) + ')'
-      
-      const promise: Promise<Agent> = this.agentService.getAgentByEmail(data.get(this.PRIMARY_EMAIL_IDENTIFIER).toLowerCase().trim())
+      let email_address: string;  
+
+      if(data.has(this.PRIMARY_EMAIL_IDENTIFIER)){
+        email_address = data.get(this.PRIMARY_EMAIL_IDENTIFIER);
+      } else {
+        email_address = data.get('invitee_email')
+      }
+
+      let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + email_address + ')'
+
+      const promise: Promise<Agent> = this.agentService.getAgentByEmail(email_address.toLowerCase().trim())
         .then((agent) => {
           if (!agent) {
             messages.push(agent_name + ' does not currently exist and will be created.');
@@ -846,7 +854,7 @@ export class DomainService {
       qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
 
       
-      this.registrantsService.getAllByValue(qp).then(registrants => {
+      this.registrantsService.getAllByValue(qp).then(async registrants => {
         if(registrants.length == 0){
           registrant = {... new Registrant()};
         } else if (registrants.length == 1){
@@ -973,6 +981,18 @@ export class DomainService {
           registrant.dietary_consideration = agent.dietary_consideration
         }
 
+        if (data.has('favorite_destination')) {
+          registrant.favorite_destination = data.get('favorite_destination');
+        } else if (agent.favorite_destination){
+          registrant.favorite_destination = agent.favorite_destination;
+        }
+
+        if (data.has('p_tshirt_size')) {
+          registrant.tshirt_size = data.get('p_tshirt_size');
+        } else if (agent.p_tshirt_size){
+          registrant.tshirt_size = agent.p_tshirt_size;
+        }
+
         if (data.has('p_tshirt_size')) {
           registrant.tshirt_size = data.get('p_tshirt_size');
         } else if (agent.p_tshirt_size){
@@ -1015,7 +1035,7 @@ export class DomainService {
           }
         });
       
-        this.domainAssociationsService.extractAssociations(data).then(async emergency_contacts => {
+        await this.domainAssociationsService.extractAssociations(data).then(async emergency_contacts => {
           let contacts = emergency_contacts.filter(contact => contact.is_emergency_contact == true)
           if (contacts.length > 0) {
             registrant.emergency_contact = contacts[0];

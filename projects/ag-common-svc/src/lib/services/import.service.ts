@@ -70,12 +70,6 @@ export class ImportService {
       }
     }
 
-    let email_address = headers.filter((h) => h == this.PRIMARY_EMAIL_IDENTIFIER).length > 0;
-
-    if (!email_address) {
-      messages.push("The import must contain a field called '" + this.PRIMARY_EMAIL_IDENTIFIER + "'");
-    }
-
     if(import_type == "registration"){
       let invitee_email_exist = headers.filter(h => h == 'invitee_email').length > 0;
       
@@ -87,6 +81,12 @@ export class ImportService {
 
       if (!invitee_guest_exist) {
         messages.push("The 'Registration' import must contain a field called 'invitee_guest'");
+      }
+    } else {
+      let email_address = headers.filter((h) => h == this.PRIMARY_EMAIL_IDENTIFIER).length > 0;
+
+      if (!email_address) {
+        messages.push("The import must contain a field called '" + this.PRIMARY_EMAIL_IDENTIFIER + "'");
       }
     }
 
@@ -125,9 +125,6 @@ export class ImportService {
           messages.push('ERROR: ' + agent_name + " The Login Email with this Registration must be associated with the first Address w/n the spreadsheet");
           isValid = false;
         }
-      } else {
-        messages.push('ERROR: ' + agent_name + " does not have an email address in 'address.1.address'");
-        isValid = false;   
       }
     } else {
       messages.push('ERROR: ' + agent_name + " does not have an email address in 'invitee_email'");

@@ -16,6 +16,7 @@ import {
   BaseModelKeys,
   EmailAddress,
   Goal,
+  LegacyAgent,
   PhoneNumber,
   PROSPECT_DISPOSITION,
   PROSPECT_PRIORITY,
@@ -838,7 +839,6 @@ export class DomainService {
     registrant_data.forEach((data) => {
       let registrant: Registrant;
 
-      
       let qp: QueryParam[] = [];
       qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
       qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, data.get('p_agent_first_name')));
@@ -857,7 +857,7 @@ export class DomainService {
             this.registrantsService.delete(registrants[0][BaseModelKeys.dbId]);
           }
         }
-
+        
         registrant.registration_source = 'Conference Import';
         registrant.event_id = selectedConference;
         registrant.created_date = new Date();
@@ -882,70 +882,131 @@ export class DomainService {
 
         registrant.invitee_email = data.get('invitee_email');
 
+        let agent: LegacyAgent = agents.find(agent => agent.p_email == registrant.invitee_email);
+
         let emailAddresses = this.domainEmailService.extractEmailAddresses(data);
 
-        let primaryEmail: EmailAddress[] = emailAddresses.filter(email => email.is_primary);
+        if(emailAddresses.length > 0){
+          let primaryEmail: EmailAddress[] = emailAddresses.filter(email => email.is_login == true);
+        
 
-        if (primaryEmail?.length == 1) {
-          registrant.primary_email_address = primaryEmail[0];
-        }
+          if (primaryEmail?.length == 1) {
+            registrant.primary_email_address = primaryEmail[0];
+          }
+  
+          if (emailAddresses?.length == 2) {
+            registrant.secondary_email_address = emailAddresses[1];
+          }
+        } else {
+          let primaryEmail: EmailAddress[] = agent.email_addresses.filter(email => email.is_primary == true);
 
-        if (emailAddresses?.length == 2) {
-          registrant.secondary_email_address = emailAddresses[1];
+          if (primaryEmail?.length == 1) {
+            registrant.primary_email_address = primaryEmail[0];
+          }
         }
 
         if (data.has('p_agent_first_name')) {
           registrant.first_name = data.get('p_agent_first_name');
+        } else if (agent.p_agent_first_name){
+          registrant.first_name = agent.p_agent_first_name;
         }
 
         if (data.has('p_agent_last_name')) {
           registrant.last_name = data.get('p_agent_last_name');
+        } else if (agent.p_agent_last_name){
+          registrant.last_name = agent.p_agent_last_name;
         }
 
         if (data.has('p_prefix')) {
           registrant.p_prefix = data.get('p_prefix');
+        } else if (agent.p_prefix){
+          registrant.p_prefix = agent.p_prefix;
         }
 
         if (data.has('p_nick_name')) {
           registrant.p_nick_name = data.get('p_nick_name');
+        } else if (agent.p_nick_name){
+          registrant.p_nick_name = agent.p_nick_name;
         }
 
         if (data.has('p_nick_last_name')) {
           registrant.p_nick_last_name = data.get('p_nick_last_name');
+        } else if (agent.p_nick_last_name){
+          registrant.p_nick_last_name = agent.p_nick_last_name;
+        }
+
+        if (data.has('mga_id')) {
+          registrant.mga_id = data.get('mga_id');
+        } else if (agent.p_mga_id){
+          registrant.mga_id = agent.p_mga_id;
+        }
+
+        if (data.has('agency_id')) {
+          registrant.agency_id = data.get('agency_id');
+        } else if (agent.p_agency_id){
+          registrant.agency_id = agent.p_agency_id;
+        }
+
+        if (data.has('upline')) {
+          registrant.upline = data.get('upline');
+        } else if (agent.p_agency_id){
+          registrant.upline = agent.upline;
         }
 
         if (data.has('dietary_or_personal_considerations')) {
           registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
             data.get('dietary_or_personal_considerations').trim()
           );
+        } else if (agent.dietary_or_personal_considerations){
+          registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(agent.dietary_or_personal_considerations.trim());
         }
 
         if (data.has('dietary_consideration_type')) {
           registrant.dietary_consideration_type = data.get('dietary_consideration_type');
+        } else if (agent.dietary_consideration_type){
+          registrant.dietary_consideration_type = agent.dietary_consideration_type
         }
 
         if (data.has('dietary_consideration')) {
           registrant.dietary_consideration = data.get('dietary_consideration');
+        } else if (agent.dietary_consideration){
+          registrant.dietary_consideration = agent.dietary_consideration
         }
 
         if (data.has('p_tshirt_size')) {
           registrant.tshirt_size = data.get('p_tshirt_size');
+        } else if (agent.p_tshirt_size){
+          registrant.tshirt_size = agent.p_tshirt_size;
         }
 
         let addresses: Address[] = this.domainAddressService.extractAddresses(data);
 
         if (addresses[0]) {
           registrant.address = addresses[0];
+        } else {
+          addresses = agent.addresses.filter(address => address.is_primary_shipping == true)
+          
+          if (addresses[0]) {
+            registrant.address = addresses[0];
+          }
         }
 
         let phone_numbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(data);
 
-        if (phone_numbers[0]) {
-          registrant.primary_phone_number = phone_numbers[0];
-        }
+        if(phone_numbers?.length > 0){
+          if (phone_numbers[0]) {
+            registrant.primary_phone_number = phone_numbers[0];
+          }
+  
+          if (phone_numbers[1]) {
+            registrant.secondary_phone_number = phone_numbers[1];
+          }
+        } else {
+          phone_numbers = agent.phone_numbers.filter(number => number.is_primary == true);
 
-        if (phone_numbers[1]) {
-          registrant.secondary_phone_number = phone_numbers[1];
+          if (phone_numbers[0]) {
+            registrant.primary_phone_number = phone_numbers[0];
+          }
         }
 
         data.forEach((value, key) => {
@@ -954,10 +1015,17 @@ export class DomainService {
           }
         });
       
-        this.domainAssociationsService.extractAssociations(data).then(emergency_contacts => {
-          if (emergency_contacts.length == 1) {
-            registrant.emergency_contact = emergency_contacts[0];
+        this.domainAssociationsService.extractAssociations(data).then(async emergency_contacts => {
+          let contacts = emergency_contacts.filter(contact => contact.is_emergency_contact == true)
+          if (contacts.length > 0) {
+            registrant.emergency_contact = contacts[0];
+          } else {
+            contacts = await this.agentAssociationsService.getAll(agent[BaseModelKeys.dbId]);
+            if (contacts.length > 0) {
+              registrant.emergency_contact = contacts[0];
+            }
           }    
+
           if(registrant[BaseModelKeys.dbId]){
             this.messages.push('Registration Updated for ' + registrant.first_name + ' ' + registrant.last_name);
             this.registrantsService.update(registrant);
@@ -1087,8 +1155,7 @@ export class DomainService {
             } else {
               this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
               this.registrantsService.create(registrant);
-            }
-            
+            }            
           }
         })
       });

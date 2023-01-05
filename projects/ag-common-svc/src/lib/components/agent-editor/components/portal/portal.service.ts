@@ -30,21 +30,21 @@ export class PortalService {
     );
   }
 
-  public save = (modalWindowComponent: ModalWindowComponent) => {
+  public save = async (modalWindowComponent: ModalWindowComponent) => {
     const hasChanges = this.formChangesDetector.hasChanges;
 
     if (hasChanges) {
       this._inProgress$.next(true);
 
+      const agentId = this.agentId;
       const updates = {};
       const changes = this.formChangesDetector.getAllChanges();
 
       changes.forEach(([key]) => {
         Object.assign(updates, { [key]: this.formData[key] });
       });
-
-      this.agentService
-        .updateFields(this.agentId, this.formData)
+      await this.agentService
+        .updateFields(agentId, updates)
         .then(() => {
           this.formChangesDetector.clear();
           modalWindowComponent?.hideModal();
@@ -52,11 +52,15 @@ export class PortalService {
         .finally(() => {
           this._inProgress$.next(false);
         });
+
+      return { agentId, updates };
     }
 
     if (!hasChanges) {
       modalWindowComponent?.hideModal();
     }
+
+    return null;
   };
 
   public onCancel = ({ event, component }) => {
@@ -105,7 +109,6 @@ export class PortalService {
         const prevValue = target[prop];
         this.formChangesDetector.handleChange(prop, value, prevValue);
         Reflect.set(target, prop, value, receiver);
-        debugger;
         switch (prop) {
           case AgentKeys.agent_status:
             if (value !== AGENT_STATUS.IN_REVIEW) {

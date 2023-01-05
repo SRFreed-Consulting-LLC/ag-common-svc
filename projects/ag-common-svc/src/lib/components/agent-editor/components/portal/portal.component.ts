@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import {
   Agent,
   AgentKeys,
@@ -26,6 +26,8 @@ export class PortalComponent {
   @Input('agent') set _agent(data) {
     this.agent = this.portalService.getFormData(data);
   }
+  @Output() onFieldsUpdated = new EventEmitter<{ agentId: string; updates: Partial<Agent> }>();
+
   @ViewChild('portalEditorModalRef', { static: true }) portalEditorModalComponent: ModalWindowComponent;
   @ViewChild('portalEditorFormRef', { static: false }) portalEditorFormComponent: DxFormComponent;
 
@@ -73,8 +75,12 @@ export class PortalComponent {
       });
   };
 
-  public handelSaveClick = () => {
-    this.portalService?.save(this.portalEditorModalComponent);
+  public handelSaveClick = async () => {
+    const results = await this.portalService?.save(this.portalEditorModalComponent);
+
+    if (results) {
+      this.onFieldsUpdated.emit(results);
+    }
   };
 
   public handleClosePopup = (e) => {

@@ -1,0 +1,18 @@
+<dx-select-box
+  [dataSource]="states"
+  [(value)]="value"
+  (valueChange)="valueChange.emit($event)"
+  [readOnly]="readOnly"
+  [label]="'State'"
+  [labelMode]="'floating'"
+  [displayExpr]="'name'"
+  [valueExpr]="'abbreviation'"
+  [searchExpr]="['name', 'abbreviation']"
+  [searchEnabled]="true"
+  fieldTemplate="field"
+>
+  <div *dxTemplate="let data of 'field'">
+    <div>
+      <dx-text-box text="{{ data?.abbreviation ?? '' }}"> </dx-text-box>
+    </div></div
+></dx-select-box>

@@ -1,6 +1,8 @@
 import { EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { Component } from '@angular/core';
-import { STATES } from 'ag-common-lib/public-api';
+import { ActiveLookup, STATES } from 'ag-common-lib/public-api';
+import { Observable } from 'rxjs';
+import { LookupsService } from '../../services';
 
 @Component({
   selector: 'ag-shr-state-select-box',
@@ -14,6 +16,9 @@ export class StateSelectBoxComponent {
   @Output() valueChange = new EventEmitter();
 
   public states = STATES;
+  public statesLookup$: Observable<ActiveLookup[]>;
 
-  constructor() {}
+  constructor(private readonly lookupsService: LookupsService) {
+    this.statesLookup$ = this.lookupsService.statesLookup$;
+  }
 }

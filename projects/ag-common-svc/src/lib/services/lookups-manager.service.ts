@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { Lookup, Lookups } from 'ag-common-lib/public-api';
+import { Lookup, LookupKeys, Lookups } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -26,6 +26,11 @@ export class LookupsManagerService {
   public create = (lookupId: Lookups, lookup: Lookup) => {
     const path = this.getPath(lookupId);
     return this.fsDao.create(lookup, path);
+  };
+
+  public createWithId = (lookupId: Lookups, lookup: Lookup) => {
+    const path = this.getPath(lookupId);
+    return this.fsDao.createWithId(lookup, lookup[LookupKeys.value], path);
   };
 
   public update = (lookupId: Lookups, documentId: string, updates: Partial<Lookup>) => {

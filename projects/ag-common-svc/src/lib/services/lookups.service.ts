@@ -7,11 +7,15 @@ import { LookupsManagerService } from './lookups-manager.service';
 
 @Injectable({ providedIn: 'root' })
 export class LookupsService {
+  public readonly statesLookup$: Observable<ActiveLookup[]>;
   public readonly taskCategoryLookup$: Observable<ActiveLookup[]>;
   public readonly taskSubcategoryLookup$: Observable<ActiveLookup[]>;
   public readonly associationTypeLookup$: Observable<ActiveLookup[]>;
 
   constructor(private lookupsManagerService: LookupsManagerService) {
+    this.statesLookup$ = this.lookupsManagerService
+      .getList(Lookups.States)
+      .pipe(map(this.normalizeLookup), shareReplay(1));
     this.taskCategoryLookup$ = this.lookupsManagerService
       .getList(Lookups.TaskCategory)
       .pipe(map(this.normalizeLookup), shareReplay(1));

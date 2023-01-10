@@ -3,12 +3,14 @@
   [(value)]="value"
   (valueChange)="valueChange.emit($event)"
   [readOnly]="readOnly"
-  [label]="'State'"
-  [labelMode]="'floating'"
+  [disabled]="disabled"
+  [label]="label"
+  [labelMode]="labelMode"
   [displayExpr]="'description'"
   [valueExpr]="'value'"
   [searchExpr]="['value', 'description']"
   [searchEnabled]="true"
+  [dropDownOptions]="{ width: 230 }"
   fieldTemplate="field"
 >
   <div *dxTemplate="let data of 'field'">

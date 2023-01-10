@@ -32,19 +32,12 @@
     <dxi-item dataField="address.address1" [label]="{ text: 'Address 1' }" [colSpan]="6"></dxi-item>
     <dxi-item dataField="address.address2" [label]="{ text: 'Address 2' }" [colSpan]="6"></dxi-item>
     <dxi-item dataField="address.city" [label]="{ text: 'City' }" [colSpan]="4"></dxi-item>
-    <dxi-item
-      dataField="address.state"
-      [label]="{ text: 'State' }"
-      editorType="dxSelectBox"
-      [editorOptions]="{
-        items: states,
-        valueExpr: 'abbreviation',
-        displayExpr: 'abbreviation',
-        searchEnabled: true,
-        placeholder: ''
-      }"
-      [colSpan]="4"
-    ></dxi-item>
+    <dxi-item dataField="address.state" [colSpan]="4">
+      <div *dxTemplate>
+        <ag-shr-state-select-box [value]="associationFormData?.address?.state" (valueChange)="setState($event)">
+        </ag-shr-state-select-box>
+      </div>
+    </dxi-item>
     <dxi-item dataField="address.zip" [label]="{ text: 'Zip Code' }" [colSpan]="4"></dxi-item>
     <dxi-item
       dataField="address.country"

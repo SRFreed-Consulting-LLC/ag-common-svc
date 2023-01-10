@@ -5,11 +5,14 @@ import { STATES } from 'ag-common-lib/public-api';
 @Component({
   selector: 'ag-shr-state-select-box',
   templateUrl: './state-select-box.component.html',
-  styleUrls: ['./state-select-box.component.scss']
+  styleUrls: ['./state-select-box.component.scss'],
 })
 export class StateSelectBoxComponent {
   @HostBinding('class') className = 'state-select-box';
   @Input() readOnly: boolean = false;
+  @Input() disabled: boolean = false;
+  @Input() label: string = 'State';
+  @Input() labelMode: 'static' | 'floating' | 'hidden' = 'floating';
   @Input() value: any;
   @Output() valueChange = new EventEmitter();
 

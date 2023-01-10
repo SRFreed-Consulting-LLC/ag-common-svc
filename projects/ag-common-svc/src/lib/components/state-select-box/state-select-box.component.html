@@ -3,16 +3,19 @@
   [(value)]="value"
   (valueChange)="valueChange.emit($event)"
   [readOnly]="readOnly"
-  [label]="'State'"
-  [labelMode]="'floating'"
+  [disabled]="disabled"
+  [label]="label"
+  [labelMode]="labelMode"
   [displayExpr]="'name'"
   [valueExpr]="'abbreviation'"
   [searchExpr]="['name', 'abbreviation']"
   [searchEnabled]="true"
+  [dropDownOptions]="{ width: 230 }"
   fieldTemplate="field"
 >
   <div *dxTemplate="let data of 'field'">
     <div>
       <dx-text-box text="{{ data?.abbreviation ?? '' }}"> </dx-text-box>
-    </div></div
-></dx-select-box>
+    </div>
+  </div>
+</dx-select-box>

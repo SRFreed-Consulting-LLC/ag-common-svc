@@ -16,8 +16,7 @@ import {
   PhoneNumber,
   Prospect,
   PROSPECT_STATUS,
-  SOCIAL_MEDIA,
-  STATES
+  SOCIAL_MEDIA
 } from 'ag-common-lib/public-api';
 import { Timestamp } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
@@ -27,7 +26,6 @@ import { AgentService, ProspectService } from '../../../public-api';
 @Injectable()
 export class AgentEditorService {
   public countries = COUNTRIES;
-  public states = STATES;
   public languages = languages;
 
   public business_personal_types: BUSINESS_PERSONAL_TYPE[] = [
@@ -143,8 +141,8 @@ export class AgentEditorService {
     }
   }
 
-  validatePhoneNumbers(agent: Agent){
-    if(agent.phone_numbers.length == 1) {
+  validatePhoneNumbers(agent: Agent) {
+    if (agent.phone_numbers.length == 1) {
       agent.phone_numbers[0].is_primary = true;
     }
   }
@@ -187,8 +185,8 @@ export class AgentEditorService {
     }
   }
 
-  validateEmailAddresses(agent: Agent){
-    if(agent.email_addresses.length == 1) {
+  validateEmailAddresses(agent: Agent) {
+    if (agent.email_addresses.length == 1) {
       agent.email_addresses[0].is_primary = true;
       agent.email_addresses[0].is_login = true;
     }
@@ -228,8 +226,8 @@ export class AgentEditorService {
     }
   }
 
-  validateAddresses(agent: Agent){
-    if(agent.addresses.length == 1){
+  validateAddresses(agent: Agent) {
+    if (agent.addresses.length == 1) {
       agent.addresses[0].is_primary_billing = true;
       agent.addresses[0].is_primary_shipping = true;
     }

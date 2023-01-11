@@ -913,34 +913,46 @@ export class DomainService {
           }
         }
 
-        if (data.has('p_agent_first_name')) {
-          registrant.first_name = data.get('p_agent_first_name');
+        if (data.has('first_name')) {
+          registrant.first_name = data.get('first_name');
         } else if (agent.p_agent_first_name){
           registrant.first_name = agent.p_agent_first_name;
         }
 
-        if (data.has('p_agent_last_name')) {
-          registrant.last_name = data.get('p_agent_last_name');
+        if (data.has('middle_name')) {
+          registrant.middle_name = data.get('middle_name');
+        } else if (agent.p_agent_middle_name){
+          registrant.middle_name = agent.p_agent_middle_name;
+        }
+
+        if (data.has('agent_last_name')) {
+          registrant.last_name = data.get('last_name');
         } else if (agent.p_agent_last_name){
           registrant.last_name = agent.p_agent_last_name;
         }
 
-        if (data.has('p_prefix')) {
-          registrant.p_prefix = data.get('p_prefix');
+        if (data.has('prefix')) {
+          registrant.prefix = data.get('prefix');
         } else if (agent.p_prefix){
-          registrant.p_prefix = agent.p_prefix;
+          registrant.prefix = agent.p_prefix;
         }
 
-        if (data.has('p_nick_name')) {
-          registrant.p_nick_name = data.get('p_nick_name');
+        if (data.has('suffix')) {
+          registrant.suffix = data.get('suffix');
+        } else if (agent.p_suffix){
+          registrant.suffix = agent.p_suffix;
+        }
+
+        if (data.has('nick_name')) {
+          registrant.nick_name = data.get('nick_name');
         } else if (agent.p_nick_name){
-          registrant.p_nick_name = agent.p_nick_name;
+          registrant.nick_name = agent.p_nick_name;
         }
 
-        if (data.has('p_nick_last_name')) {
-          registrant.p_nick_last_name = data.get('p_nick_last_name');
+        if (data.has('nick_last_name')) {
+          registrant.nick_last_name = data.get('nick_last_name');
         } else if (agent.p_nick_last_name){
-          registrant.p_nick_last_name = agent.p_nick_last_name;
+          registrant.nick_last_name = agent.p_nick_last_name;
         }
 
         if (data.has('mga_id')) {
@@ -1128,11 +1140,11 @@ export class DomainService {
             }
 
             if (guest.p_nick_first_name) {
-              registrant.p_nick_name = guest.p_nick_first_name;
+              registrant.nick_name = guest.p_nick_first_name;
             }
 
             if (guest.p_nick_last_name) {
-              registrant.p_nick_last_name = guest.p_nick_last_name;
+              registrant.nick_last_name = guest.p_nick_last_name;
             }
 
             if (guest.dietary_or_personal_considerations) {

@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, ViewChild } from '@angular/core';
-import { ActiveLookup, Association, BaseModelKeys, COUNTRIES, LookupKeys, STATES } from 'ag-common-lib/public-api';
+import { ActiveLookup, Association, BaseModelKeys, COUNTRIES, LookupKeys } from 'ag-common-lib/public-api';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AgentAssociationsService } from '../../../../services/agent-associations.service';
 import { filter, map, shareReplay, switchMap } from 'rxjs/operators';
@@ -14,7 +14,7 @@ import { LookupsService } from '../../../../services/lookups.service';
   selector: 'ag-shr-associations',
   templateUrl: './associations.component.html',
   styleUrls: ['./associations.component.scss'],
-  providers: [AssociationFormService],
+  providers: [AssociationFormService]
 })
 export class AssociationsComponent {
   @HostBinding('class') className = 'associations';
@@ -29,7 +29,6 @@ export class AssociationsComponent {
   public BaseModelKeys = BaseModelKeys;
   public LookupKeys = LookupKeys;
   public countries = COUNTRIES;
-  public states = STATES;
   public associations$: Observable<DataSource>;
   public associationFormData: Association;
   public relationshipTypeLookup$: Observable<ActiveLookup[]>;
@@ -39,7 +38,7 @@ export class AssociationsComponent {
   constructor(
     private readonly lookupsService: LookupsService,
     private readonly associationFormService: AssociationFormService,
-    private readonly agentAssociationsService: AgentAssociationsService,
+    private readonly agentAssociationsService: AgentAssociationsService
   ) {
     this.relationshipTypeLookup$ = this.lookupsService.associationTypeLookup$;
     this.inProgress$ = this.associationFormService.inProgress$;
@@ -50,11 +49,11 @@ export class AssociationsComponent {
         return new DataSource({
           store: new ArrayStore({
             key: 'dbId',
-            data: Array.isArray(associations) ? associations : [],
-          }),
+            data: Array.isArray(associations) ? associations : []
+          })
         });
       }),
-      shareReplay(1),
+      shareReplay(1)
     );
   }
 

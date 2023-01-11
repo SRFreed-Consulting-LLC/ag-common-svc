@@ -1,11 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { Address, BUSINESS_PERSONAL_TYPE, COUNTRIES, STATES } from 'ag-common-lib/public-api';
+import { ActiveLookup, Address, BUSINESS_PERSONAL_TYPE, COUNTRIES } from 'ag-common-lib/public-api';
 
 import { ToastrService } from 'ngx-toastr';
 import { AgentService } from '../../../../services/agent.service';
 import { FullAddressPipe } from '../../../../../shared/pipes/full-address.pipe';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
 import { DxDataGridComponent } from 'devextreme-angular';
+import { Observable } from 'rxjs';
+import { LookupsService } from '../../../../services/lookups.service';
 
 @Component({
   selector: 'ag-shr-addresses',
@@ -22,17 +24,20 @@ export class AddressesComponent implements OnInit {
 
   public inProgress = false;
   public countries = COUNTRIES;
-  public states = STATES;
   public businessPersonalTypes: BUSINESS_PERSONAL_TYPE[] = [
     BUSINESS_PERSONAL_TYPE.BUSINESS,
     BUSINESS_PERSONAL_TYPE.PERSONAL
   ];
+  public statesLookup$: Observable<ActiveLookup[]>;
 
   constructor(
     public fullAddressPipe: FullAddressPipe,
     private toastrService: ToastrService,
-    private agentService: AgentService
-  ) {}
+    private agentService: AgentService,
+    private readonly lookupsService: LookupsService
+  ) {
+    this.statesLookup$ = this.lookupsService.statesLookup$;
+  }
 
   ngOnInit(): void {}
 

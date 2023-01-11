@@ -133,7 +133,7 @@
     <dxi-column dataField="address2" [visible]="false"></dxi-column>
     <dxi-column dataField="city" [visible]="false"></dxi-column>
     <dxi-column dataField="state" [visible]="false" editCellTemplate="stateEditorTmp">
-      <dxo-lookup [dataSource]="states" [displayExpr]="'name'" [valueExpr]="'abbreviation'"></dxo-lookup>
+      <dxo-lookup [dataSource]="statesLookup$ | async" [displayExpr]="'description'" [valueExpr]="'value'"></dxo-lookup>
     </dxi-column>
     <dxi-column dataField="zip" [visible]="false"></dxi-column>
     <dxi-column dataField="country" [visible]="false">

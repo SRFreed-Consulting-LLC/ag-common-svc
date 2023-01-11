@@ -5,22 +5,22 @@ import { Observable } from 'rxjs';
 import { LookupsService } from '../../services';
 
 @Component({
-  selector: 'ag-shr-state-select-box',
-  templateUrl: './state-select-box.component.html',
-  styleUrls: ['./state-select-box.component.scss']
+  selector: 'ag-shr-suffix-select-box',
+  templateUrl: './suffix-select-box.component.html',
+  styleUrls: ['./suffix-select-box.component.scss']
 })
-export class StateSelectBoxComponent {
-  @HostBinding('class') className = 'state-select-box';
+export class SuffixSelectBoxComponent {
+  @HostBinding('class') className = 'suffix-select-box';
   @Input() readOnly: boolean = false;
   @Input() disabled: boolean = false;
-  @Input() label: string = 'State';
+  @Input() label: string = 'Suffix';
   @Input() labelMode: 'static' | 'floating' | 'hidden' = 'floating';
   @Input() value: any;
   @Output() valueChange = new EventEmitter();
 
-  public statesLookup$: Observable<ActiveLookup[]>;
+  public suffixesLookup$: Observable<ActiveLookup[]>;
 
   constructor(private readonly lookupsService: LookupsService) {
-    this.statesLookup$ = this.lookupsService.statesLookup$;
+    this.suffixesLookup$ = this.lookupsService.suffixesLookup$;
   }
 }

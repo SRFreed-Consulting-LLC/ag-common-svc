@@ -102,7 +102,6 @@ export class DomainService {
             return this.createAgent(data, createdBy, agencies);
           } else {
             messages.push(agent_name + ' exists and will be updated.');
-            console.log('about to update', agent)
             return this.updateAgent(data, agent, selectedRuleSet, agencies, createdBy);
           }
         });
@@ -367,7 +366,7 @@ export class DomainService {
 
     agent[AgentKeys.p_email] = loginAddress.address;    
 
-    return this.agentService.create(agent).then((agent) => {
+    return this.agentService.create(agent).then((new_agent) => {
       if (line_data.has(AgentKeys.approve_deny_reason)) {
         let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
         approve_deny_reason.created_by = createdBy;
@@ -376,16 +375,16 @@ export class DomainService {
         approve_deny_reason.isDeleted = false;
         approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason);
   
-        this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
+        this.approveDenyReasonService.create(new_agent[BaseModelKeys.dbId], approve_deny_reason, true)
       }
 
       const promises = agentAssociations.map((association) => {
-        return this.agentAssociationsService.create(agent[BaseModelKeys.dbId], association);
+        return this.agentAssociationsService.create(new_agent[BaseModelKeys.dbId], association);
       });
 
-      this.messages.push(`Agent ${agent.p_email} was created`);
+      this.messages.push(`Agent ${new_agent.p_email} was created`);
 
-      return Promise.all(promises).then(() => agent);
+      return Promise.all(promises).then(() => new_agent);
     });
   }
 
@@ -844,7 +843,9 @@ export class DomainService {
   }
 
   createRegistrantArrayForInvitees(agents: Agent[], registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, conferenceRegistrationPolicy: string) {
-    registrant_data.forEach((data) => {
+    let promises: Promise<Registrant>[] = [];
+    
+    registrant_data.forEach(async (data) => {
       let registrant: Registrant;
 
       let qp: QueryParam[] = [];
@@ -853,8 +854,7 @@ export class DomainService {
       qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('p_agent_last_name')));
       qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
 
-      
-      this.registrantsService.getAllByValue(qp).then(async registrants => {
+      let p = this.registrantsService.getAllByValue(qp).then(async registrants => {
         if(registrants.length == 0){
           registrant = {... new Registrant()};
         } else if (registrants.length == 1){
@@ -890,7 +890,11 @@ export class DomainService {
 
         registrant.invitee_email = data.get('invitee_email');
 
-        let agent: LegacyAgent = agents.find(agent => agent.p_email == registrant.invitee_email);
+        let agent: LegacyAgent = agents.find(agent => agent.p_email == data.get('invitee_email').toLowerCase().trim());
+
+        if(!agent){
+          agent = {... new Agent()}
+        }
 
         let emailAddresses = this.domainEmailService.extractEmailAddresses(data);
 
@@ -969,7 +973,7 @@ export class DomainService {
 
         if (data.has('upline')) {
           registrant.upline = data.get('upline');
-        } else if (agent.p_agency_id){
+        } else if (agent.upline){
           registrant.upline = agent.upline;
         }
 
@@ -1066,14 +1070,21 @@ export class DomainService {
             this.registrantsService.create(registrant);
           }
         });
+        
+        return registrant;
       })
+
+      promises.push(p);
     });
+
+    return Promise.all(promises);
   }
 
   createRegistrantArrayForGuests(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, conferenceRegistrationPolicy: string) {
+    let promises: Promise<Registrant>[] = [];
+
     registrant_data.forEach((data) => {
       let registrant: Registrant = { ...new Registrant() };
-
 
       let qp: QueryParam[] = [];
       qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
@@ -1081,7 +1092,7 @@ export class DomainService {
       qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('association.1.last_name')));
       qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
 
-      this.registrantsService.getAllByValue(qp).then(registrants => {
+      let p = this.registrantsService.getAllByValue(qp).then(registrants => {
         if(registrants.length == 0){
           registrant = {... new Registrant()};
         } else if (registrants.length == 1){
@@ -1190,9 +1201,14 @@ export class DomainService {
             }            
           }
         })
+
+        return registrant;
       });
 
+      promises.push(p);
     });
+
+    return Promise.all(promises);
   }
 
   validateAgency(agent: Agent, agencies: Agency[]): boolean {

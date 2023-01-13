@@ -1,8 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  ImportRuleSet,
-  ImportRuleSetKeys,
-} from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
+import { ImportRuleSet, ImportRuleSetKeys } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {
   Address,
   Agency,
@@ -22,7 +19,7 @@ import {
   PROSPECT_PRIORITY,
   PROSPECT_STATUS,
   Registrant,
-  Role,
+  Role
 } from 'ag-common-lib/public-api';
 import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { AgentApproveDenyReasonsService } from './agent-approve-deny-reason.service';
@@ -62,7 +59,6 @@ export class DomainService {
     private domainUtilService: DomainUtilService
   ) {}
 
-
   //************************************************************* */
   //  Method to import Agents from import file
   //
@@ -79,23 +75,30 @@ export class DomainService {
   //          in import process. Used to return messages
   //          back to user
   //************************************************************* */
-  createAgentsArray(agents: Map<string, string>[], agencies: Agency[], selectedRuleSet: ImportRuleSet, createdBy: string, messages: string[]): Promise<Agent[]> {
+  createAgentsArray(
+    agents: Map<string, string>[],
+    agencies: Agency[],
+    selectedRuleSet: ImportRuleSet,
+    createdBy: string,
+    messages: string[]
+  ): Promise<Agent[]> {
     this.messages = messages;
 
     const promises: Promise<Agent>[] = [];
 
     agents.forEach((data) => {
-      let email_address: string;  
+      let email_address: string;
 
-      if(data.has(this.PRIMARY_EMAIL_IDENTIFIER)){
+      if (data.has(this.PRIMARY_EMAIL_IDENTIFIER)) {
         email_address = data.get(this.PRIMARY_EMAIL_IDENTIFIER);
       } else {
-        email_address = data.get('invitee_email')
+        email_address = data.get('invitee_email');
       }
 
-      let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + email_address + ')'
+      let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + email_address + ')';
 
-      const promise: Promise<Agent> = this.agentService.getAgentByEmail(email_address.toLowerCase().trim())
+      const promise: Promise<Agent> = this.agentService
+        .getAgentByEmail(email_address.toLowerCase().trim())
         .then((agent) => {
           if (!agent) {
             messages.push(agent_name + ' does not currently exist and will be created.');
@@ -235,10 +238,14 @@ export class DomainService {
     }
 
     if (line_data.has(AgentKeys.p_strategic_agent)) {
-      agent[AgentKeys.p_strategic_agent] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.p_strategic_agent));
+      agent[AgentKeys.p_strategic_agent] = this.domainUtilService.getBoolean(
+        line_data.get(AgentKeys.p_strategic_agent)
+      );
     }
     if (line_data.has(AgentKeys.alliance_group_employee)) {
-      agent[AgentKeys.alliance_group_employee] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.alliance_group_employee));
+      agent[AgentKeys.alliance_group_employee] = this.domainUtilService.getBoolean(
+        line_data.get(AgentKeys.alliance_group_employee)
+      );
     }
     if (line_data.has(AgentKeys.is_manager)) {
       agent[AgentKeys.is_manager] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.is_manager));
@@ -267,17 +274,19 @@ export class DomainService {
       agent[AgentKeys.prospect_status] = PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim().toUpperCase()];
     }
     if (line_data.has(AgentKeys.prospect_priority)) {
-      agent[AgentKeys.prospect_priority] = PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim().toUpperCase()];
+      agent[AgentKeys.prospect_priority] =
+        PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim().toUpperCase()];
     }
     if (line_data.has(AgentKeys.prospect_disposition)) {
-      agent[AgentKeys.prospect_disposition] = PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim().toUpperCase()];
+      agent[AgentKeys.prospect_disposition] =
+        PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim().toUpperCase()];
     }
 
     if (line_data.has(AgentKeys.agent_type)) {
       agent[AgentKeys.agent_type] = AGENT_TYPE[line_data.get(AgentKeys.agent_type).trim().toUpperCase()];
     } else {
-      agent[AgentKeys.agent_type] = AGENT_TYPE.GENERAL_AGENT; 
-    }    
+      agent[AgentKeys.agent_type] = AGENT_TYPE.GENERAL_AGENT;
+    }
 
     let splitVals: Map<string, string> = new Map<string, string>();
 
@@ -364,18 +373,18 @@ export class DomainService {
       loginAddress = agentEmailAddresses[0];
     }
 
-    agent[AgentKeys.p_email] = loginAddress.address;    
+    agent[AgentKeys.p_email] = loginAddress.address;
 
     return this.agentService.create(agent).then((new_agent) => {
       if (line_data.has(AgentKeys.approve_deny_reason)) {
-        let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+        let approve_deny_reason: ApproveDenyReason = { ...new ApproveDenyReason() };
         approve_deny_reason.created_by = createdBy;
         approve_deny_reason.created_date = new Date();
         approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AllianceGroupLevel;
         approve_deny_reason.isDeleted = false;
         approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason);
-  
-        this.approveDenyReasonService.create(new_agent[BaseModelKeys.dbId], approve_deny_reason, true)
+
+        this.approveDenyReasonService.create(new_agent[BaseModelKeys.dbId], approve_deny_reason, true);
       }
 
       const promises = agentAssociations.map((association) => {
@@ -388,7 +397,13 @@ export class DomainService {
     });
   }
 
-  async updateAgent(line_data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, agencies: Agency[], updatedBy: string): Promise<Agent> {
+  async updateAgent(
+    line_data: Map<string, string>,
+    agent: Agent,
+    selectedRuleSet: ImportRuleSet,
+    agencies: Agency[],
+    updatedBy: string
+  ): Promise<Agent> {
     if (line_data.has(AgentKeys.p_agent_id)) {
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_agent_id],
@@ -458,7 +473,7 @@ export class DomainService {
         selectedRuleSet[ImportRuleSetKeys.p_prefix],
         agent,
         AgentKeys.p_prefix,
-        line_data.get(AgentKeys.p_prefix).trim()
+        line_data.get(AgentKeys.p_prefix).trim() // TODO use dbId
       );
     }
     if (line_data.has(AgentKeys.p_suffix)) {
@@ -639,25 +654,31 @@ export class DomainService {
       );
     }
 
-    if (line_data.has(AgentKeys.approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.approve_deny_reason].valueOf() == 'ADD_TO_LIST') {
-      let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+    if (
+      line_data.has(AgentKeys.approve_deny_reason) &&
+      selectedRuleSet[ImportRuleSetKeys.approve_deny_reason].valueOf() == 'ADD_TO_LIST'
+    ) {
+      let approve_deny_reason: ApproveDenyReason = { ...new ApproveDenyReason() };
       approve_deny_reason.created_by = updatedBy;
       approve_deny_reason.created_date = new Date();
       approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AllianceGroupLevel;
       approve_deny_reason.isDeleted = false;
       approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason).trim();
 
-      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
+      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true);
     }
-    if (line_data.has(AgentKeys.agency_approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST') {
-      let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+    if (
+      line_data.has(AgentKeys.agency_approve_deny_reason) &&
+      selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST'
+    ) {
+      let approve_deny_reason: ApproveDenyReason = { ...new ApproveDenyReason() };
       approve_deny_reason.created_by = updatedBy;
       approve_deny_reason.created_date = new Date();
       approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AgencyLevel;
       approve_deny_reason.isDeleted = false;
       approve_deny_reason.activity = line_data.get(AgentKeys.agency_approve_deny_reason).trim();
 
-      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
+      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true);
     }
 
     if (line_data.has(AgentKeys.certifications)) {
@@ -842,9 +863,15 @@ export class DomainService {
     });
   }
 
-  createRegistrantArrayForInvitees(agents: Agent[], registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, conferenceRegistrationPolicy: string) {
+  createRegistrantArrayForInvitees(
+    agents: Agent[],
+    registrant_data: Map<string, string>[],
+    selectedConference: string,
+    createdBy: string,
+    conferenceRegistrationPolicy: string
+  ) {
     let promises: Promise<Registrant>[] = [];
-    
+
     registrant_data.forEach(async (data) => {
       let registrant: Registrant;
 
@@ -854,18 +881,18 @@ export class DomainService {
       qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('p_agent_last_name')));
       qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
 
-      let p = this.registrantsService.getAllByValue(qp).then(async registrants => {
-        if(registrants.length == 0){
-          registrant = {... new Registrant()};
-        } else if (registrants.length == 1){
+      let p = this.registrantsService.getAllByValue(qp).then(async (registrants) => {
+        if (registrants.length == 0) {
+          registrant = { ...new Registrant() };
+        } else if (registrants.length == 1) {
           registrant = registrants[0];
 
-          if(conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE){
-            registrant = {... new Registrant()};
+          if (conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE) {
+            registrant = { ...new Registrant() };
             this.registrantsService.delete(registrants[0][BaseModelKeys.dbId]);
           }
         }
-        
+
         registrant.registration_source = 'Conference Import';
         registrant.event_id = selectedConference;
         registrant.created_date = new Date();
@@ -884,16 +911,18 @@ export class DomainService {
           registrant.approved = false;
         }
 
-        if(data.has('registration_type')){
+        if (data.has('registration_type')) {
           registrant.registration_type = data.get('registration_type');
         }
 
         registrant.invitee_email = data.get('invitee_email');
 
-        let agent: LegacyAgent = agents.find(agent => agent.p_email == data.get('invitee_email').toLowerCase().trim());
+        let agent: LegacyAgent = agents.find(
+          (agent) => agent.p_email == data.get('invitee_email').toLowerCase().trim()
+        );
 
-        if(!agent){
-          agent = {... new Agent()}
+        if (!agent) {
+          agent = { ...new Agent() };
         }
 
         if(agent.addresses?.length > 0){
@@ -903,7 +932,6 @@ export class DomainService {
             registrant.primary_billing_address = {... primary_billing_address};
           }
           
-
           let primary_shipping_address: Address = agent.addresses.find(address => address.is_primary_shipping== true);
 
           if(primary_shipping_address){
@@ -945,76 +973,113 @@ export class DomainService {
           }
         }        
 
-        if (agent.p_agent_first_name){
+        if (data.has('first_name')) {
+          registrant.first_name = data.get('first_name');
+        } else if (agent.p_agent_first_name){
           registrant.first_name = agent.p_agent_first_name;
         }
 
-        if (agent.p_agent_middle_name){
+        if (data.has('middle_name')) {
+          registrant.middle_name = data.get('middle_name');
+        } else if (agent.p_agent_middle_name){
           registrant.middle_name = agent.p_agent_middle_name;
         }
 
-        if (agent.p_agent_last_name){
+        if (data.has('last_name')) {
+          registrant.last_name = data.get('last_name');
+        } else if (agent.p_agent_last_name){
           registrant.last_name = agent.p_agent_last_name;
         }
 
-        if (agent.p_prefix){
+        if (data.has('prefix')) {
+          registrant.prefix = data.get('prefix');
+        } else if (agent.p_prefix){
           registrant.prefix = agent.p_prefix;
         }
 
-        if (agent.p_suffix){
+        if (data.has('suffix')) {
+          registrant.suffix = data.get('suffix');
+        } else if (agent.p_suffix){
           registrant.suffix = agent.p_suffix;
         }
 
-        if (agent.p_nick_name){
+        if (data.has('nick_name')) {
+          registrant.nick_name = data.get('nick_name');
+        } else if (agent.p_nick_name){
           registrant.nick_name = agent.p_nick_name;
         }
 
-        if (agent.p_nick_last_name){
+        if (data.has('nick_last_name')) {
+          registrant.nick_last_name = data.get('nick_last_name');
+        } else if (agent.p_nick_last_name){
           registrant.nick_last_name = agent.p_nick_last_name;
         }
 
-        if (agent.p_mga_id){
+        if (data.has('mga_id')) {
+          registrant.mga_id = data.get('mga_id');
+        } else if (agent.p_mga_id){
           registrant.mga_id = agent.p_mga_id;
         }
 
-        if (agent.p_agency_id){
+        if (data.has('agency_id')) {
+          registrant.agency_id = data.get('agency_id');
+        } else if (agent.p_agency_id){
           registrant.agency_id = agent.p_agency_id;
         }
 
-        if (agent.upline){
+        if (data.has('upline')) {
+          registrant.upline = data.get('upline');
+        } else if (agent.upline){
           registrant.upline = agent.upline;
         }
 
-        if (agent.dietary_or_personal_considerations){
+        if (data.has('dietary_or_personal_considerations')) {
+          registrant.dietary_or_personal_considerations = data.get('dietary_or_personal_considerations');
+        } else if (agent.dietary_or_personal_considerations){
           registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(agent.dietary_or_personal_considerations.trim());
         }
 
-        if (agent.dietary_consideration_type){
+        if (data.has('dietary_consideration_type')) {
+          registrant.dietary_consideration_type = data.get('dietary_consideration_type');
+        } else if (agent.dietary_consideration_type){
           registrant.dietary_consideration_type = agent.dietary_consideration_type
         }
 
-        if (agent.dietary_consideration){
+        if (data.has('dietary_consideration')) {
+          registrant.dietary_consideration = data.get('dietary_consideration');
+        } else if (agent.dietary_consideration){
           registrant.dietary_consideration = agent.dietary_consideration
         }
 
-        if (agent.favorite_destination){
+        if (data.has('favorite_destination')) {
+          registrant.favorite_destination = data.get('favorite_destination');
+        } else if (agent.favorite_destination){
           registrant.favorite_destination = agent.favorite_destination;
         }
 
-        if (agent.unisex_tshirt_size){
+        if (data.has('unisex_tshirt_size')) {
+          registrant.unisex_tshirt_size = data.get('unisex_tshirt_size');
+        } else if (agent.unisex_tshirt_size){
           registrant.unisex_tshirt_size = agent.unisex_tshirt_size;
         }
 
-        if (agent.unisex_tshirt_size_other){
+        if (data.has('unisex_tshirt_size_other')) {
+          registrant.unisex_tshirt_size_other = data.get('unisex_tshirt_size_other');
+        } else if (agent.unisex_tshirt_size_other){
           registrant.unisex_tshirt_size_other = agent.unisex_tshirt_size_other;
         }
 
-        if (agent.gender){
+        if (data.has('gender')) {
+          registrant.gender = data.get('gender');
+        } else if (agent.gender){
           registrant.gender = agent.gender;
         }
 
-        if (agent.dob){
+        if (data.has('dob')) {
+          registrant.dob = data.get('dob');
+        } else if (agent.dob){
           registrant.dob = agent.dob;
+
         }
 
         data.forEach((value, key) => {
@@ -1038,7 +1103,7 @@ export class DomainService {
         }
         
         return registrant;
-      })
+      });
 
       promises.push(p);
     });
@@ -1046,7 +1111,12 @@ export class DomainService {
     return Promise.all(promises);
   }
 
-  createRegistrantArrayForGuests(registrant_data: Map<string, string>[], selectedConference: string, createdBy: string, conferenceRegistrationPolicy: string) {
+  createRegistrantArrayForGuests(
+    registrant_data: Map<string, string>[],
+    selectedConference: string,
+    createdBy: string,
+    conferenceRegistrationPolicy: string
+  ) {
     let promises: Promise<Registrant>[] = [];
 
     registrant_data.forEach((data) => {
@@ -1058,14 +1128,14 @@ export class DomainService {
       qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('association.1.last_name')));
       qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
 
-      let p = this.registrantsService.getAllByValue(qp).then(registrants => {
-        if(registrants.length == 0){
-          registrant = {... new Registrant()};
-        } else if (registrants.length == 1){
+      let p = this.registrantsService.getAllByValue(qp).then((registrants) => {
+        if (registrants.length == 0) {
+          registrant = { ...new Registrant() };
+        } else if (registrants.length == 1) {
           registrant = registrants[0];
 
-          if(conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE){
-            registrant = {... new Registrant()};
+          if (conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE) {
+            registrant = { ...new Registrant() };
             this.registrantsService.delete(registrants[0][BaseModelKeys.dbId]);
           }
         }
@@ -1088,13 +1158,13 @@ export class DomainService {
           registrant.approved = false;
         }
 
-        if(data.has('registration_type')){
+        if (data.has('registration_type')) {
           registrant.registration_type = data.get('registration_type');
         }
 
         registrant.invitee_email = data.get('invitee_email');
 
-        this.domainAssociationsService.extractAssociations(data).then(guests => {
+        this.domainAssociationsService.extractAssociations(data).then((guests) => {
           if (guests.length == 1) {
             let guest: Association = guests[0];
 
@@ -1107,7 +1177,7 @@ export class DomainService {
             }
 
             if (guest.email_address) {
-              let address: EmailAddress = {...new EmailAddress()};
+              let address: EmailAddress = { ...new EmailAddress() };
               address.address = guest.email_address;
               registrant.primary_email_address = address;
             }
@@ -1161,16 +1231,16 @@ export class DomainService {
                 registrant[key.split('.')[1]] = value;
               }
             });
-      
-            if(registrant[BaseModelKeys.dbId]){
+
+            if (registrant[BaseModelKeys.dbId]) {
               this.messages.push('Registration Updated for ' + registrant.first_name + ' ' + registrant.last_name);
               this.registrantsService.update(registrant);
             } else {
               this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
               this.registrantsService.create(registrant);
-            }            
+            }
           }
-        })
+        });
 
         return registrant;
       });

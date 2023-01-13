@@ -6,10 +6,8 @@
   [disabled]="disabled"
   [label]="label"
   [labelMode]="labelMode"
-  [displayExpr]="'description'"
-  [valueExpr]="'value'"
-  [searchExpr]="['value', 'description']"
+  [placeholder]="placeholder"
+  [displayExpr]="LookupKeys.description"
+  [valueExpr]="BaseModelKeys.dbId"
   [searchEnabled]="true"
-  [dropDownOptions]="{ width: 230 }"
-  fieldTemplate="field"
 ></dx-select-box>

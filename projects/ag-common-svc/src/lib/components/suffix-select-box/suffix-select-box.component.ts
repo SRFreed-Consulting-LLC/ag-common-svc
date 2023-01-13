@@ -1,6 +1,6 @@
 import { EventEmitter, HostBinding, Input, Output } from '@angular/core';
 import { Component } from '@angular/core';
-import { ActiveLookup } from 'ag-common-lib/public-api';
+import { ActiveLookup, BaseModelKeys, LookupKeys } from 'ag-common-lib/public-api';
 import { Observable } from 'rxjs';
 import { LookupsService } from '../../services';
 
@@ -14,10 +14,13 @@ export class SuffixSelectBoxComponent {
   @Input() readOnly: boolean = false;
   @Input() disabled: boolean = false;
   @Input() label: string = 'Suffix';
+  @Input() placeholder: string = '';
   @Input() labelMode: 'static' | 'floating' | 'hidden' = 'floating';
   @Input() value: any;
   @Output() valueChange = new EventEmitter();
 
+  public LookupKeys = LookupKeys;
+  public BaseModelKeys = BaseModelKeys;
   public suffixesLookup$: Observable<ActiveLookup[]>;
 
   constructor(private readonly lookupsService: LookupsService) {

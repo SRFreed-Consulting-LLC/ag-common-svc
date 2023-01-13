@@ -12,6 +12,7 @@ import { PrimaryPhoneNumberPipe } from './primary-phone-number.pipe';
 import { SafeHTMLPipe } from './safe-html.pipe';
 import { TaskWorkflowDetailsPipe } from './task-workflow-details.pipe';
 import { TimestampPipe } from './timestamp.pipe';
+import { PrefixPipe } from './prefix.pipe';
 
 @NgModule({
   declarations: [
@@ -27,7 +28,8 @@ import { TimestampPipe } from './timestamp.pipe';
     PrimaryPhoneNumberPipe,
     PhoneNumberMaskPipe,
     FullAddressPipe,
-    YesNoPipe
+    YesNoPipe,
+    PrefixPipe
   ],
   exports: [
     SafeHTMLPipe,
@@ -42,7 +44,8 @@ import { TimestampPipe } from './timestamp.pipe';
     PrimaryPhoneNumberPipe,
     PhoneNumberMaskPipe,
     FullAddressPipe,
-    YesNoPipe
+    YesNoPipe,
+    PrefixPipe
   ]
 })
 export class PipesModule {}

@@ -146,8 +146,12 @@ export class DomainAssociationsService {
       association.p_nick_last_name = invals.get('association.' + key + '.p_nick_last_name');
     }
 
-    if (invals.has('association.' + key + '.p_tshirt_size')) {
-      association.p_tshirt_size = invals.get('association.' + key + '.p_tshirt_size');
+    if (invals.has('association.' + key + '.unisex_tshirt_size')) {
+      association.unisex_tshirt_size = invals.get('association.' + key + '.unisex_tshirt_size');
+    }
+
+    if (invals.has('association.' + key + '.unisex_tshirt_size_other')) {
+      association.unisex_tshirt_size_other = invals.get('association.' + key + '.unisex_tshirt_size_other');
     }
     return association;
   }

@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { PREFIX } from 'ag-common-lib/lib/lists/prefixes.enum';
 import { SUFFIX } from 'ag-common-lib/lib/lists/sufffixes.enum';
 import {
   Address,
@@ -45,7 +44,6 @@ export class AgentEditorService {
   public agentTypes: AGENT_TYPE[] = [];
   public roles: any[] = [];
 
-  prefixes: PREFIX[] = [];
   suffixes: SUFFIX[] = [];
 
   constructor(
@@ -60,7 +58,7 @@ export class AgentEditorService {
     this.agentStatuses = listManager.getAgentStatuses();
     this.agentTypes = listManager.getAgentTypes();
     this.roles = listManager.getRoles();
-    this.prefixes = listManager.getPrefixes();
+    // this.prefixes = listManager.getPrefixes();
     this.suffixes = listManager.getSuffixes();
   }
 

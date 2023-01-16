@@ -9,6 +9,8 @@ import { LookupsManagerService } from './lookups-manager.service';
 export class LookupsService {
   public readonly statesLookup$: Observable<ActiveLookup[]>;
   public readonly gendersLookup$: Observable<ActiveLookup[]>;
+  public readonly dietaryConsiderationTypesLookup$: Observable<ActiveLookup[]>;
+  public readonly tShortSizesLookup$: Observable<ActiveLookup[]>;
   public readonly suffixesLookup$: Observable<ActiveLookup[]>;
   public readonly prefixesLookup$: Observable<ActiveLookup[]>;
   public readonly taskCategoryLookup$: Observable<ActiveLookup[]>;
@@ -36,6 +38,12 @@ export class LookupsService {
       .pipe(map(this.normalizeLookup), shareReplay(1));
     this.associationTypeLookup$ = this.lookupsManagerService
       .getList(Lookups.AssociationType)
+      .pipe(map(this.normalizeLookup), shareReplay(1));
+    this.dietaryConsiderationTypesLookup$ = this.lookupsManagerService
+      .getList(Lookups.DietaryConsiderationType)
+      .pipe(map(this.normalizeLookup), shareReplay(1));
+    this.tShortSizesLookup$ = this.lookupsManagerService
+      .getList(Lookups.TShirtSize)
       .pipe(map(this.normalizeLookup), shareReplay(1));
   }
 

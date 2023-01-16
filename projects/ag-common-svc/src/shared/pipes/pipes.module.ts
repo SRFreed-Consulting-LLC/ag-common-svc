@@ -13,6 +13,10 @@ import { SafeHTMLPipe } from './safe-html.pipe';
 import { TaskWorkflowDetailsPipe } from './task-workflow-details.pipe';
 import { TimestampPipe } from './timestamp.pipe';
 import { PrefixPipe } from './prefix.pipe';
+import { DietaryConsiderationTypePipe } from './dietary-consideration-type.pipe';
+import { GenderPipe } from './gender.pipe';
+import { SuffixPipe } from './suffix.pipe';
+import { TShortSizePipe } from './t-short-size.pipe';
 
 @NgModule({
   declarations: [
@@ -29,7 +33,11 @@ import { PrefixPipe } from './prefix.pipe';
     PhoneNumberMaskPipe,
     FullAddressPipe,
     YesNoPipe,
-    PrefixPipe
+    PrefixPipe,
+    DietaryConsiderationTypePipe,
+    GenderPipe,
+    SuffixPipe,
+    TShortSizePipe
   ],
   exports: [
     SafeHTMLPipe,
@@ -45,7 +53,11 @@ import { PrefixPipe } from './prefix.pipe';
     PhoneNumberMaskPipe,
     FullAddressPipe,
     YesNoPipe,
-    PrefixPipe
+    PrefixPipe,
+    DietaryConsiderationTypePipe,
+    GenderPipe,
+    SuffixPipe,
+    TShortSizePipe
   ]
 })
 export class PipesModule {}

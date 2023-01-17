@@ -1,0 +1,77 @@
+<div class="mt-2">
+  <div class="row my-2 px-3">
+    <div class="col-12 text-start editToolbar">
+      <dx-toolbar>
+        <dxi-item location="before" widget="dxButton" locateInMenu="never">
+          <div *dxTemplate>
+            <div class="toolbar-label"><b>Sizes for Fun Stuff</b></div>
+          </div>
+        </dxi-item>
+        <dxi-item location="after" locateInMenu="never">
+          <div *dxTemplate>
+            <dx-button [icon]="'edit'" [stylingMode]="'text'" (onClick)="showEditorModal()"></dx-button>
+          </div>
+        </dxi-item>
+      </dx-toolbar>
+    </div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3 text-start"><b>T-Shirt Size:</b></div>
+    <div class="col-3">{{ agent.p_tshirt_size | tShortSize | async }}</div>
+    <div class="col-3 text-start"><b>Hobbies:</b></div>
+    <div class="col-3">{{ agent.hobbies }}</div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3 text-start"><b>Unisex T-Shirt Size:</b></div>
+    <div class="col-3">{{ agent.unisex_tshirt_size | tShortSize | async }}</div>
+    <div class="col-3 text-start"><b>Favorite Destination:</b></div>
+    <div class="col-3">{{ agent.favorite_destination }}</div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3 text-start"><b>Shoe Size:</b></div>
+    <div class="col-3">{{ agent.shoe_size }}</div>
+    <div class="col-3 text-start"></div>
+  </div>
+</div>
+
+<ag-shr-modal-window
+  [width]="'50vw'"
+  [height]="'auto'"
+  #sizeModalRef
+  [title]="'Sizes For Fun'"
+  [inProgress]="inProgress"
+  (onSaveClick)="saveAgentUpdates()"
+  (onPopupClose)="handleClosePopup()"
+>
+  <dx-form class="mt-2" [colCount]="12" [formData]="agent" labelMode="floating">
+    <dxi-item dataField="p_tshirt_size" [colSpan]="4">
+      <div *dxTemplate>
+        <ag-shr-t-short-size-select-box
+          [label]="'T-Shirt Size'"
+          [(value)]="agent.p_tshirt_size"
+        ></ag-shr-t-short-size-select-box>
+      </div>
+    </dxi-item>
+
+    <dxi-item dataField="unisex_tshirt_size" [colSpan]="4">
+      <div *dxTemplate>
+        <ag-shr-t-short-size-select-box
+          [label]="'Unisex T-Shirt Size'"
+          [(value)]="agent.unisex_tshirt_size"
+        ></ag-shr-t-short-size-select-box>
+      </div>
+    </dxi-item>
+
+    <dxi-item dataField="shoe_size" [colSpan]="4">
+      <dxo-label [text]="'Shoe Size'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item dataField="hobbies" [colSpan]="8">
+      <dxo-label [text]="'Hobbies'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item dataField="favorite_destination" [colSpan]="4">
+      <dxo-label [text]="'Favorite Destination'"></dxo-label>
+    </dxi-item>
+  </dx-form>
+</ag-shr-modal-window>

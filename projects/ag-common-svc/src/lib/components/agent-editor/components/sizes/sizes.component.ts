@@ -17,13 +17,22 @@ export class SizesComponent {
   constructor(private agentService: AgentService) {}
 
   public saveAgentUpdates = () => {
-    this.agentService.updateFields(this.agent?.dbId, {
-      [AgentKeys.p_tshirt_size]: this.agent[AgentKeys.p_tshirt_size],
-      [AgentKeys.unisex_tshirt_size]: this.agent[AgentKeys.unisex_tshirt_size],
-      [AgentKeys.shoe_size]: this.agent[AgentKeys.shoe_size],
-      [AgentKeys.hobbies]: this.agent[AgentKeys.hobbies],
-      [AgentKeys.favorite_destination]: this.agent[AgentKeys.favorite_destination]
-    });
+    this.inProgress = true;
+
+    this.agentService
+      .updateFields(this.agent?.dbId, {
+        [AgentKeys.p_tshirt_size]: this.agent[AgentKeys.p_tshirt_size],
+        [AgentKeys.unisex_tshirt_size]: this.agent[AgentKeys.unisex_tshirt_size],
+        [AgentKeys.shoe_size]: this.agent[AgentKeys.shoe_size],
+        [AgentKeys.hobbies]: this.agent[AgentKeys.hobbies],
+        [AgentKeys.favorite_destination]: this.agent[AgentKeys.favorite_destination]
+      })
+      .then(() => {
+        this.sizeModalComponent.hideModal();
+      })
+      .finally(() => {
+        this.inProgress = false;
+      });
   };
 
   public showEditorModal = () => {

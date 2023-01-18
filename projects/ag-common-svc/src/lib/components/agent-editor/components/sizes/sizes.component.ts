@@ -1,46 +1,59 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { Agent, AgentKeys } from 'ag-common-lib/public-api';
+import { Agent, AgentKeys, BaseModelKeys, Lookup } from 'ag-common-lib/public-api';
+import { DxFormComponent } from 'devextreme-angular';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { AgentService } from '../../../../services/agent.service';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
+import { SizesService } from './sizes.service';
 
 @Component({
   selector: 'ag-shr-sizes',
   templateUrl: './sizes.component.html',
-  styleUrls: ['./sizes.component.scss']
+  styleUrls: ['./sizes.component.scss'],
+  providers: [SizesService]
 })
 export class SizesComponent {
-  @Input('agent') agent: Agent;
+  @Input('agent') set _agent(value: Agent) {
+    this.agent = value;
+    this.funStaffFormDetails = this.sizesService.getFormData(value);
+  }
   @ViewChild('sizeModalRef', { static: true }) sizeModalComponent: ModalWindowComponent;
+  @ViewChild('sizeFormRef', { static: false }) sizeFormComponent: DxFormComponent;
 
-  public inProgress = false;
+  public AgentKeys = AgentKeys;
+  public funStaffFormDetails;
+  public inProgress$: Observable<boolean>;
+  public selectedTShortSize$: BehaviorSubject<Lookup>;
+  public selectedUnisexTShortSize$: BehaviorSubject<Lookup>;
 
-  constructor(private agentService: AgentService) {}
+  private agent: Agent;
 
-  public saveAgentUpdates = () => {
-    this.inProgress = true;
+  constructor(private sizesService: SizesService) {
+    this.inProgress$ = sizesService.inProgress$;
+    this.selectedTShortSize$ = sizesService.selectedTShortSize$;
+    this.selectedUnisexTShortSize$ = sizesService.selectedUnisexTShortSize$;
+  }
 
-    this.agentService
-      .updateFields(this.agent?.dbId, {
-        [AgentKeys.p_tshirt_size]: this.agent[AgentKeys.p_tshirt_size],
-        [AgentKeys.unisex_tshirt_size]: this.agent[AgentKeys.unisex_tshirt_size],
-        [AgentKeys.shoe_size]: this.agent[AgentKeys.shoe_size],
-        [AgentKeys.hobbies]: this.agent[AgentKeys.hobbies],
-        [AgentKeys.favorite_destination]: this.agent[AgentKeys.favorite_destination]
-      })
-      .then(() => {
-        this.sizeModalComponent.hideModal();
-      })
-      .finally(() => {
-        this.inProgress = false;
-      });
+  public saveAgentUpdates = (e) => {
+    const validationResults = this.sizeFormComponent.instance.validate();
+    if (validationResults.isValid) {
+      this.sizesService.handleSave(this.agent[BaseModelKeys.dbId], e.component);
+    }
   };
 
   public showEditorModal = () => {
-    this.inProgress = false;
     this.sizeModalComponent.showModal();
   };
 
-  public handleClosePopup = () => {
-    this.inProgress = false;
+  public handleClosePopup = (e) => {
+    this.sizesService.onCancelEdit(e);
+  };
+
+  public handleTShortSizeSelect = (item) => {
+    this.selectedTShortSize$.next(item);
+  };
+
+  public handleUnisexTShortSizeSelect = (item) => {
+    this.selectedUnisexTShortSize$.next(item);
   };
 }

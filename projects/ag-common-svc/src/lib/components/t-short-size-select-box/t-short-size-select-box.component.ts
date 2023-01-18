@@ -18,6 +18,7 @@ export class TShortSizeSelectBoxComponent {
   @Input() labelMode: 'static' | 'floating' | 'hidden' = 'floating';
   @Input() value: any;
   @Output() valueChange = new EventEmitter();
+  @Output() selectedItemChange = new EventEmitter();
 
   public LookupKeys = LookupKeys;
   public BaseModelKeys = BaseModelKeys;

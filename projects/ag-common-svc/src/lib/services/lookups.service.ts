@@ -42,9 +42,11 @@ export class LookupsService {
     this.dietaryConsiderationTypesLookup$ = this.lookupsManagerService
       .getList(Lookups.DietaryConsiderationType)
       .pipe(map(this.normalizeLookup), shareReplay(1));
-    this.tShortSizesLookup$ = this.lookupsManagerService
-      .getList(Lookups.TShirtSize)
-      .pipe(map(this.normalizeLookup), shareReplay(1));
+    this.tShortSizesLookup$ = this.lookupsManagerService.getList(Lookups.TShirtSize).pipe(
+      map(this.normalizeLookup),
+      map((items) => items.sort(this.sizeComparator)),
+      shareReplay(1)
+    );
   }
 
   public getTaskSubcategoryLookup = (taskCategoryDbId) => {
@@ -80,5 +82,26 @@ export class LookupsService {
           };
         })
       : [];
+  };
+
+  private sizeComparator = (left, right) => {
+    const valuesMap = new Map([
+      ['xs', '0'],
+      ['s', '1'],
+      ['m', '2'],
+      ['l', '3'],
+      ['xl', '4'],
+      ['xxl', '5'],
+      ['xxxl', '6'],
+      ['other', '7']
+    ]);
+    const leftValue = valuesMap.get(`${left?.value}`.toLocaleLowerCase()) ?? `${left?.value}`;
+    const rightValue = valuesMap.get(`${right?.value}`.toLocaleLowerCase()) ?? `${right?.value}`;
+
+    return leftValue.localeCompare(rightValue, 'en', {
+      numeric: true,
+      sensitivity: 'base',
+      ignorePunctuation: true
+    });
   };
 }

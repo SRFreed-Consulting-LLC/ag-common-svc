@@ -29,6 +29,7 @@ export class SizesService {
   }
 
   public handleSave = (agentId, modalWindowComponent) => {
+    debugger;
     const updates = {};
     const changes = this.formChangesDetector.getAllChanges();
 
@@ -39,6 +40,7 @@ export class SizesService {
     this.agentService
       .updateFields(agentId, updates)
       .then(() => {
+        debugger;
         const selectedTShortSize = this.selectedTShortSize$.value;
         const selectedUnisexTShortSize = this.selectedUnisexTShortSize$.value;
         if (!selectedTShortSize?.isAssigned) {
@@ -47,7 +49,7 @@ export class SizesService {
         if (!selectedUnisexTShortSize?.isAssigned) {
           updateDoc(selectedUnisexTShortSize?.reference, { [LookupKeys.isAssigned]: true }).then();
         }
-
+        debugger;
         this.formChangesDetector.clear();
         modalWindowComponent?.hideModal();
       })
@@ -90,13 +92,17 @@ export class SizesService {
           case AgentKeys.p_tshirt_size:
             const prevSelectedTShortSize = this.selectedTShortSize$.value;
             if (prevSelectedTShortSize.value === 'Other') {
+              const prevValueOtherSize = target[AgentKeys.p_tshirt_size_other];
               Reflect.set(target, AgentKeys.p_tshirt_size_other, null, receiver);
+              this.formChangesDetector.handleChange(AgentKeys.p_tshirt_size_other, null, prevValueOtherSize);
             }
             break;
           case AgentKeys.unisex_tshirt_size:
+            const prevValueUnisexOtherSize = target[AgentKeys.unisex_tshirt_size_other];
             const prevUnisexSelectedTShortSize = this.selectedTShortSize$.value;
             if (prevUnisexSelectedTShortSize.value === 'Other') {
               Reflect.set(target, AgentKeys.unisex_tshirt_size_other, null, receiver);
+              this.formChangesDetector.handleChange(AgentKeys.unisex_tshirt_size_other, null, prevValueUnisexOtherSize);
             }
             break;
         }

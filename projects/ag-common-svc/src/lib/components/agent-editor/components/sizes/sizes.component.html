@@ -17,13 +17,21 @@
   </div>
   <div class="row my-2 px-3">
     <div class="col-3 text-start"><b>T-Shirt Size:</b></div>
-    <div class="col-3">{{ funStaffFormDetails.p_tshirt_size | tShortSize | async }}</div>
+    <div class="col-3">
+      {{ funStaffFormDetails.p_tshirt_size | tShortSize | async }}
+      <span *ngIf="funStaffFormDetails?.p_tshirt_size_other as tShirtSizeOther">/ {{ tShirtSizeOther }}</span>
+    </div>
     <div class="col-3 text-start"><b>Hobbies:</b></div>
     <div class="col-3">{{ funStaffFormDetails.hobbies }}</div>
   </div>
   <div class="row my-2 px-3">
     <div class="col-3 text-start"><b>Unisex T-Shirt Size:</b></div>
-    <div class="col-3">{{ funStaffFormDetails.unisex_tshirt_size | tShortSize | async }}</div>
+    <div class="col-3">
+      {{ funStaffFormDetails.unisex_tshirt_size | tShortSize | async }}
+      <span *ngIf="funStaffFormDetails?.unisex_tshirt_size_other as unisexTShirtSizeOther"
+        >/ {{ unisexTShirtSizeOther }}</span
+      >
+    </div>
     <div class="col-3 text-start"><b>Favorite Destination:</b></div>
     <div class="col-3">{{ funStaffFormDetails.favorite_destination }}</div>
   </div>
@@ -40,7 +48,7 @@
   #sizeModalRef
   [title]="'Sizes For Fun'"
   [inProgress]="inProgress$ | async"
-  (onSaveClick)="saveAgentUpdates($event)"
+  (onSaveClick)="saveAgentUpdates()"
   (onPopupClose)="handleClosePopup($event)"
 >
   <dx-form #sizeFormRef class="mt-2" [formData]="funStaffFormDetails" labelMode="floating">

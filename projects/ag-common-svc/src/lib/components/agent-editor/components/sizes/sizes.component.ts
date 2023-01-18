@@ -34,10 +34,10 @@ export class SizesComponent {
     this.selectedUnisexTShortSize$ = sizesService.selectedUnisexTShortSize$;
   }
 
-  public saveAgentUpdates = (e) => {
+  public saveAgentUpdates = () => {
     const validationResults = this.sizeFormComponent.instance.validate();
     if (validationResults.isValid) {
-      this.sizesService.handleSave(this.agent[BaseModelKeys.dbId], e.component);
+      this.sizesService.handleSave(this.agent[BaseModelKeys.dbId], this.sizeModalComponent);
     }
   };
 

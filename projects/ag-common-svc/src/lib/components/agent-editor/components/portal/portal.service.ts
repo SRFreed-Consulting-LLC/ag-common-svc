@@ -111,12 +111,21 @@ export class PortalService {
         Reflect.set(target, prop, value, receiver);
         switch (prop) {
           case AgentKeys.agent_status:
-            if (value !== AGENT_STATUS.IN_REVIEW) {
+            const prevReviewLevel = target[AgentKeys.agent_review_level];
+
+            if (value !== AGENT_STATUS.IN_REVIEW && !prevReviewLevel) {
               Reflect.set(target, AgentKeys.agent_review_level, null, receiver);
+              this.formChangesDetector.handleChange(AgentKeys.agent_review_level, null, prevReviewLevel);
             }
             if (value === AGENT_STATUS.IN_REVIEW) {
               Reflect.set(target, AgentKeys.agent_review_level, AgentReviewLevel.AllianceGroupLevel, receiver);
+              this.formChangesDetector.handleChange(
+                AgentKeys.agent_review_level,
+                AgentReviewLevel.AllianceGroupLevel,
+                prevReviewLevel
+              );
             }
+
             this.isReviewLevelVisible$.next(value === AGENT_STATUS.IN_REVIEW);
             break;
 

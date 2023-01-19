@@ -6,9 +6,10 @@ import { FormChangesDetector } from '../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
 import { AgentService } from '../../../../services/agent.service';
 import { updateDoc } from 'firebase/firestore';
+import { pick } from 'lodash';
 
 @Injectable()
-export class SizesService {
+export class DietaryConsiderationService {
   public formData: Partial<Agent>;
   public hasFormChanges$: Observable<boolean>;
   public readonly formChangesDetector: FormChangesDetector = new FormChangesDetector();
@@ -16,8 +17,7 @@ export class SizesService {
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);
 
-  public selectedTShortSize$ = new BehaviorSubject(null);
-  public selectedUnisexTShortSize$ = new BehaviorSubject(null);
+  public selectedDietaryConsiderationType$ = new BehaviorSubject(null);
 
   constructor(private readonly agentService: AgentService) {
     this.inProgress$ = this._inProgress$.asObservable();
@@ -39,18 +39,14 @@ export class SizesService {
     this.agentService
       .updateFields(agentId, updates)
       .then(() => {
-        const selectedTShortSize = this.selectedTShortSize$.value;
-        const selectedUnisexTShortSize = this.selectedUnisexTShortSize$.value;
-        if (selectedTShortSize && !selectedTShortSize?.isAssigned) {
-          updateDoc(selectedTShortSize?.reference, { [LookupKeys.isAssigned]: true }).then();
+        const selectedDietaryConsiderationType = this.selectedDietaryConsiderationType$?.value;
+        if (selectedDietaryConsiderationType && !selectedDietaryConsiderationType?.isAssigned) {
+          updateDoc(selectedDietaryConsiderationType?.reference, { [LookupKeys.isAssigned]: true }).then();
         }
-        if (selectedUnisexTShortSize && !selectedUnisexTShortSize?.isAssigned) {
-          updateDoc(selectedUnisexTShortSize?.reference, { [LookupKeys.isAssigned]: true }).then();
-        }
-
         this.formChangesDetector.clear();
         modalWindowComponent?.hideModal();
       })
+
       .finally(() => {
         this._inProgress$.next(false);
       });
@@ -73,39 +69,17 @@ export class SizesService {
   };
 
   public getFormData = (agent?: Partial<Agent>) => {
-    const funStaffInitialData = {
-      [AgentKeys.p_tshirt_size]: agent[AgentKeys.p_tshirt_size],
-      [AgentKeys.p_tshirt_size_other]: agent[AgentKeys.p_tshirt_size_other],
-      [AgentKeys.unisex_tshirt_size]: agent[AgentKeys.unisex_tshirt_size],
-      [AgentKeys.unisex_tshirt_size_other]: agent[AgentKeys.unisex_tshirt_size_other],
-      [AgentKeys.shoe_size]: agent[AgentKeys.shoe_size],
-      [AgentKeys.hobbies]: agent[AgentKeys.hobbies],
-      [AgentKeys.favorite_destination]: agent[AgentKeys.favorite_destination]
-    };
-    this.formData = new Proxy(funStaffInitialData, {
+    const dietaryConsiderationInitialData = pick(agent, [
+      AgentKeys.dietary_or_personal_considerations,
+      AgentKeys.dietary_consideration_type,
+      AgentKeys.dietary_consideration
+    ]);
+    console.log('dietaryConsiderationInitialData', dietaryConsiderationInitialData);
+    this.formData = new Proxy(dietaryConsiderationInitialData, {
       set: (target, prop, value, receiver) => {
         const prevValue = target[prop];
         this.formChangesDetector.handleChange(prop, value, prevValue);
         Reflect.set(target, prop, value, receiver);
-
-        switch (prop) {
-          case AgentKeys.p_tshirt_size:
-            const prevSelectedTShortSize = this.selectedTShortSize$.value;
-            if (prevSelectedTShortSize.value === 'Other') {
-              const prevValueOtherSize = target[AgentKeys.p_tshirt_size_other];
-              Reflect.set(target, AgentKeys.p_tshirt_size_other, null, receiver);
-              this.formChangesDetector.handleChange(AgentKeys.p_tshirt_size_other, null, prevValueOtherSize);
-            }
-            break;
-          case AgentKeys.unisex_tshirt_size:
-            const prevValueUnisexOtherSize = target[AgentKeys.unisex_tshirt_size_other];
-            const prevUnisexSelectedTShortSize = this.selectedTShortSize$.value;
-            if (prevUnisexSelectedTShortSize.value === 'Other') {
-              Reflect.set(target, AgentKeys.unisex_tshirt_size_other, null, receiver);
-              this.formChangesDetector.handleChange(AgentKeys.unisex_tshirt_size_other, null, prevValueUnisexOtherSize);
-            }
-            break;
-        }
 
         return true;
       }

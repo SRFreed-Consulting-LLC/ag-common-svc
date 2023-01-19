@@ -52,7 +52,7 @@
   (onPopupClose)="handleClosePopup($event)"
 >
   <dx-form #sizeFormRef class="mt-2" [formData]="funStaffFormDetails" labelMode="floating">
-    <dxi-item itemType="group" [colCount]="(selectedTShortSize$.value | otherSize) ? 12 : 6">
+    <dxi-item itemType="group" [colCount]="(selectedTShortSize$?.value | otherSize) ? 12 : 6">
       <dxi-item [dataField]="AgentKeys.p_tshirt_size" [colSpan]="6">
         <div *dxTemplate>
           <ag-shr-t-short-size-select-box
@@ -66,14 +66,14 @@
       <dxi-item
         [dataField]="AgentKeys.p_tshirt_size_other"
         [colSpan]="6"
-        [isRequired]="selectedTShortSize$.value | otherSize"
-        [visible]="selectedTShortSize$.value | otherSize"
+        [isRequired]="!!(selectedTShortSize$?.value | otherSize)"
+        [visible]="!!(selectedTShortSize$?.value | otherSize)"
       >
         <dxo-label [text]="'T-Shirt Size Other'"></dxo-label>
       </dxi-item>
     </dxi-item>
 
-    <dxi-item itemType="group" [colCount]="(selectedUnisexTShortSize$.value | otherSize) ? 12 : 6">
+    <dxi-item itemType="group" [colCount]="(selectedUnisexTShortSize$?.value | otherSize) ? 12 : 6">
       <dxi-item [dataField]="AgentKeys.unisex_tshirt_size" [colSpan]="6">
         <div *dxTemplate>
           <ag-shr-t-short-size-select-box
@@ -87,8 +87,8 @@
       <dxi-item
         [dataField]="AgentKeys.unisex_tshirt_size_other"
         [colSpan]="6"
-        [isRequired]="true"
-        [visible]="selectedUnisexTShortSize$.value | otherSize"
+        [isRequired]="!!(selectedUnisexTShortSize$?.value | otherSize)"
+        [visible]="!!(selectedUnisexTShortSize$?.value | otherSize)"
       >
         <dxo-label [text]="'Unisex T-Shirt Size Other'"></dxo-label>
       </dxi-item>

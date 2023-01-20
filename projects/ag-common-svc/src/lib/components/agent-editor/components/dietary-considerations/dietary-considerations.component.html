@@ -1,0 +1,111 @@
+<div class="mt-2">
+  <div class="row my-2 px-3">
+    <div class="col-12 text-start editToolbar">
+      <dx-toolbar [width]="'100%'">
+        <dxi-item location="before" locateInMenu="never">
+          <div *dxTemplate>
+            <div class="toolbar-label"><b>Dietary Considerations</b></div>
+          </div>
+        </dxi-item>
+        <dxi-item location="after" locateInMenu="never">
+          <div *dxTemplate>
+            <dx-button [icon]="'edit'" [stylingMode]="'text'" (onClick)="showEditorModal()"></dx-button>
+          </div>
+        </dxi-item>
+      </dx-toolbar>
+    </div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-4 text-start">
+      <b>Do you have a Dietary or Personal Consideration?</b>
+    </div>
+    <div class="col-3 text-start">
+      <b>Consideration Type</b>
+    </div>
+    <div class="col-5 text-start">
+      <b>Description of Consideration(s)</b>
+    </div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-4 text-start">{{ dietaryConsiderationFormDetails?.dietary_or_personal_considerations }}</div>
+    <div class="col-3 text-start">
+      {{ dietaryConsiderationFormDetails?.dietary_consideration_type | dietaryConsiderationType | async }}
+    </div>
+    <div class="col-5 text-start">{{ dietaryConsiderationFormDetails?.dietary_consideration }}</div>
+  </div>
+</div>
+
+<ag-shr-modal-window
+  [width]="'50vw'"
+  [height]="'auto'"
+  #dietaryConsiderationModalRef
+  [title]="'Dietary Considerations'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="saveAgentUpdates()"
+  (onPopupClose)="handleClosePopup($event)"
+>
+  <dx-form
+    #dietaryConsiderationFormRef
+    class="mt-2"
+    [formData]="dietaryConsiderationFormDetails"
+    [labelLocation]="'top'"
+    labelMode="floating"
+    [validationGroup]="validationGroup"
+  >
+    <dxi-item
+      dataField="dietary_or_personal_considerations"
+      editorType="dxSelectBox"
+      [editorOptions]="{ items: ['Yes', 'No'] }"
+    >
+      <dxo-label [text]="'Do you have a Dietary or Personal Consideration?'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item
+      dataField="dietary_consideration_type"
+      [isRequired]="
+        dietaryConsiderationFormDetails?.dietary_or_personal_considerations &&
+        dietaryConsiderationFormDetails?.dietary_or_personal_considerations === 'Yes'
+      "
+    >
+      <dxo-label [text]="'Type of Dietary or Personal Consideration'"></dxo-label>
+
+      <div *dxTemplate>
+        <ag-shr-dietary-consideration-type-select-box
+          [readOnly]="
+            !dietaryConsiderationFormDetails?.dietary_or_personal_considerations ||
+            dietaryConsiderationFormDetails?.dietary_or_personal_considerations !== 'Yes'
+          "
+          [isRequired]="
+            dietaryConsiderationFormDetails?.dietary_or_personal_considerations &&
+            dietaryConsiderationFormDetails?.dietary_or_personal_considerations === 'Yes'
+          "
+          [validationGroup]="validationGroup"
+          (selectedItemChange)="handleDietaryConsiderationTypeSelect($event)"
+          [(value)]="dietaryConsiderationFormDetails.dietary_consideration_type"
+        ></ag-shr-dietary-consideration-type-select-box>
+      </div>
+    </dxi-item>
+
+    <dxi-item
+      dataField="dietary_consideration"
+      editorType="dxTextArea"
+      [editorOptions]="{
+        height: 200,
+        readOnly:
+          !dietaryConsiderationFormDetails?.dietary_or_personal_considerations ||
+          dietaryConsiderationFormDetails?.dietary_or_personal_considerations !== 'Yes'
+      }"
+    >
+      <dxo-label [text]="'Description of Consideration(s)'"></dxo-label>
+      <dxi-validation-rule
+        *ngIf="
+          dietaryConsiderationFormDetails?.dietary_or_personal_considerations &&
+          dietaryConsiderationFormDetails?.dietary_or_personal_considerations === 'Yes'
+        "
+        type="required"
+        message="Required field"
+      >
+      </dxi-validation-rule>
+    </dxi-item>
+  </dx-form>
+</ag-shr-modal-window>

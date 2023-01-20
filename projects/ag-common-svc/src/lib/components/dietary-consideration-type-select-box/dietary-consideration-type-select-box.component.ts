@@ -13,11 +13,14 @@ export class DietaryConsiderationTypeSelectBoxComponent {
   @HostBinding('class') className = 'dietary-consideration-type-select-box';
   @Input() readOnly: boolean = false;
   @Input() disabled: boolean = false;
-  @Input() label: string = 'Dietary Consideration Type';
+  @Input() validationGroup: string;
+  @Input() isRequired: boolean = false;
+  @Input() label: string = 'Consideration Type';
   @Input() placeholder: string = '';
   @Input() labelMode: 'static' | 'floating' | 'hidden' = 'floating';
   @Input() value: any;
   @Output() valueChange = new EventEmitter();
+  @Output() selectedItemChange = new EventEmitter();
 
   public LookupKeys = LookupKeys;
   public BaseModelKeys = BaseModelKeys;

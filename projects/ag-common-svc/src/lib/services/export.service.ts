@@ -32,15 +32,12 @@ export class ExportService {
       { title: 'shipping_state', mapped_to: 'address.state', required: false},
       { title: 'shipping_zip', mapped_to: 'address.zip', required: false},
       { title: 'shipping_address_type', mapped_to: 'address', required: false},
-      { title: 'shipping_is_primary_shipping', mapped_to: '', required: false, default_value: true},
-      { title: 'shipping_is_primary_billing', mapped_to: '', required: false, default_value: false},
+      { title: 'billing_address1', mapped_to: 'address.address2', required: false},
       { title: 'billing_address2', mapped_to: 'address.address2', required: false},
       { title: 'billing_city', mapped_to: 'address.city', required: false},
       { title: 'billing_state', mapped_to: 'address.state', required: false},
       { title: 'billing_zip', mapped_to: 'address.zip', required: false},
       { title: 'billing_address_type', mapped_to: 'address', required: false},
-      { title: 'billing_is_primary_shipping', mapped_to: '', required: false, default_value: true},
-      { title: 'billing_is_primary_billing', mapped_to: '', required: false, default_value: false},
       { title: 'mobile_phone', mapped_to: '', required: false},//<--- NEW
       { title: 'secondary_phone', mapped_to: '', required: false},//<--- NEW
       { title: 'secondary_phone_extension', mapped_to: '', required: false},//<--- NEW

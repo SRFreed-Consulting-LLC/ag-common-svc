@@ -9,15 +9,13 @@ import { updateDoc } from 'firebase/firestore';
 import { pick } from 'lodash';
 
 @Injectable()
-export class DietaryConsiderationService {
+export class AgentHeaderService {
   public formData: Partial<Agent>;
   public hasFormChanges$: Observable<boolean>;
   public readonly formChangesDetector: FormChangesDetector = new FormChangesDetector();
 
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);
-
-  public selectedDietaryConsiderationType$ = new BehaviorSubject(null);
 
   constructor(private readonly agentService: AgentService) {
     this.inProgress$ = this._inProgress$.asObservable();
@@ -36,13 +34,9 @@ export class DietaryConsiderationService {
       Object.assign(updates, { [key]: this.formData[key] ?? null });
     });
     this._inProgress$.next(true);
-    return this.agentService
+    this.agentService
       .updateFields(agentId, updates)
       .then(() => {
-        const selectedDietaryConsiderationType = this.selectedDietaryConsiderationType$?.value;
-        if (selectedDietaryConsiderationType && !selectedDietaryConsiderationType?.isAssigned) {
-          updateDoc(selectedDietaryConsiderationType?.reference, { [LookupKeys.isAssigned]: true }).then();
-        }
         this.formChangesDetector.clear();
 
         return updates;

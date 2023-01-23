@@ -1,0 +1,226 @@
+<div class="row mb-3">
+  <div class="col-2">
+    <!-- <ag-crm-profile-picture [agent]="agent"></ag-crm-profile-picture> -->
+  </div>
+  <div class="col-10">
+    <div class="row">
+      <div class="col-12" style="font-size: 18px">
+        <span *ngIf="agentHeaderFormDetails?.p_prefix as prefix">{{ prefix | prefix | async }}&nbsp;</span>
+        <span *ngIf="agentHeaderFormDetails?.p_agent_first_name as firstName">{{ firstName }}&nbsp;</span>
+        <span *ngIf="agentHeaderFormDetails?.p_agent_middle_name as middleName">{{ middleName }}&nbsp;</span>
+        <span *ngIf="agentHeaderFormDetails?.p_agent_last_name as lastName">{{ lastName }}&nbsp;</span>
+        <span *ngIf="agentHeaderFormDetails?.p_suffix as suffix">{{ suffix | suffix | async }}&nbsp;</span>
+        <span
+          >&nbsp; &nbsp; &nbsp;<dx-button icon="edit" stylingMode="text" (onClick)="showEditorModal()"></dx-button
+        ></span>
+      </div>
+    </div>
+    <div class="row pb-1">
+      <div class="col-4">
+        {{ agentHeaderFormDetails?.title ?? "" }}
+      </div>
+    </div>
+    <div class="row pb-1">
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Email Address</div>
+        <!-- <div>{{ agentEditorService.getPrimaryEmailAddress(agent) }}</div> -->
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">MGA</div>
+        <!-- <div>{{ agentEditorService.getAgency(agent.p_mga_id, agencies) }}</div> -->
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Shipping Address</div>
+        <!-- <div>{{ agentEditorService.getPrimaryShippingAddress(agent) }}</div> -->
+      </div>
+    </div>
+    <div class="row pb-1">
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Phone Number</div>
+        <!-- <div>{{ agentEditorService.getPrimaryPhoneNumber(agent) }}</div> -->
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Agency</div>
+        <!-- <div>{{ agentEditorService.getAgency(agent.p_agency_id, agencies) }}</div> -->
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Billing Address</div>
+        <!-- <div>{{ agentEditorService.getPrimaryBillingAddress(agent) }}</div> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<ag-shr-modal-window
+  [width]="'50vw'"
+  [height]="'auto'"
+  #agentHeaderModalRef
+  [title]="'Dietary Considerations'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="saveAgentUpdates()"
+  (onPopupClose)="handleClosePopup($event)"
+>
+  <div class="row">
+    <div class="col-2">
+      <div class="widget-container flex-box">
+        <span>Profile Picture</span>
+        <div
+          id="dropzone-external"
+          class="flex-box"
+          [ngClass]="
+            isDropZoneActive ? ['dx-theme-accent-as-border-color', 'dropzone-active'] : ['dx-theme-border-color']
+          "
+        >
+          <img id="dropzone-image" [src]="imageSource" *ngIf="imageSource" alt="" />
+          <div id="dropzone-text" class="flex-box" *ngIf="textVisible">
+            <span>Drag & Drop the desired file</span>
+            <span>…or click to browse for a file instead.</span>
+          </div>
+          <dx-progress-bar
+            #uploadProgress
+            [min]="0"
+            [max]="100"
+            width="30%"
+            [showStatus]="false"
+            [visible]="progressVisible"
+            [value]="progressValue"
+          >
+          </dx-progress-bar>
+        </div>
+        <dx-file-uploader
+          #fileUploader
+          dialogTrigger="#dropzone-external"
+          dropZone="#dropzone-external"
+          [multiple]="false"
+          [allowedFileExtensions]="['.jpg', '.jpeg', '.gif', '.png']"
+          uploadMode="instantly"
+          [uploadFile]="onUploaded"
+          [visible]="false"
+          (onDropZoneEnter)="onDropZoneEnter($event)"
+          (onDropZoneLeave)="onDropZoneLeave($event)"
+          (onProgress)="onProgress($event)"
+          (onUploadStarted)="onUploadStarted($event)"
+        >
+        </dx-file-uploader>
+      </div>
+    </div>
+    <div class="col-10">
+      <dx-form class="mt-2" [colCount]="12" [formData]="agentHeaderFormDetails" [labelLocation]="'top'">
+        <dxi-item dataField="p_prefix" [colSpan]="2">
+          <dxo-label [text]="'Prefix'"></dxo-label>
+          <div *dxTemplate>
+            <ag-shr-prefix-select-box
+              [(value)]="agentHeaderFormDetails.p_prefix"
+              [labelMode]="'hidden'"
+            ></ag-shr-prefix-select-box>
+          </div>
+        </dxi-item>
+
+        <dxi-item dataField="p_agent_first_name" [colSpan]="3" [template]="'firstNameTemplate'">
+          <dxo-label [text]="'First'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'firstNameTemplate'">
+          <dx-text-box [(value)]="agentHeaderFormDetails.p_agent_first_name"></dx-text-box>
+        </div>
+        <dxi-item dataField="p_agent_middle_name" [colSpan]="2" [template]="'middleNameTemplate'">
+          <dxo-label [text]="'Middle'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'middleNameTemplate'">
+          <dx-text-box [(value)]="agentHeaderFormDetails.p_agent_middle_name"></dx-text-box>
+        </div>
+        <dxi-item dataField="p_agent_last_name" [colSpan]="3" [template]="'lastNameTemplate'">
+          <dxo-label [text]="'Last'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'lastNameTemplate'">
+          <dx-text-box [(value)]="agentHeaderFormDetails.p_agent_last_name"></dx-text-box>
+        </div>
+        <dxi-item dataField="p_suffix" [colSpan]="2">
+          <dxo-label [text]="'Suffix'"></dxo-label>
+          <div *dxTemplate>
+            <ag-shr-suffix-select-box
+              [(value)]="agentHeaderFormDetails.p_suffix"
+              [labelMode]="'hidden'"
+            ></ag-shr-suffix-select-box>
+          </div>
+        </dxi-item>
+
+        <dxi-item dataField="title" [colSpan]="4" [template]="'titleTemplate'">
+          <dxo-label [text]="'Title'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'titleTemplate'">
+          <dx-text-box [(value)]="agentHeaderFormDetails.title"></dx-text-box>
+        </div>
+
+        <dxi-item dataField="p_headshot_link" [colSpan]="8" [template]="'imageTemplate'">
+          <dxo-label [text]="'Header Image'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'imageTemplate'">
+          <dx-text-box [(value)]="agentHeaderFormDetails.p_headshot_link"></dx-text-box>
+        </div>
+
+        <dxi-item dataField="primaryEmailAddress" [colSpan]="4" [template]="'primaryEmailAddressTemplate'">
+          <dxo-label [text]="'Primary Email Address'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'primaryEmailAddressTemplate'">
+          <dx-select-box
+            [items]="agentHeaderFormDetails.email_addresses"
+            [displayExpr]="'address'"
+            [(value)]="primaryEmailAddress"
+          ></dx-select-box>
+        </div>
+        <dxi-item dataField="p_mga_id" [colSpan]="4" [template]="'mgaTemplate'">
+          <dxo-label [text]="'MGA'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'mgaTemplate'">
+          <dx-select-box
+            #selectedMGA
+            [(value)]="agentHeaderFormDetails.p_mga_id"
+            [dataSource]="filteredMGAs"
+            [displayExpr]="'name'"
+            [valueExpr]="'agency_id'"
+            [searchEnabled]="true"
+            [showClearButton]="true"
+          >
+          </dx-select-box>
+        </div>
+        <dxi-item dataField="primaryShippingAddress" [colSpan]="4" [template]="'primaryShippingAddressTemplate'">
+          <dxo-label [text]="'Primary Shipping Address'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'primaryShippingAddressTemplate'">
+          <!-- <div>{{ getPrimaryShippingAddress() }}</div> -->
+        </div>
+        <dxi-item dataField="primaryPhoneNumber" [colSpan]="4" [template]="'primaryPhoneNumberTemplate'">
+          <dxo-label [text]="'Primary Phone Number'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'primaryPhoneNumberTemplate'">
+          <dx-select-box
+            [items]="agentHeaderFormDetails.phone_numbers"
+            [displayExpr]="'number'"
+            [(value)]="primaryPhoneNumber"
+          ></dx-select-box>
+        </div>
+        <dxi-item dataField="p_agency_id" [colSpan]="4" [template]="'agencyTemplate'">
+          <dxo-label [text]="'Agency'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'agencyTemplate'">
+          <dx-select-box
+            #agencyList
+            [(value)]="agentHeaderFormDetails.p_agency_id"
+            [dataSource]="filteredAgencies"
+            [displayExpr]="'name'"
+            [valueExpr]="'agency_id'"
+            [searchEnabled]="true"
+            [showClearButton]="true"
+          >
+          </dx-select-box>
+        </div>
+        <dxi-item dataField="primaryBillingAddress" [colSpan]="4" [template]="'primaryBillingAddressTemplate'">
+          <dxo-label [text]="'Primary Billing Address'"></dxo-label>
+        </dxi-item>
+        <div *dxTemplate="let data of 'primaryBillingAddressTemplate'">
+          <!-- <div>{{ getPrimaryBillingAddress() }}</div> -->
+        </div>
+      </dx-form>
+    </div>
+  </div>
+</ag-shr-modal-window>

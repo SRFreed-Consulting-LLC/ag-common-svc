@@ -62,6 +62,12 @@ export class DietaryConsiderationService {
     const result = confirm('<i>Are you sure you want to Cancel without Saving?</i>', 'Confirm');
     result.then((dialogResult) => {
       if (dialogResult) {
+        const changes = this.formChangesDetector.getAllChanges();
+
+        changes.forEach(([key, value]) => {
+          Reflect.set(this.formData, key, value);
+        });
+
         this.formChangesDetector?.clear();
         component.instance.hide();
       }
@@ -80,6 +86,15 @@ export class DietaryConsiderationService {
         const prevValue = target[prop];
         this.formChangesDetector.handleChange(prop, value, prevValue);
         Reflect.set(target, prop, value, receiver);
+
+        switch (prop) {
+          case AgentKeys.dietary_or_personal_considerations:
+            if (prevValue === 'Yes' && value === 'No') {
+              Object.assign(this.formData, { [AgentKeys.dietary_consideration_type]: null });
+              Object.assign(this.formData, { [AgentKeys.dietary_consideration]: null });
+            }
+            break;
+        }
 
         return true;
       }

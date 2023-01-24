@@ -64,13 +64,22 @@ export class AgentHeaderService {
   };
 
   public getFormData = (agent?: Partial<Agent>) => {
-    const dietaryConsiderationInitialData = pick(agent, [
-      AgentKeys.dietary_or_personal_considerations,
-      AgentKeys.dietary_consideration_type,
-      AgentKeys.dietary_consideration
+    const initialData = pick(agent, [
+      AgentKeys.p_prefix,
+      AgentKeys.p_agent_first_name,
+      AgentKeys.p_agent_middle_name,
+      AgentKeys.p_agent_last_name,
+      AgentKeys.p_suffix,
+      AgentKeys.p_headshot_link,
+      AgentKeys.title,
+      AgentKeys.p_mga_id,
+      AgentKeys.p_agency_id,
+      AgentKeys.addresses,
+      AgentKeys.email_addresses,
+      AgentKeys.phone_numbers
     ]);
-    console.log('dietaryConsiderationInitialData', dietaryConsiderationInitialData);
-    this.formData = new Proxy(dietaryConsiderationInitialData, {
+    console.log('initialData', initialData);
+    this.formData = new Proxy(initialData, {
       set: (target, prop, value, receiver) => {
         const prevValue = target[prop];
         this.formChangesDetector.handleChange(prop, value, prevValue);

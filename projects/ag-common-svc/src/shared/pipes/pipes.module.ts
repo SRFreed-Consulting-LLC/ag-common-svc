@@ -17,6 +17,10 @@ import { DietaryConsiderationTypePipe } from './dietary-consideration-type.pipe'
 import { GenderPipe } from './gender.pipe';
 import { SuffixPipe } from './suffix.pipe';
 import { TShortSizePipe } from './t-short-size.pipe';
+import { PrimaryEmailAddressPipe } from './primary-email-address.pipe';
+import { PrimaryShippingAddressPipe } from './primary-shipping-address.pipe';
+import { PrimaryBillingAddressPipe } from './primary-billing-address.pipe';
+import { AgencyPipe } from './agent.pipe';
 
 @NgModule({
   declarations: [
@@ -37,7 +41,11 @@ import { TShortSizePipe } from './t-short-size.pipe';
     DietaryConsiderationTypePipe,
     GenderPipe,
     SuffixPipe,
-    TShortSizePipe
+    TShortSizePipe,
+    PrimaryEmailAddressPipe,
+    PrimaryShippingAddressPipe,
+    PrimaryBillingAddressPipe,
+    AgencyPipe
   ],
   exports: [
     SafeHTMLPipe,
@@ -57,7 +65,11 @@ import { TShortSizePipe } from './t-short-size.pipe';
     DietaryConsiderationTypePipe,
     GenderPipe,
     SuffixPipe,
-    TShortSizePipe
+    TShortSizePipe,
+    PrimaryEmailAddressPipe,
+    PrimaryShippingAddressPipe,
+    PrimaryBillingAddressPipe,
+    AgencyPipe
   ]
 })
 export class PipesModule {}

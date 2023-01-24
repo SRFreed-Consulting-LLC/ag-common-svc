@@ -1,18 +1,22 @@
 <div class="row mb-3">
-  <div class="col-2">
-    <!-- <ag-crm-profile-picture [agent]="agent"></ag-crm-profile-picture> -->
+  <div class="col-2 agent-header__image-container">
+    <img
+      class="agent-header__image"
+      [src]="agentHeaderFormDetails?.p_headshot_link || 'assets/image-placeholder.png'"
+    />
   </div>
   <div class="col-10">
     <div class="row">
       <div class="col-12" style="font-size: 18px">
-        <span *ngIf="agentHeaderFormDetails?.p_prefix as prefix">{{ prefix | prefix | async }}&nbsp;</span>
-        <span *ngIf="agentHeaderFormDetails?.p_agent_first_name as firstName">{{ firstName }}&nbsp;</span>
-        <span *ngIf="agentHeaderFormDetails?.p_agent_middle_name as middleName">{{ middleName }}&nbsp;</span>
-        <span *ngIf="agentHeaderFormDetails?.p_agent_last_name as lastName">{{ lastName }}&nbsp;</span>
-        <span *ngIf="agentHeaderFormDetails?.p_suffix as suffix">{{ suffix | suffix | async }}&nbsp;</span>
-        <span
-          >&nbsp; &nbsp; &nbsp;<dx-button icon="edit" stylingMode="text" (onClick)="showEditorModal()"></dx-button
-        ></span>
+        {{
+          [
+            agentHeaderFormDetails?.p_prefix | prefix | async,
+            agentHeaderFormDetails?.p_agent_first_name,
+            agentHeaderFormDetails?.p_agent_last_name,
+            agentHeaderFormDetails?.p_suffix | suffix | async
+          ] | fullName
+        }}
+        <dx-button class="mr-2" icon="edit" stylingMode="text" (onClick)="showEditorModal()"></dx-button>
       </div>
     </div>
     <div class="row pb-1">
@@ -23,29 +27,29 @@
     <div class="row pb-1">
       <div class="col-3">
         <div class="pb-1" style="text-decoration: underline">Primary Email Address</div>
-        <!-- <div>{{ agentEditorService.getPrimaryEmailAddress(agent) }}</div> -->
+        <div>{{ agentHeaderFormDetails?.email_addresses | primaryEmailAddress }}</div>
       </div>
       <div class="col-3">
         <div class="pb-1" style="text-decoration: underline">MGA</div>
-        <!-- <div>{{ agentEditorService.getAgency(agent.p_mga_id, agencies) }}</div> -->
+        <div>{{ agentHeaderFormDetails?.p_mga_id | agency | async }}</div>
       </div>
       <div class="col-3">
         <div class="pb-1" style="text-decoration: underline">Primary Shipping Address</div>
-        <!-- <div>{{ agentEditorService.getPrimaryShippingAddress(agent) }}</div> -->
+        <div>{{ agentHeaderFormDetails?.addresses | primaryShippingAddress | fullAddress }}</div>
       </div>
     </div>
     <div class="row pb-1">
       <div class="col-3">
         <div class="pb-1" style="text-decoration: underline">Primary Phone Number</div>
-        <!-- <div>{{ agentEditorService.getPrimaryPhoneNumber(agent) }}</div> -->
+        <div>{{ agentHeaderFormDetails?.phone_numbers | primaryPhoneNumber | phoneNumberMask }}</div>
       </div>
       <div class="col-3">
         <div class="pb-1" style="text-decoration: underline">Agency</div>
-        <!-- <div>{{ agentEditorService.getAgency(agent.p_agency_id, agencies) }}</div> -->
+        <div>{{ agentHeaderFormDetails?.p_agency_id | agency | async }}</div>
       </div>
       <div class="col-3">
         <div class="pb-1" style="text-decoration: underline">Primary Billing Address</div>
-        <!-- <div>{{ agentEditorService.getPrimaryBillingAddress(agent) }}</div> -->
+        <div>{{ agentHeaderFormDetails?.addresses | primaryBillingAddress | fullAddress }}</div>
       </div>
     </div>
   </div>
@@ -55,7 +59,7 @@
   [width]="'50vw'"
   [height]="'auto'"
   #agentHeaderModalRef
-  [title]="'Dietary Considerations'"
+  [title]="'Agent Information'"
   [inProgress]="inProgress$ | async"
   (onSaveClick)="saveAgentUpdates()"
   (onPopupClose)="handleClosePopup($event)"
@@ -105,121 +109,40 @@
       </div>
     </div>
     <div class="col-10">
-      <dx-form class="mt-2" [colCount]="12" [formData]="agentHeaderFormDetails" [labelLocation]="'top'">
-        <dxi-item dataField="p_prefix" [colSpan]="2">
-          <dxo-label [text]="'Prefix'"></dxo-label>
-          <div *dxTemplate>
-            <ag-shr-prefix-select-box
-              [(value)]="agentHeaderFormDetails.p_prefix"
-              [labelMode]="'hidden'"
-            ></ag-shr-prefix-select-box>
-          </div>
-        </dxi-item>
-
-        <dxi-item dataField="p_agent_first_name" [colSpan]="3" [template]="'firstNameTemplate'">
+      <dx-form class="mt-2" [colCount]="12" [formData]="agentHeaderFormDetails" [labelMode]="'floating'">
+        <dxi-item dataField="p_agent_first_name" [colSpan]="6">
           <dxo-label [text]="'First'"></dxo-label>
         </dxi-item>
-        <div *dxTemplate="let data of 'firstNameTemplate'">
-          <dx-text-box [(value)]="agentHeaderFormDetails.p_agent_first_name"></dx-text-box>
-        </div>
-        <dxi-item dataField="p_agent_middle_name" [colSpan]="2" [template]="'middleNameTemplate'">
-          <dxo-label [text]="'Middle'"></dxo-label>
-        </dxi-item>
-        <div *dxTemplate="let data of 'middleNameTemplate'">
-          <dx-text-box [(value)]="agentHeaderFormDetails.p_agent_middle_name"></dx-text-box>
-        </div>
-        <dxi-item dataField="p_agent_last_name" [colSpan]="3" [template]="'lastNameTemplate'">
+
+        <dxi-item dataField="p_agent_last_name" [colSpan]="6">
           <dxo-label [text]="'Last'"></dxo-label>
         </dxi-item>
-        <div *dxTemplate="let data of 'lastNameTemplate'">
-          <dx-text-box [(value)]="agentHeaderFormDetails.p_agent_last_name"></dx-text-box>
-        </div>
-        <dxi-item dataField="p_suffix" [colSpan]="2">
-          <dxo-label [text]="'Suffix'"></dxo-label>
+
+        <dxi-item dataField="p_agent_middle_name" [colSpan]="12">
+          <dxo-label [text]="'Middle'"></dxo-label>
+        </dxi-item>
+
+        <dxi-item dataField="p_prefix" [colSpan]="6">
+          <dxo-label [text]="'Prefix'"></dxo-label>
           <div *dxTemplate>
-            <ag-shr-suffix-select-box
-              [(value)]="agentHeaderFormDetails.p_suffix"
-              [labelMode]="'hidden'"
-            ></ag-shr-suffix-select-box>
+            <ag-shr-prefix-select-box [(value)]="agentHeaderFormDetails.p_prefix"></ag-shr-prefix-select-box>
           </div>
         </dxi-item>
 
-        <dxi-item dataField="title" [colSpan]="4" [template]="'titleTemplate'">
+        <dxi-item dataField="p_suffix" [colSpan]="6">
+          <dxo-label [text]="'Suffix'"></dxo-label>
+          <div *dxTemplate>
+            <ag-shr-suffix-select-box [(value)]="agentHeaderFormDetails.p_suffix"></ag-shr-suffix-select-box>
+          </div>
+        </dxi-item>
+
+        <dxi-item dataField="title" [colSpan]="6">
           <dxo-label [text]="'Title'"></dxo-label>
         </dxi-item>
-        <div *dxTemplate="let data of 'titleTemplate'">
-          <dx-text-box [(value)]="agentHeaderFormDetails.title"></dx-text-box>
-        </div>
 
-        <dxi-item dataField="p_headshot_link" [colSpan]="8" [template]="'imageTemplate'">
+        <dxi-item dataField="p_headshot_link" [colSpan]="6">
           <dxo-label [text]="'Header Image'"></dxo-label>
         </dxi-item>
-        <div *dxTemplate="let data of 'imageTemplate'">
-          <dx-text-box [(value)]="agentHeaderFormDetails.p_headshot_link"></dx-text-box>
-        </div>
-
-        <dxi-item dataField="primaryEmailAddress" [colSpan]="4" [template]="'primaryEmailAddressTemplate'">
-          <dxo-label [text]="'Primary Email Address'"></dxo-label>
-        </dxi-item>
-        <div *dxTemplate="let data of 'primaryEmailAddressTemplate'">
-          <dx-select-box
-            [items]="agentHeaderFormDetails.email_addresses"
-            [displayExpr]="'address'"
-            [(value)]="primaryEmailAddress"
-          ></dx-select-box>
-        </div>
-        <dxi-item dataField="p_mga_id" [colSpan]="4" [template]="'mgaTemplate'">
-          <dxo-label [text]="'MGA'"></dxo-label>
-        </dxi-item>
-        <div *dxTemplate="let data of 'mgaTemplate'">
-          <dx-select-box
-            #selectedMGA
-            [(value)]="agentHeaderFormDetails.p_mga_id"
-            [dataSource]="filteredMGAs"
-            [displayExpr]="'name'"
-            [valueExpr]="'agency_id'"
-            [searchEnabled]="true"
-            [showClearButton]="true"
-          >
-          </dx-select-box>
-        </div>
-        <dxi-item dataField="primaryShippingAddress" [colSpan]="4" [template]="'primaryShippingAddressTemplate'">
-          <dxo-label [text]="'Primary Shipping Address'"></dxo-label>
-        </dxi-item>
-        <div *dxTemplate="let data of 'primaryShippingAddressTemplate'">
-          <!-- <div>{{ getPrimaryShippingAddress() }}</div> -->
-        </div>
-        <dxi-item dataField="primaryPhoneNumber" [colSpan]="4" [template]="'primaryPhoneNumberTemplate'">
-          <dxo-label [text]="'Primary Phone Number'"></dxo-label>
-        </dxi-item>
-        <div *dxTemplate="let data of 'primaryPhoneNumberTemplate'">
-          <dx-select-box
-            [items]="agentHeaderFormDetails.phone_numbers"
-            [displayExpr]="'number'"
-            [(value)]="primaryPhoneNumber"
-          ></dx-select-box>
-        </div>
-        <dxi-item dataField="p_agency_id" [colSpan]="4" [template]="'agencyTemplate'">
-          <dxo-label [text]="'Agency'"></dxo-label>
-        </dxi-item>
-        <div *dxTemplate="let data of 'agencyTemplate'">
-          <dx-select-box
-            #agencyList
-            [(value)]="agentHeaderFormDetails.p_agency_id"
-            [dataSource]="filteredAgencies"
-            [displayExpr]="'name'"
-            [valueExpr]="'agency_id'"
-            [searchEnabled]="true"
-            [showClearButton]="true"
-          >
-          </dx-select-box>
-        </div>
-        <dxi-item dataField="primaryBillingAddress" [colSpan]="4" [template]="'primaryBillingAddressTemplate'">
-          <dxo-label [text]="'Primary Billing Address'"></dxo-label>
-        </dxi-item>
-        <div *dxTemplate="let data of 'primaryBillingAddressTemplate'">
-          <!-- <div>{{ getPrimaryBillingAddress() }}</div> -->
-        </div>
       </dx-form>
     </div>
   </div>

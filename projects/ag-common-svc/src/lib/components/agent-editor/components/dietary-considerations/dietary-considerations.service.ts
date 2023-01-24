@@ -65,10 +65,9 @@ export class DietaryConsiderationService {
         const changes = this.formChangesDetector.getAllChanges();
 
         changes.forEach(([key, value]) => {
-          Reflect.set(this.formData, key, value);
+          Object.assign(this.formData, { [key]: value });
         });
-
-        this.formChangesDetector?.clear();
+        this.formChangesDetector.clear();
         component.instance.hide();
       }
     });
@@ -80,20 +79,22 @@ export class DietaryConsiderationService {
       AgentKeys.dietary_consideration_type,
       AgentKeys.dietary_consideration
     ]);
-    console.log('dietaryConsiderationInitialData', dietaryConsiderationInitialData);
     this.formData = new Proxy(dietaryConsiderationInitialData, {
       set: (target, prop, value, receiver) => {
         const prevValue = target[prop];
-        this.formChangesDetector.handleChange(prop, value, prevValue);
-        Reflect.set(target, prop, value, receiver);
 
-        switch (prop) {
-          case AgentKeys.dietary_or_personal_considerations:
-            if (prevValue === 'Yes' && value === 'No') {
-              Object.assign(this.formData, { [AgentKeys.dietary_consideration_type]: null });
-              Object.assign(this.formData, { [AgentKeys.dietary_consideration]: null });
-            }
-            break;
+        if (value !== prevValue) {
+          this.formChangesDetector.handleChange(prop, value, prevValue);
+          Reflect.set(target, prop, value, receiver);
+
+          switch (prop) {
+            case AgentKeys.dietary_or_personal_considerations:
+              if (prevValue === 'Yes' && value === 'No') {
+                Object.assign(this.formData, { [AgentKeys.dietary_consideration_type]: null });
+                Object.assign(this.formData, { [AgentKeys.dietary_consideration]: null });
+              }
+              break;
+          }
         }
 
         return true;

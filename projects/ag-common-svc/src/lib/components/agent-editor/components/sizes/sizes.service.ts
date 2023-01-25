@@ -66,7 +66,12 @@ export class SizesService {
     const result = confirm('<i>Are you sure you want to Cancel without Saving?</i>', 'Confirm');
     result.then((dialogResult) => {
       if (dialogResult) {
-        this.formChangesDetector?.clear();
+        const changes = this.formChangesDetector.getAllChanges();
+
+        changes.forEach(([key, value]) => {
+          Object.assign(this.formData, { [key]: value });
+        });
+        this.formChangesDetector.clear();
         component.instance.hide();
       }
     });
@@ -85,26 +90,25 @@ export class SizesService {
     this.formData = new Proxy(funStaffInitialData, {
       set: (target, prop, value, receiver) => {
         const prevValue = target[prop];
-        this.formChangesDetector.handleChange(prop, value, prevValue);
-        Reflect.set(target, prop, value, receiver);
 
-        switch (prop) {
-          case AgentKeys.p_tshirt_size:
-            const prevSelectedTShortSize = this.selectedTShortSize$.value;
-            if (prevSelectedTShortSize.value === 'Other') {
-              const prevValueOtherSize = target[AgentKeys.p_tshirt_size_other];
-              Reflect.set(target, AgentKeys.p_tshirt_size_other, null, receiver);
-              this.formChangesDetector.handleChange(AgentKeys.p_tshirt_size_other, null, prevValueOtherSize);
-            }
-            break;
-          case AgentKeys.unisex_tshirt_size:
-            const prevValueUnisexOtherSize = target[AgentKeys.unisex_tshirt_size_other];
-            const prevUnisexSelectedTShortSize = this.selectedTShortSize$.value;
-            if (prevUnisexSelectedTShortSize.value === 'Other') {
-              Reflect.set(target, AgentKeys.unisex_tshirt_size_other, null, receiver);
-              this.formChangesDetector.handleChange(AgentKeys.unisex_tshirt_size_other, null, prevValueUnisexOtherSize);
-            }
-            break;
+        if (value !== prevValue) {
+          this.formChangesDetector.handleChange(prop, value, prevValue);
+          Reflect.set(target, prop, value, receiver);
+
+          switch (prop) {
+            case AgentKeys.p_tshirt_size:
+              const prevSelectedTShortSize = this.selectedTShortSize$.value;
+              if (prevSelectedTShortSize.value === 'Other') {
+                Object.assign(this.formData, { [AgentKeys.p_tshirt_size_other]: null });
+              }
+              break;
+            case AgentKeys.unisex_tshirt_size:
+              const prevUnisexSelectedTShortSize = this.selectedTShortSize$.value;
+              if (prevUnisexSelectedTShortSize.value === 'Other') {
+                Object.assign(this.formData, { [AgentKeys.unisex_tshirt_size_other]: null });
+              }
+              break;
+          }
         }
 
         return true;

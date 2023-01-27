@@ -111,6 +111,10 @@ export class PhoneNumbersComponent {
     return !e.row.data.is_primary;
   };
 
+  public uniqPhoneNumberValidationCallback = ({ value }) => {
+    return this.phoneNumbers?.every((phoneNumber) => value !== phoneNumber?.number);
+  };
+
   private checkIsPhoneNumberUniq = (data, key?: PhoneNumber) => {
     return this.phoneNumbers.every((phoneNumber) => {
       if (key && phoneNumber === key) {

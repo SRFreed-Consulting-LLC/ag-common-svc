@@ -28,7 +28,7 @@ export class SizesService {
     );
   }
 
-  public handleSave = (agentId, modalWindowComponent) => {
+  public handleSave = (agentId) => {
     const updates = {};
     const changes = this.formChangesDetector.getAllChanges();
 
@@ -36,7 +36,7 @@ export class SizesService {
       Object.assign(updates, { [key]: this.formData[key] ?? null });
     });
     this._inProgress$.next(true);
-    this.agentService
+    return this.agentService
       .updateFields(agentId, updates)
       .then(() => {
         const selectedTShortSize = this.selectedTShortSize$.value;
@@ -49,7 +49,7 @@ export class SizesService {
         }
 
         this.formChangesDetector.clear();
-        modalWindowComponent?.hideModal();
+        return updates;
       })
       .finally(() => {
         this._inProgress$.next(false);

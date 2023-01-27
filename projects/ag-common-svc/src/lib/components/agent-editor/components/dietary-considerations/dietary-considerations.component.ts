@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Agent, BaseModelKeys, Lookup } from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -16,6 +16,7 @@ export class DietaryConsiderationsComponent {
     this.agent = value;
     this.dietaryConsiderationFormDetails = this.dietaryConsiderationService.getFormData(value);
   }
+  @Output() onFieldsUpdated: EventEmitter<{ agentId: string; updates: Partial<Agent> }> = new EventEmitter();
   @ViewChild('dietaryConsiderationModalRef', { static: true }) dietaryConsiderationModalComponent: ModalWindowComponent;
   @ViewChild('dietaryConsiderationFormRef', { static: false }) dietaryConsiderationFormComponent: DxFormComponent;
 
@@ -34,10 +35,11 @@ export class DietaryConsiderationsComponent {
   public saveAgentUpdates = () => {
     const validationResults = this.dietaryConsiderationFormComponent.instance.validate();
     if (validationResults.isValid) {
-      this.dietaryConsiderationService.handleSave(
-        this.agent[BaseModelKeys.dbId],
-        this.dietaryConsiderationModalComponent
-      );
+      const agentId = this.agent[BaseModelKeys.dbId];
+      this.dietaryConsiderationService.handleSave(this.agent[BaseModelKeys.dbId]).then((updates) => {
+        this.dietaryConsiderationModalComponent.hideModal();
+        this.onFieldsUpdated.emit({ agentId, updates });
+      });
     }
   };
 

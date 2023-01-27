@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { Agent, AgentKeys, BaseModelKeys, Lookup } from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -17,6 +17,7 @@ export class SizesComponent {
     this.agent = value;
     this.funStaffFormDetails = this.sizesService.getFormData(value);
   }
+  @Output() onFieldsUpdated: EventEmitter<{ agentId: string; updates: Partial<Agent> }> = new EventEmitter();
   @ViewChild('sizeModalRef', { static: true }) sizeModalComponent: ModalWindowComponent;
   @ViewChild('sizeFormRef', { static: false }) sizeFormComponent: DxFormComponent;
 
@@ -37,7 +38,11 @@ export class SizesComponent {
   public saveAgentUpdates = () => {
     const validationResults = this.sizeFormComponent.instance.validate();
     if (validationResults.isValid) {
-      this.sizesService.handleSave(this.agent[BaseModelKeys.dbId], this.sizeModalComponent);
+      const agentId = this.agent[BaseModelKeys.dbId];
+      this.sizesService.handleSave(agentId).then((updates) => {
+        this.sizeModalComponent.hideModal();
+        this.onFieldsUpdated.emit({ agentId, updates });
+      });
     }
   };
 

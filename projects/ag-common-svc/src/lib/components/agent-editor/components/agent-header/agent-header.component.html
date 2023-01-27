@@ -1,0 +1,149 @@
+<div class="row mb-3">
+  <div class="col-2 agent-header__image-container">
+    <img
+      class="agent-header__image"
+      [src]="agentHeaderFormDetails?.p_headshot_link || 'assets/image-placeholder.png'"
+    />
+  </div>
+  <div class="col-10">
+    <div class="row">
+      <div class="col-12" style="font-size: 18px">
+        {{
+          [
+            agentHeaderFormDetails?.p_prefix | prefix | async,
+            agentHeaderFormDetails?.p_agent_first_name,
+            agentHeaderFormDetails?.p_agent_last_name,
+            agentHeaderFormDetails?.p_suffix | suffix | async
+          ] | fullName
+        }}
+        <dx-button class="mr-2" icon="edit" stylingMode="text" (onClick)="showEditorModal()"></dx-button>
+      </div>
+    </div>
+    <div class="row pb-1">
+      <div class="col-4">
+        {{ agentHeaderFormDetails?.title ?? "" }}
+      </div>
+    </div>
+    <div class="row pb-1">
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Email Address</div>
+        <div>{{ agentHeaderFormDetails?.email_addresses | primaryEmailAddress }}</div>
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">MGA</div>
+        <div>{{ agentHeaderFormDetails?.p_mga_id | agency | async }}</div>
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Shipping Address</div>
+        <div>{{ agentHeaderFormDetails?.addresses | primaryShippingAddress | fullAddress }}</div>
+      </div>
+    </div>
+    <div class="row pb-1">
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Phone Number</div>
+        <div>{{ agentHeaderFormDetails?.phone_numbers | primaryPhoneNumber | phoneNumberMask }}</div>
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Agency</div>
+        <div>{{ agentHeaderFormDetails?.p_agency_id | agency | async }}</div>
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Billing Address</div>
+        <div>{{ agentHeaderFormDetails?.addresses | primaryBillingAddress | fullAddress }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ag-shr-modal-window
+  [width]="'50vw'"
+  [height]="'auto'"
+  #agentHeaderModalRef
+  [title]="'Agent Information'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="saveAgentUpdates()"
+  (onPopupClose)="handleClosePopup($event)"
+>
+  <div class="row">
+    <div class="col-2">
+      <div class="widget-container flex-box">
+        <span>Profile Picture</span>
+        <div
+          id="dropzone-external"
+          class="flex-box"
+          [ngClass]="
+            isDropZoneActive ? ['dx-theme-accent-as-border-color', 'dropzone-active'] : ['dx-theme-border-color']
+          "
+        >
+          <img id="dropzone-image" [src]="imageSource" *ngIf="imageSource" alt="" />
+          <div id="dropzone-text" class="flex-box" *ngIf="textVisible">
+            <span>Drag & Drop the desired file</span>
+            <span>…or click to browse for a file instead.</span>
+          </div>
+          <dx-progress-bar
+            #uploadProgress
+            [min]="0"
+            [max]="100"
+            width="30%"
+            [showStatus]="false"
+            [visible]="progressVisible"
+            [value]="progressValue"
+          >
+          </dx-progress-bar>
+        </div>
+        <dx-file-uploader
+          #fileUploader
+          dialogTrigger="#dropzone-external"
+          dropZone="#dropzone-external"
+          [multiple]="false"
+          [allowedFileExtensions]="['.jpg', '.jpeg', '.gif', '.png']"
+          uploadMode="instantly"
+          [uploadFile]="onUploaded"
+          [visible]="false"
+          (onDropZoneEnter)="onDropZoneEnter($event)"
+          (onDropZoneLeave)="onDropZoneLeave($event)"
+          (onProgress)="onProgress($event)"
+          (onUploadStarted)="onUploadStarted($event)"
+        >
+        </dx-file-uploader>
+      </div>
+    </div>
+    <div class="col-10">
+      <dx-form class="mt-2" [colCount]="12" [formData]="agentHeaderFormDetails" [labelMode]="'floating'">
+        <dxi-item dataField="p_agent_first_name" [colSpan]="6">
+          <dxo-label [text]="'First'"></dxo-label>
+        </dxi-item>
+
+        <dxi-item dataField="p_agent_last_name" [colSpan]="6">
+          <dxo-label [text]="'Last'"></dxo-label>
+        </dxi-item>
+
+        <dxi-item dataField="p_agent_middle_name" [colSpan]="12">
+          <dxo-label [text]="'Middle'"></dxo-label>
+        </dxi-item>
+
+        <dxi-item dataField="p_prefix" [colSpan]="6">
+          <dxo-label [text]="'Prefix'"></dxo-label>
+          <div *dxTemplate>
+            <ag-shr-prefix-select-box [(value)]="agentHeaderFormDetails.p_prefix"></ag-shr-prefix-select-box>
+          </div>
+        </dxi-item>
+
+        <dxi-item dataField="p_suffix" [colSpan]="6">
+          <dxo-label [text]="'Suffix'"></dxo-label>
+          <div *dxTemplate>
+            <ag-shr-suffix-select-box [(value)]="agentHeaderFormDetails.p_suffix"></ag-shr-suffix-select-box>
+          </div>
+        </dxi-item>
+
+        <dxi-item dataField="title" [colSpan]="6">
+          <dxo-label [text]="'Title'"></dxo-label>
+        </dxi-item>
+
+        <dxi-item dataField="p_headshot_link" [colSpan]="6">
+          <dxo-label [text]="'Header Image'"></dxo-label>
+        </dxi-item>
+      </dx-form>
+    </div>
+  </div>
+</ag-shr-modal-window>

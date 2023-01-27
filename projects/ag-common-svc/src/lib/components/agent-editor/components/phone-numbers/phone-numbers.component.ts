@@ -8,8 +8,9 @@ import {
   Lookup,
   PhoneNumber,
   PhoneNumberType,
+  PhoneNumberTypeDescriptionMap,
   PHONE_NUMBER_TYPE_LOOKUP,
-  PROSPECT_STATUS
+  PROSPECT_STATUS,
 } from 'ag-common-lib/public-api';
 import { ToastrService } from 'ngx-toastr';
 import { AgentService } from '../../../../services/agent.service';
@@ -20,7 +21,7 @@ import { ModalWindowComponent } from '../../../modal-window/modal-window.compone
   selector: 'ag-shr-phone-numbers',
   templateUrl: './phone-numbers.component.html',
   styleUrls: ['./phone-numbers.component.scss'],
-  providers: []
+  providers: [],
 })
 export class PhoneNumbersComponent {
   @Input() agentId: string;
@@ -31,6 +32,7 @@ export class PhoneNumbersComponent {
 
   public AgentKeys = AgentKeys;
   public PHONE_NUMBER_TYPE_LOOKUP = PHONE_NUMBER_TYPE_LOOKUP;
+  public PhoneNumberTypeDescriptionMap = PhoneNumberTypeDescriptionMap;
   public prospectStatuses: PROSPECT_STATUS[] = [];
   public agentStatuses: AGENT_STATUS[] = [];
   public agentTypes: AGENT_TYPE[] = [];
@@ -88,7 +90,7 @@ export class PhoneNumbersComponent {
     const isUniq = this.checkIsPhoneNumberUniq(data, e?.key);
 
     if (!isUniq) {
-      this.toastrService.error('Same address already exists in this profile');
+      this.toastrService.error('Same Phone Number already exists in this profile');
 
       e.cancel = true;
       return;
@@ -109,10 +111,6 @@ export class PhoneNumbersComponent {
 
   public canDeleteRow = (e) => {
     return !e.row.data.is_primary;
-  };
-
-  public uniqPhoneNumberValidationCallback = ({ value }) => {
-    return this.phoneNumbers?.every((phoneNumber) => value !== phoneNumber?.number);
   };
 
   private checkIsPhoneNumberUniq = (data, key?: PhoneNumber) => {

@@ -1,0 +1,215 @@
+<div class="mt-2">
+  <div class="row my-2 px-3">
+    <div class="col-12 text-start editToolbar">
+      <dx-toolbar>
+        <dxi-item location="before" widget="dxButton" locateInMenu="never">
+          <div *dxTemplate>
+            <div class="toolbar-label"><b>Phone Numbers</b></div>
+          </div>
+        </dxi-item>
+        <dxi-item location="after" locateInMenu="never">
+          <div *dxTemplate>
+            <dx-button [icon]="'edit'" [stylingMode]="'text'" (onClick)="showPhoneNumbersEditorModal()"></dx-button>
+          </div>
+        </dxi-item>
+      </dx-toolbar>
+    </div>
+  </div>
+  <div class="row my-2 px-3" *ngIf="phoneNumbers.length > 0">
+    <div class="col-6 text-start"></div>
+
+    <div class="col-2 text-center">
+      <b>Type</b>
+    </div>
+    <div class="col-2 text-center">
+      <b>WhatsApp</b>
+    </div>
+    <div class="col-2 text-center">
+      <b>Primary</b>
+    </div>
+  </div>
+  <div class="row my-2 px-3 text-center" *ngIf="phoneNumbers.length == 0">
+    <div class="col-12" style="text-align: center">
+      <span>No Phone Numbers Currently Exist</span>
+    </div>
+  </div>
+  <ng-container *ngFor="let phoneNumber of phoneNumbers">
+    <div class="row mb-2 px-3 py-1">
+      <div class="col-6 text-start">
+        {{ phoneNumber?.number | phoneNumberMask }}
+        <span *ngIf="!!phoneNumber?.extension">&nbsp;(ext.&nbsp;{{ phoneNumber?.extension }})</span>
+      </div>
+
+      <div class="col-2 text-center">
+        {{ phoneNumber?.phone_type }}
+      </div>
+      <div class="col-2 text-center">
+        <i class="phone-numbers__icon phone-numbers__icon--whatsapp fa-brands fa-whatsapp"></i>
+      </div>
+      <div class="col-2 text-center">
+        <i *ngIf="phoneNumber?.is_primary" class="dx-icon-check"></i>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<ag-shr-modal-window
+  #phoneNumbersEditorModalRef
+  [title]="'Add / Edit Phone Numbers'"
+  [inProgress]="inProgress$ | async"
+  [showSaveButton]="false"
+>
+  <dx-data-grid
+    #dataGridRef
+    [dataSource]="phoneNumbers"
+    [showRowLines]="true"
+    [showBorders]="true"
+    [showColumnLines]="true"
+    [columnAutoWidth]="true"
+    [wordWrapEnabled]="true"
+    [rowAlternationEnabled]="false"
+    (onEditorPreparing)="onEditorPreparing($event)"
+    (onInitNewRow)="onInitNewRow($event)"
+    (onRowInserting)="onRowInserting($event)"
+    (onRowUpdating)="onRowUpdating($event)"
+    (onRowRemoving)="onRowRemoving($event)"
+  >
+    <dxo-toolbar>
+      <dxi-item location="before">
+        <div *dxTemplate>
+          <div class="toolbar-label">
+            <b>Phone Numbers</b>
+          </div>
+        </div>
+      </dxi-item>
+    </dxo-toolbar>
+
+    <dxo-editing mode="row" [useIcons]="true" [allowUpdating]="true" [allowDeleting]="true" [allowAdding]="true">
+    </dxo-editing>
+    <dxo-paging [enabled]="false"></dxo-paging>
+    <dxo-scrolling [mode]="'virtual'" [showScrollbar]="'always'"></dxo-scrolling>
+
+    <dxi-column dataField="number" [editorOptions]="{ mask: '(000) 000-0000' }" cellTemplate="phoneNumberCellTemplate">
+      <dxi-validation-rule type="required" [message]="'Phone Number is Required'"></dxi-validation-rule>
+      <dxi-validation-rule
+        type="stringLength"
+        [min]="10"
+        [max]="10"
+        message="Please enter 10 digits for Phone Number"
+      ></dxi-validation-rule>
+      <!-- <dxi-validation-rule
+      type="async"
+      [message]="'This Phone Number already exists in this profile'"
+      [validationCallback]="agentEditorService.validateUniqueness.bind(this, 'phone_numbers', 'number', false, agent)"
+    >
+    </dxi-validation-rule> -->
+    </dxi-column>
+
+    <dxi-column dataField="extension" caption="Extension"> </dxi-column>
+
+    <dxi-column dataField="phone_type" caption="Type">
+      <dxo-lookup [dataSource]="PHONE_NUMBER_TYPE_LOOKUP" valueExpr="value" displayExpr="description"></dxo-lookup>
+      <dxi-validation-rule type="required"></dxi-validation-rule>
+    </dxi-column>
+
+    <dxi-column dataField="is_whatsapp" caption="WhatsApp" dataType="boolean"></dxi-column>
+
+    <dxi-column dataField="is_primary" caption="Primary" dataType="boolean"></dxi-column>
+
+    <!-- Templates -->
+    <div *dxTemplate="let cell of 'phoneNumberCellTemplate'">
+      <div class="">
+        {{ cell.value | phoneNumberMask }}
+      </div>
+    </div>
+  </dx-data-grid>
+</ag-shr-modal-window>
+
+<!-- <ng-container *ngIf="editPhoneNumbers">
+  <dx-popup
+    [width]="'50%'"
+    [height]="'70%'"
+    [showTitle]="true"
+    [showCloseButton]="true"
+    title="Phone Numbers"
+    [dragEnabled]="false"
+    [(visible)]="editPhoneNumbers"
+  >
+    <dx-scroll-view height="80%">
+      <dx-tree-list
+        [dataSource]="phone_numbers"
+        id="gridContainer"
+        keyExpr="id"
+        [showRowLines]="true"
+        [showBorders]="true"
+        [columnAutoWidth]="true"
+        (onEditorPreparing)="agentEditorService.lockEditorFields($event)"
+        (onInitNewRow)="agentEditorService.initNewRow($event, 'phone_number')"
+        (onRowInserting)="agentEditorService.setPrimary($event, 'phone_numbers', 'is_primary', agent)"
+        (onRowInserted)="
+          agentEditorService.validatePhoneNumbers(agent);
+          agentEditorService.saveAgent(agent);
+        "
+        (onRowUpdating)="agentEditorService.setPrimary($event, 'phone_numbers', 'is_primary', agent)"
+        (onRowUpdated)="
+          agentEditorService.validatePhoneNumbers(agent);
+          agentEditorService.saveAgent(agent);
+        "
+        (onRowRemoved)="
+          agentEditorService.validatePhoneNumbers(agent);
+          agentEditorService.saveAgent(agent);
+        "
+      >
+        <dxo-toolbar>
+          <dxi-item location="before">
+            <div *dxTemplate>
+              <b>&nbsp;&nbsp;&nbsp;Phone Numbers</b>
+            </div>
+          </dxi-item>
+          <dxi-item name="addRowButton"></dxi-item>
+        </dxo-toolbar>
+        <dxo-editing mode="row" [useIcons]="true" [allowUpdating]="true" [allowDeleting]="true" [allowAdding]="true">
+        </dxo-editing>
+        <dxi-column
+          dataField="number"
+          [calculateDisplayValue]="agentEditorService.getPhoneNumber"
+          [editorOptions]="{ mask: '(000) 000-0000' }"
+        >
+          <dxi-validation-rule type="required" [message]="'Phone Number is Required'"></dxi-validation-rule>
+          <dxi-validation-rule
+            type="stringLength"
+            [min]="10"
+            [max]="10"
+            message="Please enter 10 digits for Phone Number"
+          ></dxi-validation-rule>
+          <dxi-validation-rule
+            type="async"
+            [message]="'This Phone Number already exists in this profile'"
+            [validationCallback]="agentEditorService.validateUniqueness.bind(this, 'phone_numbers', 'number', false, agent)"
+          >
+          </dxi-validation-rule>
+        </dxi-column>
+        <dxi-column dataField="phone_type" caption="Type">
+          <dxo-lookup [dataSource]="agentEditorService.business_personal_types"></dxo-lookup>
+          <dxi-validation-rule type="required"></dxi-validation-rule>
+        </dxi-column>
+        <dxi-column dataField="is_primary" caption="Primary" dataType="boolean"></dxi-column>
+        <dxi-column type="buttons">
+          <dxi-button name="edit"></dxi-button>
+          <dxi-button name="delete" [visible]="agentEditorService.canDeleteRow.bind(this)"></dxi-button>
+        </dxi-column>
+      </dx-tree-list>
+    </dx-scroll-view>
+    <div class="row d-flex my-3 justify-content-around" style="margin: 0 auto">
+      <div class="col-lg-12 text-end" style="text-align: right">
+        <dx-button
+          width="200"
+          stylingMode="contained"
+          text="Close"
+          type="default"
+          (onClick)="editPhoneNumbers = false"
+        ></dx-button>
+      </div>
+    </div>
+  </dx-popup>
+</ng-container> -->

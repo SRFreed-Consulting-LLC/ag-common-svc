@@ -18,6 +18,7 @@ export class AgentHeadersComponent {
     this.agentHeaderFormDetails = this.agentHeaderService.getFormData(value);
   }
   @ViewChild('agentHeaderModalRef', { static: true }) agentHeaderModalComponent: ModalWindowComponent;
+  @ViewChild('agentProfilePictureModalRef', { static: true }) agentProfilePictureModalComponent: ModalWindowComponent;
   @ViewChild('agentHeaderFormRef', { static: false }) agentHeaderFormComponent: DxFormComponent;
 
   public agentHeaderFormDetails;
@@ -40,6 +41,10 @@ export class AgentHeadersComponent {
 
   public showEditorModal = () => {
     this.agentHeaderModalComponent.showModal();
+  };
+
+  public showProfilePictureEditorModal = () => {
+    this.agentProfilePictureModalComponent.showModal();
   };
 
   public handleClosePopup = (e) => {

@@ -1,0 +1,60 @@
+<div class="drop-zone">
+  <dx-text-box
+    [width]="'100%'"
+    [(value)]="remoteImageUrl"
+    [label]="'Profile Picture Url'"
+    [labelMode]="'floating'"
+    [buttons]="[
+      {
+        name: 'save',
+        options: {
+          icon: 'fa-solid fa-cloud-arrow-down',
+          type: 'success',
+          stylingMode: 'text',
+          elementAttr: {
+            class: 'inline-editor-control'
+          },
+          onClick: handleUploadFromRemote
+        }
+      }
+    ]"
+  >
+  </dx-text-box>
+
+  <div class="drop-zone__container">
+    <input #fileInput class="drop-zone__input" type="file" (change)="fileChangeEvent($event)" accept=".jpg,.png,.gif" />
+
+    <img [src]="imagePreviewUrl" *ngIf="!!imagePreviewUrl; else imagePlaceholder" class="drop-zone__image" />
+
+    <ng-template #imagePlaceholder>
+      <p class="drop-zone__image-placeholder">Click or Drag a Image</p>
+    </ng-template>
+  </div>
+</div>
+
+<p class="drop-zone__note">Note: Preferred images in png format with aspect ratio 4 / 5</p>
+
+<ag-shr-modal-window
+  #imageCropModalRef
+  [title]="'Crop Profile Picture'"
+  [width]="'100vw'"
+  [height]="'100vh'"
+  [isFullScreen]="true"
+  (onSaveClick)="handleApplyCrop()"
+  (onPopupClose)="handleCancelCrop()"
+>
+  <div class="drop-zone__crop-popup-content">
+    <image-cropper
+      class=""
+      [imageChangedEvent]="imageChangedEvent"
+      [imageURL]="imageURL"
+      [maintainAspectRatio]="true"
+      [aspectRatio]="4 / 5"
+      format="png"
+      (imageCropped)="imageCropped($event)"
+      [containWithinAspectRatio]="true"
+      [onlyScaleDown]="true"
+      [roundCropper]="true"
+    ></image-cropper>
+  </div>
+</ag-shr-modal-window>

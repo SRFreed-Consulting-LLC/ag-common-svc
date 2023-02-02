@@ -12,6 +12,7 @@ export class ModalWindowComponent {
   @HostBinding('class') className = 'modal-window';
   @ViewChild('popupRef', { static: true }) popupComponent: DxPopupComponent;
   @Input() inProgress: boolean;
+  @Input() isFullScreen: boolean = false;
   @Input() title: string;
   @Input() actionTitle: string = 'SAVE';
   @Input() showSaveButton = true;
@@ -20,8 +21,6 @@ export class ModalWindowComponent {
   @Input() extraToolbarItems = [];
   @Output() onSaveClick = new EventEmitter<{ component: DxPopupComponent }>();
   @Output() onPopupClose = new EventEmitter<any>();
-
-  public isFullScreen = false;
 
   constructor() {}
 

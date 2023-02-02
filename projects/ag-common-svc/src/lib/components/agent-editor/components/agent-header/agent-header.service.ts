@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Agent, AgentKeys, LookupKeys } from 'ag-common-lib/public-api';
+import { Agent, AgentKeys, BaseModelKeys, LookupKeys } from 'ag-common-lib/public-api';
 import { map } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
 import { AgentService } from '../../../../services/agent.service';
 import { updateDoc } from 'firebase/firestore';
 import { pick } from 'lodash';
+import { FireStorageDao } from '../../../../dao/FireStorage.dao';
 
 @Injectable()
 export class AgentHeaderService {
@@ -17,7 +18,7 @@ export class AgentHeaderService {
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);
 
-  constructor(private readonly agentService: AgentService) {
+  constructor(private readonly agentService: AgentService, private fireStorageDao: FireStorageDao) {
     this.inProgress$ = this._inProgress$.asObservable();
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
@@ -26,15 +27,42 @@ export class AgentHeaderService {
     );
   }
 
-  public handleSave = (agentId) => {
+  public handleSave = async (agentId) => {
     const updates = {};
     const changes = this.formChangesDetector.getAllChanges();
 
     changes.forEach(([key]) => {
       Object.assign(updates, { [key]: this.formData[key] ?? null });
     });
+
     this._inProgress$.next(true);
-    this.agentService
+
+    const profilePictureUrl: string = updates[AgentKeys.p_headshot_link];
+    if (profilePictureUrl && profilePictureUrl.startsWith('data:image/png;base64')) {
+      const filename = [
+        this.formData[AgentKeys.p_agent_first_name],
+        this.formData[AgentKeys.p_agent_middle_name],
+        this.formData[AgentKeys.p_agent_last_name]
+      ]
+        .filter(Boolean)
+        .join('_')
+        .replace(/\s/g, '');
+
+      const file = await fetch(profilePictureUrl)
+        .then((res) => res.blob())
+        .then((blob) => {
+          return new File([blob], `${filename}.png`, { type: blob.type });
+        });
+
+      const firestoreFile = await this.fireStorageDao.uploadFile(file, '/head_shot/' + filename);
+
+      const url = await this.fireStorageDao.getFileURL(firestoreFile.ref);
+
+      updates[AgentKeys.p_headshot_link] = url;
+      this.formData[AgentKeys.p_headshot_link] = url;
+    }
+
+    await this.agentService
       .updateFields(agentId, updates)
       .then(() => {
         this.formChangesDetector.clear();
@@ -45,6 +73,8 @@ export class AgentHeaderService {
       .finally(() => {
         this._inProgress$.next(false);
       });
+
+    return { agentId, updates };
   };
 
   public onCancelEdit = ({ event, component }) => {
@@ -57,6 +87,12 @@ export class AgentHeaderService {
     const result = confirm('<i>Are you sure you want to Cancel without Saving?</i>', 'Confirm');
     result.then((dialogResult) => {
       if (dialogResult) {
+        const changes = this.formChangesDetector.getAllChanges();
+
+        changes.forEach(([key, value]) => {
+          Object.assign(this.formData, { [key]: value });
+        });
+
         this.formChangesDetector?.clear();
         component.instance.hide();
       }

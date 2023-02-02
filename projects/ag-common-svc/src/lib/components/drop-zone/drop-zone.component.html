@@ -1,30 +1,34 @@
 <div class="drop-zone">
   <dx-text-box
+    #urlTextBoxRef
     [width]="'100%'"
-    [(value)]="remoteImageUrl"
+    [(value)]="imagePreviewUrl"
+    (onValueChanged)="onUrlValueChanged($event)"
     [label]="'Profile Picture Url'"
     [labelMode]="'floating'"
-    [buttons]="[
-      {
-        name: 'save',
-        options: {
-          icon: 'fa-solid fa-cloud-arrow-down',
-          type: 'success',
-          stylingMode: 'text',
-          elementAttr: {
-            class: 'inline-editor-control'
-          },
-          onClick: handleUploadFromRemote
-        }
-      }
-    ]"
+    [showClearButton]="true"
   >
+    <dx-validator>
+      <dxi-validation-rule
+        type="custom"
+        [reevaluate]="true"
+        message="Broken Image File Assigned"
+        [validationCallback]="customValidationCallback"
+      >
+      </dxi-validation-rule>
+    </dx-validator>
   </dx-text-box>
 
   <div class="drop-zone__container">
     <input #fileInput class="drop-zone__input" type="file" (change)="fileChangeEvent($event)" accept=".jpg,.png,.gif" />
 
-    <img [src]="imagePreviewUrl" *ngIf="!!imagePreviewUrl; else imagePlaceholder" class="drop-zone__image" />
+    <img
+      class="drop-zone__image"
+      [src]="imagePreviewUrl"
+      *ngIf="!!imagePreviewUrl; else imagePlaceholder"
+      (load)="onImgLoaded()"
+      (error)="onImgError()"
+    />
 
     <ng-template #imagePlaceholder>
       <p class="drop-zone__image-placeholder">Click or Drag a Image</p>
@@ -47,12 +51,11 @@
     <image-cropper
       class=""
       [imageChangedEvent]="imageChangedEvent"
-      [imageURL]="imageURL"
       [maintainAspectRatio]="true"
+      [resizeToHeight]="500"
       [aspectRatio]="4 / 5"
       format="png"
       (imageCropped)="imageCropped($event)"
-      [containWithinAspectRatio]="true"
       [onlyScaleDown]="true"
       [roundCropper]="true"
     ></image-cropper>

@@ -14,8 +14,7 @@ import {
   ref,
   StorageReference,
   uploadBytes,
-  uploadString,
-
+  uploadString
 } from 'firebase/storage';
 import { FIREBASE_APP } from '../injections/firebase-app';
 
@@ -59,11 +58,6 @@ export class FireStorageDao {
     let reference = ref(this.storage, folder);
 
     return uploadBytes(reference, fileData);
-  }
-
-  public uploadImageFromUrl(url, folder) {
-    const reference = ref(this.storage, folder);
-
   }
 
   public deleteFile(item: FileSystemItem) {

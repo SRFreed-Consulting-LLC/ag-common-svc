@@ -1,0 +1,63 @@
+<div class="drop-zone">
+  <dx-text-box
+    #urlTextBoxRef
+    [width]="'100%'"
+    [(value)]="imagePreviewUrl"
+    (onValueChanged)="onUrlValueChanged($event)"
+    [label]="'Profile Picture Url'"
+    [labelMode]="'floating'"
+    [showClearButton]="true"
+  >
+    <dx-validator>
+      <dxi-validation-rule
+        type="custom"
+        [reevaluate]="true"
+        message="Broken Image File Assigned"
+        [validationCallback]="customValidationCallback"
+      >
+      </dxi-validation-rule>
+    </dx-validator>
+  </dx-text-box>
+
+  <div class="drop-zone__container">
+    <input #fileInput class="drop-zone__input" type="file" (change)="fileChangeEvent($event)" accept=".jpg,.png,.gif" />
+
+    <img
+      class="drop-zone__image"
+      [src]="imagePreviewUrl"
+      *ngIf="!!imagePreviewUrl; else imagePlaceholder"
+      (load)="onImgLoaded()"
+      (error)="onImgError()"
+    />
+
+    <ng-template #imagePlaceholder>
+      <p class="drop-zone__image-placeholder">Click or Drag a Image</p>
+    </ng-template>
+  </div>
+</div>
+
+<p class="drop-zone__note">Note: Preferred images in png format with aspect ratio 4 / 5</p>
+
+<ag-shr-modal-window
+  #imageCropModalRef
+  [title]="'Crop Profile Picture'"
+  [width]="'100vw'"
+  [height]="'100vh'"
+  [isFullScreen]="true"
+  (onSaveClick)="handleApplyCrop()"
+  (onPopupClose)="handleCancelCrop()"
+>
+  <div class="drop-zone__crop-popup-content">
+    <image-cropper
+      class=""
+      [imageChangedEvent]="imageChangedEvent"
+      [maintainAspectRatio]="true"
+      [resizeToHeight]="500"
+      [aspectRatio]="4 / 5"
+      format="png"
+      (imageCropped)="imageCropped($event)"
+      [onlyScaleDown]="true"
+      [roundCropper]="true"
+    ></image-cropper>
+  </div>
+</ag-shr-modal-window>

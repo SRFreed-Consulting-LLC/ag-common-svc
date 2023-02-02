@@ -4,6 +4,8 @@
       class="agent-header__image"
       [src]="agentHeaderFormDetails?.p_headshot_link || 'assets/image-placeholder.png'"
     />
+
+    <dx-button class="mr-2" icon="edit" stylingMode="text" (onClick)="showProfilePictureEditorModal()"></dx-button>
   </div>
   <div class="col-10">
     <div class="row">
@@ -56,94 +58,65 @@
 </div>
 
 <ag-shr-modal-window
-  [width]="'50vw'"
+  [width]="'auto'"
+  [height]="'auto'"
+  #agentProfilePictureModalRef
+  [title]="'Profile Picture'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="saveAgentProfileImagesUpdates()"
+  (onPopupClose)="handleClosePopup($event)"
+>
+  <ag-shr-drop-zone
+    #profilePictureDropZoneRef
+    [(profilePictureUrl)]="agentHeaderFormDetails.p_headshot_link"
+  ></ag-shr-drop-zone>
+</ag-shr-modal-window>
+
+<ag-shr-modal-window
+  [width]="'750px'"
   [height]="'auto'"
   #agentHeaderModalRef
   [title]="'Agent Information'"
   [inProgress]="inProgress$ | async"
-  (onSaveClick)="saveAgentUpdates()"
+  (onSaveClick)="saveAgentHeaderInfoUpdates()"
   (onPopupClose)="handleClosePopup($event)"
 >
-  <div class="row">
-    <div class="col-2">
-      <div class="widget-container flex-box">
-        <span>Profile Picture</span>
-        <div
-          id="dropzone-external"
-          class="flex-box"
-          [ngClass]="
-            isDropZoneActive ? ['dx-theme-accent-as-border-color', 'dropzone-active'] : ['dx-theme-border-color']
-          "
-        >
-          <img id="dropzone-image" [src]="imageSource" *ngIf="imageSource" alt="" />
-          <div id="dropzone-text" class="flex-box" *ngIf="textVisible">
-            <span>Drag & Drop the desired file</span>
-            <span>…or click to browse for a file instead.</span>
-          </div>
-          <dx-progress-bar
-            #uploadProgress
-            [min]="0"
-            [max]="100"
-            width="30%"
-            [showStatus]="false"
-            [visible]="progressVisible"
-            [value]="progressValue"
-          >
-          </dx-progress-bar>
-        </div>
-        <dx-file-uploader
-          #fileUploader
-          dialogTrigger="#dropzone-external"
-          dropZone="#dropzone-external"
-          [multiple]="false"
-          [allowedFileExtensions]="['.jpg', '.jpeg', '.gif', '.png']"
-          uploadMode="instantly"
-          [uploadFile]="onUploaded"
-          [visible]="false"
-          (onDropZoneEnter)="onDropZoneEnter($event)"
-          (onDropZoneLeave)="onDropZoneLeave($event)"
-          (onProgress)="onProgress($event)"
-          (onUploadStarted)="onUploadStarted($event)"
-        >
-        </dx-file-uploader>
+  <dx-form
+    #agentHeaderFormRef
+    class="mt-2"
+    [colCount]="12"
+    [formData]="agentHeaderFormDetails"
+    [labelMode]="'floating'"
+    [minColWidth]="100"
+  >
+    <dxi-item dataField="p_prefix" [colSpan]="2">
+      <dxo-label [text]="'Prefix'"></dxo-label>
+      <div *dxTemplate>
+        <ag-shr-prefix-select-box [(value)]="agentHeaderFormDetails.p_prefix"></ag-shr-prefix-select-box>
       </div>
-    </div>
-    <div class="col-10">
-      <dx-form class="mt-2" [colCount]="12" [formData]="agentHeaderFormDetails" [labelMode]="'floating'">
-        <dxi-item dataField="p_agent_first_name" [colSpan]="6">
-          <dxo-label [text]="'First'"></dxo-label>
-        </dxi-item>
+    </dxi-item>
 
-        <dxi-item dataField="p_agent_last_name" [colSpan]="6">
-          <dxo-label [text]="'Last'"></dxo-label>
-        </dxi-item>
+    <dxi-item dataField="p_agent_first_name" [colSpan]="4">
+      <dxo-label [text]="'First'"></dxo-label>
+    </dxi-item>
 
-        <dxi-item dataField="p_agent_middle_name" [colSpan]="12">
-          <dxo-label [text]="'Middle'"></dxo-label>
-        </dxi-item>
+    <dxi-item dataField="p_agent_last_name" [colSpan]="4">
+      <dxo-label [text]="'Last'"></dxo-label>
+    </dxi-item>
 
-        <dxi-item dataField="p_prefix" [colSpan]="6">
-          <dxo-label [text]="'Prefix'"></dxo-label>
-          <div *dxTemplate>
-            <ag-shr-prefix-select-box [(value)]="agentHeaderFormDetails.p_prefix"></ag-shr-prefix-select-box>
-          </div>
-        </dxi-item>
+    <dxi-item dataField="p_suffix" [colSpan]="2">
+      <dxo-label [text]="'Suffix'"></dxo-label>
+      <div *dxTemplate>
+        <ag-shr-suffix-select-box [(value)]="agentHeaderFormDetails.p_suffix"></ag-shr-suffix-select-box>
+      </div>
+    </dxi-item>
 
-        <dxi-item dataField="p_suffix" [colSpan]="6">
-          <dxo-label [text]="'Suffix'"></dxo-label>
-          <div *dxTemplate>
-            <ag-shr-suffix-select-box [(value)]="agentHeaderFormDetails.p_suffix"></ag-shr-suffix-select-box>
-          </div>
-        </dxi-item>
+    <dxi-item dataField="title" [colSpan]="6">
+      <dxo-label [text]="'Title'"></dxo-label>
+    </dxi-item>
 
-        <dxi-item dataField="title" [colSpan]="6">
-          <dxo-label [text]="'Title'"></dxo-label>
-        </dxi-item>
-
-        <dxi-item dataField="p_headshot_link" [colSpan]="6">
-          <dxo-label [text]="'Header Image'"></dxo-label>
-        </dxi-item>
-      </dx-form>
-    </div>
-  </div>
+    <dxi-item dataField="p_agent_middle_name" [colSpan]="6">
+      <dxo-label [text]="'Middle'"></dxo-label>
+    </dxi-item>
+  </dx-form>
 </ag-shr-modal-window>

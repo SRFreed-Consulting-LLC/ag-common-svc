@@ -7,7 +7,7 @@ import { LookupsService } from '../../services';
 @Component({
   selector: 'ag-shr-prefix-select-box',
   templateUrl: './prefix-select-box.component.html',
-  styleUrls: ['./prefix-select-box.component.scss']
+  styleUrls: ['./prefix-select-box.component.scss'],
 })
 export class PrefixSelectBoxComponent {
   @HostBinding('class') className = 'prefix-select-box';
@@ -18,6 +18,7 @@ export class PrefixSelectBoxComponent {
   @Input() labelMode: 'static' | 'floating' | 'hidden' = 'floating';
   @Input() value: any;
   @Output() valueChange = new EventEmitter();
+  @Output() selectedItemChange = new EventEmitter();
 
   public LookupKeys = LookupKeys;
   public BaseModelKeys = BaseModelKeys;

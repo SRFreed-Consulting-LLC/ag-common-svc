@@ -7,7 +7,7 @@ import { LookupsService } from '../../services';
 @Component({
   selector: 'ag-shr-suffix-select-box',
   templateUrl: './suffix-select-box.component.html',
-  styleUrls: ['./suffix-select-box.component.scss']
+  styleUrls: ['./suffix-select-box.component.scss'],
 })
 export class SuffixSelectBoxComponent {
   @HostBinding('class') className = 'suffix-select-box';
@@ -18,6 +18,7 @@ export class SuffixSelectBoxComponent {
   @Input() labelMode: 'static' | 'floating' | 'hidden' = 'floating';
   @Input() value: any;
   @Output() valueChange = new EventEmitter();
+  @Output() selectedItemChange = new EventEmitter();
 
   public LookupKeys = LookupKeys;
   public BaseModelKeys = BaseModelKeys;

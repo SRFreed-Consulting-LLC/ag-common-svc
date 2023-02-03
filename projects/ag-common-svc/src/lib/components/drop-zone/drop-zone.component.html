@@ -1,24 +1,23 @@
+<dx-text-box
+  #urlTextBoxRef
+  [width]="'100%'"
+  [(value)]="imagePreviewUrl"
+  (onValueChanged)="onUrlValueChanged($event)"
+  [label]="'Profile Picture Url'"
+  [labelMode]="'floating'"
+  [showClearButton]="true"
+>
+  <dx-validator>
+    <dxi-validation-rule
+      type="custom"
+      [reevaluate]="true"
+      message="Broken Image File Assigned"
+      [validationCallback]="customValidationCallback"
+    >
+    </dxi-validation-rule>
+  </dx-validator>
+</dx-text-box>
 <div class="drop-zone">
-  <dx-text-box
-    #urlTextBoxRef
-    [width]="'100%'"
-    [(value)]="imagePreviewUrl"
-    (onValueChanged)="onUrlValueChanged($event)"
-    [label]="'Profile Picture Url'"
-    [labelMode]="'floating'"
-    [showClearButton]="true"
-  >
-    <dx-validator>
-      <dxi-validation-rule
-        type="custom"
-        [reevaluate]="true"
-        message="Broken Image File Assigned"
-        [validationCallback]="customValidationCallback"
-      >
-      </dxi-validation-rule>
-    </dx-validator>
-  </dx-text-box>
-
   <div class="drop-zone__container">
     <input #fileInput class="drop-zone__input" type="file" (change)="fileChangeEvent($event)" accept=".jpg,.png,.gif" />
 
@@ -36,7 +35,7 @@
   </div>
 </div>
 
-<p class="drop-zone__note">Note: Preferred images in png format with aspect ratio 4 / 5</p>
+<p class="drop-zone__note">Note: Preferred images in png format with aspect ratio 3 / 4</p>
 
 <ag-shr-modal-window
   #imageCropModalRef
@@ -53,7 +52,7 @@
       [imageChangedEvent]="imageChangedEvent"
       [maintainAspectRatio]="true"
       [resizeToHeight]="500"
-      [aspectRatio]="4 / 5"
+      [aspectRatio]="3 / 4"
       format="png"
       (imageCropped)="imageCropped($event)"
       [onlyScaleDown]="true"

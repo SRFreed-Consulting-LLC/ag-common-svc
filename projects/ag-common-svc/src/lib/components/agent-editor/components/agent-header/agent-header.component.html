@@ -1,5 +1,5 @@
 <div class="row mb-3">
-  <div class="col-2 agent-header__image-container">
+  <div class="agent-header__image-container">
     <img
       class="agent-header__image"
       [src]="agentHeaderFormDetails?.p_headshot_link || 'assets/image-placeholder.png'"
@@ -7,7 +7,8 @@
 
     <dx-button class="mr-2" icon="edit" stylingMode="text" (onClick)="showProfilePictureEditorModal()"></dx-button>
   </div>
-  <div class="col-10">
+
+  <div class="col">
     <div class="row">
       <div class="col-12" style="font-size: 18px">
         {{
@@ -73,7 +74,7 @@
 </ag-shr-modal-window>
 
 <ag-shr-modal-window
-  [width]="'750px'"
+  [width]="'860px'"
   [height]="'auto'"
   #agentHeaderModalRef
   [title]="'Agent Information'"
@@ -101,7 +102,10 @@
     <dxi-item [dataField]="AgentKeys.p_prefix" [colSpan]="2">
       <dxo-label [text]="'Prefix'"></dxo-label>
       <div *dxTemplate>
-        <ag-shr-prefix-select-box [(value)]="agentHeaderFormDetails.p_prefix"></ag-shr-prefix-select-box>
+        <ag-shr-prefix-select-box
+          [(value)]="agentHeaderFormDetails.p_prefix"
+          (selectedItemChange)="handlePrefixSelect($event)"
+        ></ag-shr-prefix-select-box>
       </div>
     </dxi-item>
 
@@ -116,7 +120,10 @@
     <dxi-item [dataField]="AgentKeys.p_suffix" [colSpan]="2">
       <dxo-label [text]="'Suffix'"></dxo-label>
       <div *dxTemplate>
-        <ag-shr-suffix-select-box [(value)]="agentHeaderFormDetails.p_suffix"></ag-shr-suffix-select-box>
+        <ag-shr-suffix-select-box
+          [(value)]="agentHeaderFormDetails.p_suffix"
+          (selectedItemChange)="handleSuffixSelect($event)"
+        ></ag-shr-suffix-select-box>
       </div>
     </dxi-item>
 

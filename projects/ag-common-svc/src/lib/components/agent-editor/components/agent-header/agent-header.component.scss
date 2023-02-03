@@ -8,7 +8,7 @@ $base-image-size: 20px;
   }
 
   &__image {
-    width: calc(7 * $base-image-size);
+    width: calc(6 * $base-image-size);
     height: calc(8 * $base-image-size);
     object-fit: contain;
     border-radius: 50%;

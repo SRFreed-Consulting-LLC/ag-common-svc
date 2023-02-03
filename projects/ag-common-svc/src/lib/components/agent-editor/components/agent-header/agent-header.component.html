@@ -102,7 +102,10 @@
     <dxi-item [dataField]="AgentKeys.p_prefix" [colSpan]="2">
       <dxo-label [text]="'Prefix'"></dxo-label>
       <div *dxTemplate>
-        <ag-shr-prefix-select-box [(value)]="agentHeaderFormDetails.p_prefix"></ag-shr-prefix-select-box>
+        <ag-shr-prefix-select-box
+          [(value)]="agentHeaderFormDetails.p_prefix"
+          (selectedItemChange)="handlePrefixSelect($event)"
+        ></ag-shr-prefix-select-box>
       </div>
     </dxi-item>
 
@@ -117,7 +120,10 @@
     <dxi-item [dataField]="AgentKeys.p_suffix" [colSpan]="2">
       <dxo-label [text]="'Suffix'"></dxo-label>
       <div *dxTemplate>
-        <ag-shr-suffix-select-box [(value)]="agentHeaderFormDetails.p_suffix"></ag-shr-suffix-select-box>
+        <ag-shr-suffix-select-box
+          [(value)]="agentHeaderFormDetails.p_suffix"
+          (selectedItemChange)="handleSuffixSelect($event)"
+        ></ag-shr-suffix-select-box>
       </div>
     </dxi-item>
 

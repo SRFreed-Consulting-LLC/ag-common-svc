@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Agent, AgentKeys } from 'ag-common-lib/public-api';
+import { Agent, AgentKeys, LookupKeys } from 'ag-common-lib/public-api';
 import { map } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
@@ -8,6 +8,7 @@ import { AgentService } from '../../../../services/agent.service';
 import { pick } from 'lodash';
 import { FireStorageDao } from '../../../../dao/FireStorage.dao';
 import { AgentHeaderKeys } from './agent-header.model';
+import { updateDoc } from 'firebase/firestore';
 
 @Injectable()
 export class AgentHeaderService {
@@ -18,12 +19,15 @@ export class AgentHeaderService {
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);
 
+  public selectedPrefix$ = new BehaviorSubject(null);
+  public selectedSuffix$ = new BehaviorSubject(null);
+
   constructor(private readonly agentService: AgentService, private fireStorageDao: FireStorageDao) {
     this.inProgress$ = this._inProgress$.asObservable();
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
         return this.formChangesDetector.hasChanges;
-      })
+      }),
     );
   }
 
@@ -45,7 +49,7 @@ export class AgentHeaderService {
 
               Object.assign(address, { is_primary_billing: isSame });
               return address;
-            })
+            }),
           });
 
           return;
@@ -56,7 +60,7 @@ export class AgentHeaderService {
 
               Object.assign(address, { is_primary_shipping: isSame });
               return address;
-            })
+            }),
           });
 
           return;
@@ -67,7 +71,7 @@ export class AgentHeaderService {
 
               Object.assign(emailAddress, { is_primary: isSame });
               return emailAddress;
-            })
+            }),
           });
           return;
         case AgentHeaderKeys.primaryPhoneNumber:
@@ -77,7 +81,7 @@ export class AgentHeaderService {
 
               Object.assign(phoneNumber, { is_primary: isSame });
               return phoneNumber;
-            })
+            }),
           });
           return;
 
@@ -94,7 +98,7 @@ export class AgentHeaderService {
       const filename = [
         this.formData[AgentKeys.p_agent_first_name],
         this.formData[AgentKeys.p_agent_middle_name],
-        this.formData[AgentKeys.p_agent_last_name]
+        this.formData[AgentKeys.p_agent_last_name],
       ]
         .filter(Boolean)
         .join('_')
@@ -117,6 +121,16 @@ export class AgentHeaderService {
     await this.agentService
       .updateFields(agentId, updates)
       .then(() => {
+        debugger;
+        const selectedPrefix = this.selectedPrefix$.value;
+        const selectedSuffix = this.selectedSuffix$.value;
+        if (selectedPrefix && !selectedPrefix?.isAssigned) {
+          updateDoc(selectedPrefix?.reference, { [LookupKeys.isAssigned]: true }).then();
+        }
+        if (selectedSuffix && !selectedSuffix?.isAssigned) {
+          updateDoc(selectedSuffix?.reference, { [LookupKeys.isAssigned]: true }).then();
+        }
+
         this.formChangesDetector.clear();
 
         return updates;
@@ -164,7 +178,7 @@ export class AgentHeaderService {
       AgentKeys.p_agency_id,
       AgentKeys.addresses,
       AgentKeys.email_addresses,
-      AgentKeys.phone_numbers
+      AgentKeys.phone_numbers,
     ]);
     let primaryBillingAddress = null;
     let primaryShippingAddress = null;
@@ -186,7 +200,7 @@ export class AgentHeaderService {
       [AgentHeaderKeys.primaryShippingAddress]: primaryShippingAddress,
       [AgentHeaderKeys.primaryBillingAddress]: primaryBillingAddress,
       [AgentHeaderKeys.primaryEmailAddress]: primaryEmailAddress,
-      [AgentHeaderKeys.primaryPhoneNumber]: primaryPhoneNumber
+      [AgentHeaderKeys.primaryPhoneNumber]: primaryPhoneNumber,
     });
 
     this.formData = new Proxy(initialData, {
@@ -196,7 +210,7 @@ export class AgentHeaderService {
         Reflect.set(target, prop, value, receiver);
 
         return true;
-      }
+      },
     });
 
     return this.formData;

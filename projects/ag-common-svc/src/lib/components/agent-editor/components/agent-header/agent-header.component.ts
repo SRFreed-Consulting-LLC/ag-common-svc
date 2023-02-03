@@ -13,7 +13,7 @@ import { AgentHeaderKeys } from './agent-header.model';
   selector: 'ag-shr-agent-header',
   templateUrl: './agent-header.component.html',
   styleUrls: ['./agent-header.component.scss'],
-  providers: [AgentHeaderService, FullAddressPipe, PhoneNumberMaskPipe]
+  providers: [AgentHeaderService, FullAddressPipe, PhoneNumberMaskPipe],
 })
 export class AgentHeadersComponent {
   @HostBinding('class') className = 'agent-header';
@@ -33,15 +33,19 @@ export class AgentHeadersComponent {
   public inProgress$: Observable<boolean>;
   public validationGroup = 'agentHeaderValidationGroup';
   public selectedAgentHeaderType$: BehaviorSubject<Lookup>;
+  public selectedPrefix$: BehaviorSubject<Lookup>;
+  public selectedSuffix$: BehaviorSubject<Lookup>;
 
   private agent: Agent;
 
   constructor(
     private agentHeaderService: AgentHeaderService,
     public phoneNumberMaskPipe: PhoneNumberMaskPipe,
-    public fullAddressPipe: FullAddressPipe
+    public fullAddressPipe: FullAddressPipe,
   ) {
     this.inProgress$ = agentHeaderService.inProgress$;
+    this.selectedPrefix$ = agentHeaderService.selectedPrefix$;
+    this.selectedSuffix$ = agentHeaderService.selectedSuffix$;
   }
 
   public saveAgentProfileImagesUpdates = () => {
@@ -74,5 +78,15 @@ export class AgentHeadersComponent {
 
   public handleClosePopup = (e) => {
     this.agentHeaderService.onCancelEdit(e);
+  };
+
+  public handlePrefixSelect = (item) => {
+    debugger;
+    this.selectedPrefix$.next(item);
+  };
+
+  public handleSuffixSelect = (item) => {
+    debugger;
+    this.selectedSuffix$.next(item);
   };
 }

@@ -15,6 +15,7 @@ import {
   Goal,
   LegacyAgent,
   PhoneNumber,
+  PhoneNumberType,
   PROSPECT_DISPOSITION,
   PROSPECT_PRIORITY,
   PROSPECT_STATUS,
@@ -905,7 +906,7 @@ export class DomainService {
 
         registrant.last_eval_date = new Date();
 
-        if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
+        if (data.has('registration_status') && data.get('registration_status').toLowerCase() == 'approved') {
           registrant.approved = true;
         } else {
           registrant.approved = false;
@@ -960,13 +961,13 @@ export class DomainService {
         }
 
         if(agent.phone_numbers?.length > 0){
-          let mobile_phone_numbers: PhoneNumber = agent.phone_numbers.find(number => number.is_primary == true);
+          let mobile_phone_numbers: PhoneNumber = agent.phone_numbers.find(number => number.phone_type == PhoneNumberType.Mobile);
 
           if (mobile_phone_numbers) {
             registrant.mobile_phone = mobile_phone_numbers;
           }
           
-          let secondary_phone: PhoneNumber[] = agent.phone_numbers.filter(number => number.is_primary != true)
+          let secondary_phone: PhoneNumber[] = agent.phone_numbers.filter(number =>  number.phone_type != PhoneNumberType.Mobile)
 
           if(secondary_phone?.length){
             registrant.secondary_phone = secondary_phone[0];

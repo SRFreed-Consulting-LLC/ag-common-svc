@@ -21,9 +21,11 @@ export class LookupsService {
     this.gendersLookup$ = this.lookupsManagerService
       .getList(Lookups.Genders)
       .pipe(map(this.normalizeLookup), shareReplay(1));
-    this.suffixesLookup$ = this.lookupsManagerService
-      .getList(Lookups.Suffixes)
-      .pipe(map(this.normalizeLookup), shareReplay(1));
+    this.suffixesLookup$ = this.lookupsManagerService.getList(Lookups.Suffixes).pipe(
+      map(this.normalizeLookup),
+      map((items) => items.sort(this.suffixComparator)),
+      shareReplay(1),
+    );
     this.prefixesLookup$ = this.lookupsManagerService
       .getList(Lookups.Prefixes)
       .pipe(map(this.normalizeLookup), shareReplay(1));
@@ -45,7 +47,7 @@ export class LookupsService {
     this.tShortSizesLookup$ = this.lookupsManagerService.getList(Lookups.TShirtSize).pipe(
       map(this.normalizeLookup),
       map((items) => items.sort(this.sizeComparator)),
-      shareReplay(1)
+      shareReplay(1),
     );
   }
 
@@ -55,7 +57,7 @@ export class LookupsService {
     }
     return this.lookupsManagerService
       .getList(Lookups.TaskSubcategory, [
-        new QueryParam(LookupKeys.dependsOn, WhereFilterOperandKeys.equal, taskCategoryDbId)
+        new QueryParam(LookupKeys.dependsOn, WhereFilterOperandKeys.equal, taskCategoryDbId),
       ])
       .pipe(map(this.normalizeLookup), shareReplay(1));
   };
@@ -69,7 +71,7 @@ export class LookupsService {
             [LookupKeys.value]: value,
             [LookupKeys.description]: description,
             [LookupKeys.isActive]: isActive,
-            [LookupKeys.isAssigned]: isAssigned
+            [LookupKeys.isAssigned]: isAssigned,
           } = lookup;
 
           return {
@@ -78,7 +80,7 @@ export class LookupsService {
             [LookupKeys.reference]: reference,
             [LookupKeys.description]: description,
             [LookupKeys.isAssigned]: isAssigned,
-            [LookupKeys.visible]: isActive
+            [LookupKeys.visible]: isActive,
           };
         })
       : [];
@@ -93,7 +95,7 @@ export class LookupsService {
       ['xl', '4'],
       ['xxl', '5'],
       ['xxxl', '6'],
-      ['other', '7']
+      ['other', '7'],
     ]);
     const leftValue = valuesMap.get(`${left?.value}`.toLocaleLowerCase()) ?? `${left?.value}`;
     const rightValue = valuesMap.get(`${right?.value}`.toLocaleLowerCase()) ?? `${right?.value}`;
@@ -101,7 +103,26 @@ export class LookupsService {
     return leftValue.localeCompare(rightValue, 'en', {
       numeric: true,
       sensitivity: 'base',
-      ignorePunctuation: true
+      ignorePunctuation: true,
+    });
+  };
+
+  private suffixComparator = (left, right) => {
+    const valuesMap = new Map([
+      ['jr', '0'],
+      ['sr', '1'],
+      ['ii', '2'],
+      ['iii', '3'],
+      ['iiii', '4'],
+      ['iv', '5'],
+    ]);
+    const leftValue = valuesMap.get(`${left?.value}`.toLocaleLowerCase()) ?? `${left?.value}`;
+    const rightValue = valuesMap.get(`${right?.value}`.toLocaleLowerCase()) ?? `${right?.value}`;
+
+    return leftValue.localeCompare(rightValue, 'en', {
+      numeric: true,
+      sensitivity: 'base',
+      ignorePunctuation: true,
     });
   };
 }

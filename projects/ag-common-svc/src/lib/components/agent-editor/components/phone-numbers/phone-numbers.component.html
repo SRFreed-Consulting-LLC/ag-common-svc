@@ -36,7 +36,7 @@
   <ng-container *ngFor="let phoneNumber of phoneNumbers">
     <div class="row mb-2 px-3 py-1">
       <div class="col-6 text-start">
-        {{ phoneNumber?.number | phoneNumberMask }}
+        {{ phoneNumber | phoneNumberMask }}
         <span *ngIf="!!phoneNumber?.extension">&nbsp;(ext.&nbsp;{{ phoneNumber?.extension }})</span>
       </div>
 

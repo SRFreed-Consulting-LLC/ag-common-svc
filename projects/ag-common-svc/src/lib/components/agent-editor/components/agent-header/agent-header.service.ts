@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Agent, AgentKeys, BaseModelKeys, LookupKeys } from 'ag-common-lib/public-api';
+import { Agent, AgentKeys } from 'ag-common-lib/public-api';
 import { map } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
 import { AgentService } from '../../../../services/agent.service';
-import { updateDoc } from 'firebase/firestore';
 import { pick } from 'lodash';
 import { FireStorageDao } from '../../../../dao/FireStorage.dao';
+import { AgentHeaderKeys } from './agent-header.model';
 
 @Injectable()
 export class AgentHeaderService {
@@ -32,7 +32,59 @@ export class AgentHeaderService {
     const changes = this.formChangesDetector.getAllChanges();
 
     changes.forEach(([key]) => {
-      Object.assign(updates, { [key]: this.formData[key] ?? null });
+      const update = this.formData[key] ?? null;
+      const addresses = updates[AgentKeys.addresses] ?? this.formData[AgentKeys.addresses] ?? [];
+      const emailAddresses = updates[AgentKeys.email_addresses] ?? this.formData[AgentKeys.email_addresses] ?? [];
+      const phoneNumbers = updates[AgentKeys.phone_numbers] ?? this.formData[AgentKeys.phone_numbers] ?? [];
+
+      switch (key) {
+        case AgentHeaderKeys.primaryBillingAddress:
+          Object.assign(updates, {
+            [AgentKeys.addresses]: addresses.map((address) => {
+              const isSame = address === update;
+
+              Object.assign(address, { is_primary_billing: isSame });
+              return address;
+            })
+          });
+
+          return;
+        case AgentHeaderKeys.primaryShippingAddress:
+          Object.assign(updates, {
+            [AgentKeys.addresses]: addresses.map((address) => {
+              const isSame = address === update;
+
+              Object.assign(address, { is_primary_shipping: isSame });
+              return address;
+            })
+          });
+
+          return;
+        case AgentHeaderKeys.primaryEmailAddress:
+          Object.assign(updates, {
+            [AgentKeys.email_addresses]: emailAddresses.map((emailAddress) => {
+              const isSame = emailAddress === update;
+
+              Object.assign(emailAddress, { is_primary: isSame });
+              return emailAddress;
+            })
+          });
+          return;
+        case AgentHeaderKeys.primaryPhoneNumber:
+          Object.assign(updates, {
+            [AgentKeys.phone_numbers]: phoneNumbers.map((phoneNumber) => {
+              const isSame = phoneNumber === update;
+
+              Object.assign(phoneNumber, { is_primary: isSame });
+              return phoneNumber;
+            })
+          });
+          return;
+
+        default:
+          Object.assign(updates, { [key]: update });
+          return;
+      }
     });
 
     this._inProgress$.next(true);
@@ -114,7 +166,29 @@ export class AgentHeaderService {
       AgentKeys.email_addresses,
       AgentKeys.phone_numbers
     ]);
-    console.log('initialData', initialData);
+    let primaryBillingAddress = null;
+    let primaryShippingAddress = null;
+
+    agent[AgentKeys.addresses]?.forEach((address) => {
+      if (address.is_primary_billing) {
+        primaryBillingAddress = address;
+      }
+
+      if (address.is_primary_shipping) {
+        primaryShippingAddress = address;
+      }
+    });
+
+    const primaryEmailAddress = agent[AgentKeys.email_addresses]?.find((emailAddresses) => emailAddresses?.is_primary);
+    const primaryPhoneNumber = agent[AgentKeys.phone_numbers]?.find((phoneNumber) => phoneNumber?.is_primary);
+
+    Object.assign(initialData, {
+      [AgentHeaderKeys.primaryShippingAddress]: primaryShippingAddress,
+      [AgentHeaderKeys.primaryBillingAddress]: primaryBillingAddress,
+      [AgentHeaderKeys.primaryEmailAddress]: primaryEmailAddress,
+      [AgentHeaderKeys.primaryPhoneNumber]: primaryPhoneNumber
+    });
+
     this.formData = new Proxy(initialData, {
       set: (target, prop, value, receiver) => {
         const prevValue = target[prop];

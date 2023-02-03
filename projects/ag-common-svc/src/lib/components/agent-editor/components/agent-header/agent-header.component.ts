@@ -1,19 +1,22 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { Address, Agency, Agent, BaseModelKeys, EmailAddress, Lookup, PhoneNumber } from 'ag-common-lib/public-api';
+import { Component, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
+import { Agent, AgentKeys, BaseModelKeys, Lookup } from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
-import { FireStorageDao } from '../../../../dao/FireStorage.dao';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
 import { AgentHeaderService } from './agent-header.service';
 import { DropZoneComponent } from '../../../drop-zone/drop-zone.component';
+import { PhoneNumberMaskPipe } from '../../../../../shared/pipes/phone-number-mask.pipe';
+import { FullAddressPipe } from '../../../../../shared/pipes/full-address.pipe';
+import { AgentHeaderKeys } from './agent-header.model';
 
 @Component({
   selector: 'ag-shr-agent-header',
   templateUrl: './agent-header.component.html',
   styleUrls: ['./agent-header.component.scss'],
-  providers: [AgentHeaderService]
+  providers: [AgentHeaderService, FullAddressPipe, PhoneNumberMaskPipe]
 })
 export class AgentHeadersComponent {
+  @HostBinding('class') className = 'agent-header';
   @Input('agent') set _agent(value: Agent) {
     this.agent = value;
     this.agentHeaderFormDetails = this.agentHeaderService.getFormData(value);
@@ -24,6 +27,8 @@ export class AgentHeadersComponent {
   @ViewChild('profilePictureDropZoneRef', { static: true }) profilePictureDropZoneComponent: DropZoneComponent;
   @ViewChild('agentHeaderFormRef', { static: false }) agentHeaderFormComponent: DxFormComponent;
 
+  public AgentKeys = AgentKeys;
+  public AgentHeaderKeys = AgentHeaderKeys;
   public agentHeaderFormDetails;
   public inProgress$: Observable<boolean>;
   public validationGroup = 'agentHeaderValidationGroup';
@@ -31,7 +36,11 @@ export class AgentHeadersComponent {
 
   private agent: Agent;
 
-  constructor(private agentHeaderService: AgentHeaderService, private fireStorageDao: FireStorageDao) {
+  constructor(
+    private agentHeaderService: AgentHeaderService,
+    public phoneNumberMaskPipe: PhoneNumberMaskPipe,
+    public fullAddressPipe: FullAddressPipe
+  ) {
     this.inProgress$ = agentHeaderService.inProgress$;
   }
 

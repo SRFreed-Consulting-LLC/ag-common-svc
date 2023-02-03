@@ -1,3 +1,5 @@
+$base-image-size: 20px;
+
 ::ng-deep .agent-header {
   &__image-container {
     display: flex;
@@ -6,28 +8,20 @@
   }
 
   &__image {
-    width: 120px;
-    height: 150px;
+    width: calc(7 * $base-image-size);
+    height: calc(8 * $base-image-size);
     object-fit: contain;
     border-radius: 50%;
     border: 1px solid rgba(0, 0, 0, 0.1);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   }
-}
 
-#dropzone-external {
-  width: 150px;
-  height: 200px;
-  background-color: rgba(183, 183, 183, 0.1);
-  border-width: 2px;
-  border-style: dashed;
-  padding: 10px;
-}
-
-#dropzone-external > * {
-  pointer-events: none;
-}
-
-#dropzone-external.dropzone-active {
-  border-style: solid;
+  &__form {
+    .dx-form-group-content {
+      padding: 8px 0;
+    }
+    .dx-form-group-caption {
+      font-size: 16px;
+    }
+  }
 }

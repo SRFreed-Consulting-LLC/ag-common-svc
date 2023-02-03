@@ -1,13 +1,15 @@
 @import "variables.scss";
 
+$base-image-size: 60px;
+
 ::ng-deep .drop-zone {
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
   gap: 8px;
-  width: calc(400px + 2 * $base-padding);
-  height: calc(500px + 2 * $base-padding);
+  width: calc(7 * $base-image-size + 2 * $base-padding);
+  height: calc(8 * $base-image-size + 2 * $base-padding);
   padding: $base-padding;
   border-radius: 4px;
   background-color: var(--color-base-accent);
@@ -19,7 +21,7 @@
     flex-grow: 1;
     width: 100%;
     position: relative;
-    border-radius: 100%;
+    border-radius: 50%;
     border: 2px dashed #aaaaaa;
     color: #aaaaaa;
     font-size: 18px;

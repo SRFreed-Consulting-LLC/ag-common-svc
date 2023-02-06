@@ -1,6 +1,13 @@
 $base-image-size: 20px;
 
 ::ng-deep .agent-header {
+  &__container {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 16px;
+    gap: 24px;
+  }
+
   &__image-container {
     display: flex;
     justify-content: center;

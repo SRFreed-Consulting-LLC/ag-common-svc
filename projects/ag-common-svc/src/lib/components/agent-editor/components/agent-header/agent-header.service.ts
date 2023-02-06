@@ -27,7 +27,7 @@ export class AgentHeaderService {
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
         return this.formChangesDetector.hasChanges;
-      }),
+      })
     );
   }
 
@@ -49,7 +49,7 @@ export class AgentHeaderService {
 
               Object.assign(address, { is_primary_billing: isSame });
               return address;
-            }),
+            })
           });
 
           return;
@@ -60,7 +60,7 @@ export class AgentHeaderService {
 
               Object.assign(address, { is_primary_shipping: isSame });
               return address;
-            }),
+            })
           });
 
           return;
@@ -71,7 +71,7 @@ export class AgentHeaderService {
 
               Object.assign(emailAddress, { is_primary: isSame });
               return emailAddress;
-            }),
+            })
           });
           return;
         case AgentHeaderKeys.primaryPhoneNumber:
@@ -81,7 +81,7 @@ export class AgentHeaderService {
 
               Object.assign(phoneNumber, { is_primary: isSame });
               return phoneNumber;
-            }),
+            })
           });
           return;
 
@@ -98,7 +98,7 @@ export class AgentHeaderService {
       const filename = [
         this.formData[AgentKeys.p_agent_first_name],
         this.formData[AgentKeys.p_agent_middle_name],
-        this.formData[AgentKeys.p_agent_last_name],
+        this.formData[AgentKeys.p_agent_last_name]
       ]
         .filter(Boolean)
         .join('_')
@@ -121,7 +121,6 @@ export class AgentHeaderService {
     await this.agentService
       .updateFields(agentId, updates)
       .then(() => {
-        debugger;
         const selectedPrefix = this.selectedPrefix$.value;
         const selectedSuffix = this.selectedSuffix$.value;
         if (selectedPrefix && !selectedPrefix?.isAssigned) {
@@ -178,7 +177,7 @@ export class AgentHeaderService {
       AgentKeys.p_agency_id,
       AgentKeys.addresses,
       AgentKeys.email_addresses,
-      AgentKeys.phone_numbers,
+      AgentKeys.phone_numbers
     ]);
     let primaryBillingAddress = null;
     let primaryShippingAddress = null;
@@ -200,7 +199,7 @@ export class AgentHeaderService {
       [AgentHeaderKeys.primaryShippingAddress]: primaryShippingAddress,
       [AgentHeaderKeys.primaryBillingAddress]: primaryBillingAddress,
       [AgentHeaderKeys.primaryEmailAddress]: primaryEmailAddress,
-      [AgentHeaderKeys.primaryPhoneNumber]: primaryPhoneNumber,
+      [AgentHeaderKeys.primaryPhoneNumber]: primaryPhoneNumber
     });
 
     this.formData = new Proxy(initialData, {
@@ -210,7 +209,7 @@ export class AgentHeaderService {
         Reflect.set(target, prop, value, receiver);
 
         return true;
-      },
+      }
     });
 
     return this.formData;

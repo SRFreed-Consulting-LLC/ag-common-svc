@@ -13,7 +13,7 @@ import { AgentHeaderKeys } from './agent-header.model';
   selector: 'ag-shr-agent-header',
   templateUrl: './agent-header.component.html',
   styleUrls: ['./agent-header.component.scss'],
-  providers: [AgentHeaderService, FullAddressPipe, PhoneNumberMaskPipe],
+  providers: [AgentHeaderService, FullAddressPipe, PhoneNumberMaskPipe]
 })
 export class AgentHeadersComponent {
   @HostBinding('class') className = 'agent-header';
@@ -41,7 +41,7 @@ export class AgentHeadersComponent {
   constructor(
     private agentHeaderService: AgentHeaderService,
     public phoneNumberMaskPipe: PhoneNumberMaskPipe,
-    public fullAddressPipe: FullAddressPipe,
+    public fullAddressPipe: FullAddressPipe
   ) {
     this.inProgress$ = agentHeaderService.inProgress$;
     this.selectedPrefix$ = agentHeaderService.selectedPrefix$;
@@ -81,12 +81,10 @@ export class AgentHeadersComponent {
   };
 
   public handlePrefixSelect = (item) => {
-    debugger;
     this.selectedPrefix$.next(item);
   };
 
   public handleSuffixSelect = (item) => {
-    debugger;
     this.selectedSuffix$.next(item);
   };
 }

@@ -916,6 +916,10 @@ export class DomainService {
           registrant.registration_type = data.get('registration_type');
         }
 
+        if (data.has('qualified_as')) {
+          registrant.qualified_as = data.get('qualified_as');
+        }
+
         registrant.invitee_email = data.get('invitee_email');
 
         let agent: LegacyAgent = agents.find(
@@ -947,7 +951,7 @@ export class DomainService {
             registrant.primary_email_address = primary_email;
           }
 
-          let secondary_email: EmailAddress[] = agent.email_addresses.filter(email => email.is_login != true);
+          let secondary_email: EmailAddress[] = agent.email_addresses.filter(email => email.is_login == false);
         
           if (secondary_email?.length > 0) {
             registrant.secondary_email_address = secondary_email[0];
@@ -967,7 +971,7 @@ export class DomainService {
             registrant.mobile_phone = mobile_phone_numbers;
           }
           
-          let secondary_phone: PhoneNumber[] = agent.phone_numbers.filter(number =>  number.phone_type != PhoneNumberType.Mobile)
+          let secondary_phone: PhoneNumber[] = agent.phone_numbers.filter(number =>  number.number != mobile_phone_numbers.number)
 
           if(secondary_phone?.length){
             registrant.secondary_phone = secondary_phone[0];
@@ -1022,6 +1026,12 @@ export class DomainService {
           registrant.mga_id = agent.p_mga_id;
         }
 
+        if (data.has('agent_id')) {
+          registrant.agent_id = data.get('agent_id');
+        } else if (agent.p_agent_id){
+          registrant.agent_id = agent.p_agent_id;
+        }
+
         if (data.has('agency_id')) {
           registrant.agency_id = data.get('agency_id');
         } else if (agent.p_agency_id){
@@ -1070,6 +1080,18 @@ export class DomainService {
           registrant.unisex_tshirt_size_other = agent.unisex_tshirt_size_other;
         }
 
+        if (data.has('tshirt_size')) {
+          registrant.tshirt_size = data.get('tshirt_size');
+        } else if (agent.p_tshirt_size){
+          registrant.unisex_tshirt_size = agent.p_tshirt_size;
+        }
+
+        if (data.has('tshirt_size_other')) {
+          registrant.tshirt_size_other = data.get('tshirt_size_other');
+        } else if (agent.p_tshirt_size_other){
+          registrant.tshirt_size_other = agent.p_tshirt_size_other;
+        }
+
         if (data.has('gender')) {
           registrant.gender = data.get('gender');
         } else if (agent.gender){
@@ -1092,7 +1114,13 @@ export class DomainService {
         let contacts = await this.agentAssociationsService.getAll(agent[BaseModelKeys.dbId]);
         
         if (contacts.length > 0) {
-          registrant.emergency_contact = contacts[0];
+          let emergency_contacts: Association[] = contacts.filter(contact => contact.is_emergency_contact == true);
+
+          if(emergency_contacts.length > 0){
+            registrant.emergency_contact = emergency_contacts[0]  
+          } else {
+            registrant.emergency_contact = contacts[0];
+          }
         }
             
         if(registrant[BaseModelKeys.dbId]){

@@ -1083,7 +1083,7 @@ export class DomainService {
         if (data.has('tshirt_size')) {
           registrant.tshirt_size = data.get('tshirt_size');
         } else if (agent.p_tshirt_size){
-          registrant.unisex_tshirt_size = agent.p_tshirt_size;
+          registrant.tshirt_size = agent.p_tshirt_size;
         }
 
         if (data.has('tshirt_size_other')) {

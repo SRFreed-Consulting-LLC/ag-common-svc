@@ -1102,7 +1102,12 @@ export class DomainService {
           registrant.dob = data.get('dob');
         } else if (agent.dob){
           registrant.dob = agent.dob;
+        }
 
+        if (data.has('headshot')) {
+          registrant.headshot_link = data.get('headshot');
+        } else if (agent.p_headshot_link){
+          registrant.headshot_link = agent.p_headshot_link;
         }
 
         data.forEach((value, key) => {

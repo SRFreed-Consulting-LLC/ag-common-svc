@@ -123,22 +123,22 @@ export class ImportService {
       isValid = false;
     }
 
+    if(invitee.has('email_addresses.1.address')){
+      if(invitee.get('email_addresses.1.address').trim() != invitee.get('invitee_email').trim()){
+        messages.push('ERROR: Invitee ' + agent_name + " The Email Associated with this Registration and the Primary Login Email must be the same");
+        isValid = false;
+      }
+
+      if(!this.domainUtilService.getBoolean(invitee.get('email_addresses.1.is_login'))){
+        messages.push('ERROR: Invitee ' + agent_name + " The Login Email with this Registration must be associated with the first Address w/n the spreadsheet");
+        isValid = false;
+      }
+    }
+    
     if(invitee.has('invitee_email')){
       if(invitee.get('invitee_email').trim() == ''){
         messages.push('ERROR: Invitee ' + agent_name + " 'invitee_email' is blank");
         isValid = false;      
-      }
-      
-      if(invitee.has('email_addresses.1.address')){
-        if(invitee.get('email_addresses.1.address').trim() != invitee.get('invitee_email').trim()){
-          messages.push('ERROR: Invitee ' + agent_name + " The Email Associated with this Registration and the Primary Login Email must be the same");
-          isValid = false;
-        }
-
-        if(!this.domainUtilService.getBoolean(invitee.get('email_addresses.1.is_login'))){
-          messages.push('ERROR: Invitee ' + agent_name + " The Login Email with this Registration must be associated with the first Address w/n the spreadsheet");
-          isValid = false;
-        }
       }
     } else {
       messages.push('ERROR: Invitee ' + agent_name + " does not have an email address in 'invitee_email'");

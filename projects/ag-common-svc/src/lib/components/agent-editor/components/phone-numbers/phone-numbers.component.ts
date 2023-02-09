@@ -1,27 +1,21 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import {
-  Agent,
   AgentKeys,
-  AGENT_REVIEW_LEVEL_LOOKUP,
-  AGENT_STATUS,
-  AGENT_TYPE,
-  Lookup,
   PhoneNumber,
   PhoneNumberType,
   PhoneNumberTypeDescriptionMap,
-  PHONE_NUMBER_TYPE_LOOKUP,
-  PROSPECT_STATUS,
+  PHONE_NUMBER_TYPE_LOOKUP
 } from 'ag-common-lib/public-api';
 import { ToastrService } from 'ngx-toastr';
 import { AgentService } from '../../../../services/agent.service';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
 
 @Component({
   selector: 'ag-shr-phone-numbers',
   templateUrl: './phone-numbers.component.html',
   styleUrls: ['./phone-numbers.component.scss'],
-  providers: [],
+  providers: []
 })
 export class PhoneNumbersComponent {
   @Input() agentId: string;
@@ -33,14 +27,8 @@ export class PhoneNumbersComponent {
   public AgentKeys = AgentKeys;
   public PHONE_NUMBER_TYPE_LOOKUP = PHONE_NUMBER_TYPE_LOOKUP;
   public PhoneNumberTypeDescriptionMap = PhoneNumberTypeDescriptionMap;
-  public prospectStatuses: PROSPECT_STATUS[] = [];
-  public agentStatuses: AGENT_STATUS[] = [];
-  public agentTypes: AGENT_TYPE[] = [];
-  public agentReviewLevelLookup: Partial<Lookup>[] = AGENT_REVIEW_LEVEL_LOOKUP;
-  public roles: any[] = [];
   public inProgress = false;
   public inProgress$: Observable<boolean>;
-  public isReviewLevelVisible$: BehaviorSubject<boolean>;
 
   constructor(private toastrService: ToastrService, private agentService: AgentService) {}
 
@@ -145,6 +133,7 @@ export class PhoneNumbersComponent {
     return this.agentService
       .updateFields(this.agentId, { [AgentKeys.phone_numbers]: phoneNumbers })
       .then(() => {
+        this.phoneNumbers = phoneNumbers;
         this.phoneNumbersChange.emit(phoneNumbers);
       })
       .finally(() => {

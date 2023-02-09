@@ -29,7 +29,8 @@ export class AgentService extends DataService<Agent> {
         data?.registrant_review_level_update_date as Timestamp
       ),
       [AgentKeys.prospect_status_update_date]: dateFromTimestamp(data?.prospect_status_update_date as Timestamp),
-      [AgentKeys.campaigns_user_since]: dateFromTimestamp(data?.campaigns_user_since as Timestamp)
+      [AgentKeys.campaigns_user_since]: dateFromTimestamp(data?.campaigns_user_since as Timestamp),
+      [AgentKeys.dob]: dateFromTimestamp(data?.dob as Timestamp)
     });
   };
 

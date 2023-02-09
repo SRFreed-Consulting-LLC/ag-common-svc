@@ -6,7 +6,7 @@ export class PrimaryBillingAddressPipe implements PipeTransform {
   transform(addresses: Address[]): Address {
     const primaryBilling = Array.isArray(addresses)
       ? addresses.find((email) => {
-          return email?.is_primary_shipping;
+          return email?.is_primary_billing;
         })
       : null;
 

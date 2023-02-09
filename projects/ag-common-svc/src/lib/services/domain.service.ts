@@ -363,7 +363,7 @@ export class DomainService {
 
     if (!Array.isArray(agentEmailAddresses) || agentEmailAddresses?.length == 0) {
       this.messages.push('No Email Addresses were set for this agent. Not Importing ' + agent[AgentKeys.p_agent_name]);
-
+      console.log('not creating', agent);
       return null;
     }
 

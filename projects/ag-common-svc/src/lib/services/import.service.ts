@@ -36,10 +36,15 @@ export class ImportService {
     });
   }
 
-  public createDataMap(csvText, ruleSet: ImportRuleSet): Map<string, string>[] {
+  public createDataMap(csvText, ruleSet: ImportRuleSet, isConferenceImport: boolean): Map<string, string>[] {
     let retval: Map<string, string>[] = [];
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
+
+    if(isConferenceImport){
+      headers.push('email_addresses.1.address')
+      headers.push('email_addresses.1.is_login');
+    }
 
     for (var i = 1; i < lines.length - 1; i++) {
       let data: Map<string, string> = new Map<string, string>();
@@ -61,6 +66,11 @@ export class ImportService {
           }
 
           data.set(mapped_header, val);
+        }
+
+        if(isConferenceImport){
+          data.set('email_addresses.1.address', data.get('invitee_email'))
+          data.set('email_addresses.1.is_login', 'TRUE');
         }
       }
 

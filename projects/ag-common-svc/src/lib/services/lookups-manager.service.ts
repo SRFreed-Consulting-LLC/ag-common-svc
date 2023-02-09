@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { BaseModelKeys, Lookup, LookupKeys, Lookups } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
+import { DocumentSnapshot } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
@@ -17,7 +18,7 @@ export class LookupsManagerService {
     this.tenantId = 'default'; // TODO get tenant id form auth
   }
 
-  public getLookup = (lookupCategory: Lookups, lookupId: string): Observable<any> => {
+  public getLookup = (lookupCategory: Lookups, lookupId: string): Observable<DocumentSnapshot<Lookup>> => {
     const path = this.getPath(lookupCategory);
 
     return this.fsDao.getDocument(path, lookupId);
@@ -51,7 +52,7 @@ export class LookupsManagerService {
     lookupId: Lookups,
     documentId: string,
     updates: Partial<Lookup>,
-    lookupItems$?: Observable<Lookup[]>
+    lookupItems$?: Observable<Lookup[]>,
   ) => {
     const path = this.getPath(lookupId);
     if (updates?.isDefault) {
@@ -88,7 +89,7 @@ export class LookupsManagerService {
 
   static readonly fromFirestore = (data): Lookup => {
     return Object.assign({}, data, {
-      [LookupKeys.isDefault]: data[LookupKeys.isDefault] ?? false
+      [LookupKeys.isDefault]: data[LookupKeys.isDefault] ?? false,
     });
   };
 }

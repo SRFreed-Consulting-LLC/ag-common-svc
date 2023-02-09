@@ -1,5 +1,13 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { ActiveLookup, AgentKeys, BaseModelKeys, EmailAddress, Lookup, LookupKeys } from 'ag-common-lib/public-api';
+import {
+  ActiveLookup,
+  AgentKeys,
+  BaseModelKeys,
+  EmailAddress,
+  Lookup,
+  LookupKeys,
+  Lookups,
+} from 'ag-common-lib/public-api';
 import { ToastrService } from 'ngx-toastr';
 import { AgentService } from '../../../../services/agent.service';
 import { Observable } from 'rxjs';
@@ -12,7 +20,7 @@ import { tap } from 'rxjs/operators';
   selector: 'ag-shr-email-addresses',
   templateUrl: './email-addresses.component.html',
   styleUrls: ['./email-addresses.component.scss'],
-  providers: []
+  providers: [],
 })
 export class EmailAddressesComponent {
   @Input() agentId: string;
@@ -24,6 +32,7 @@ export class EmailAddressesComponent {
 
   @ViewChild('emailAddressesEditorModalRef', { static: true }) emailAddressesEditorModalComponent: ModalWindowComponent;
 
+  public Lookups = Lookups;
   public LookupKeys = LookupKeys;
   public BaseModelKeys = BaseModelKeys;
   public inProgress = false;
@@ -35,12 +44,12 @@ export class EmailAddressesComponent {
   constructor(
     lookupsService: LookupsService,
     private toastrService: ToastrService,
-    private agentService: AgentService
+    private agentService: AgentService,
   ) {
     this.emailTypeLookup$ = lookupsService.emailTypeLookup$.pipe(
       tap((items) => {
         this.defaultEmailTypeLookup = items?.find((item) => item?.isDefault);
-      })
+      }),
     );
   }
 

@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@angular/core';
 import { Lookup, LookupKeys, Lookups } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
 import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
 

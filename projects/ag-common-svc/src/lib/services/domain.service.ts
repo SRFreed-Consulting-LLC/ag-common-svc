@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ImportRuleSet, ImportRuleSetKeys } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {
+  ActiveLookup,
   Address,
   Agency,
   Agent,
@@ -22,6 +23,8 @@ import {
   Registrant,
   Role
 } from 'ag-common-lib/public-api';
+import { Observable } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { AgentApproveDenyReasonsService } from './agent-approve-deny-reason.service';
 import { AgentAssociationsService } from './agent-associations.service';
@@ -33,6 +36,7 @@ import { DomainPhoneNumberService } from './domain-phone-number.service';
 import { DomainSocialsService } from './domain-socials.service';
 import { DomainUtilService } from './domain-util.service';
 import { DomainWebsiteService } from './domain-website.service';
+import { LookupsService } from './lookups.service';
 import { RegistrantsService } from './registrants.service';
 
 @Injectable({
@@ -46,6 +50,8 @@ export class DomainService {
   REGISTRATION_POLICY_REPLACE: string = 'Replace Existing Registrations';
   REGISTRATION_POLICY_UPDATE: string = 'Update Existing Registrations';
 
+  dietaryConsiderationTypesLookup$: Observable<ActiveLookup[]>;
+
   constructor(
     private agentService: AgentService,
     private registrantsService: RegistrantsService,
@@ -57,14 +63,17 @@ export class DomainService {
     private domainWebsiteService: DomainWebsiteService,
     private domainSocialsService: DomainSocialsService,
     private domainAssociationsService: DomainAssociationsService,
-    private domainUtilService: DomainUtilService
-  ) {}
+    private domainUtilService: DomainUtilService,
+    private lookupsService: LookupsService
+  ) {
+    this.dietaryConsiderationTypesLookup$ = this.lookupsService.dietaryConsiderationTypesLookup$;
+  }
 
   //************************************************************* */
   //  Method to import Agents from import file
   //
   //  agents: Map<string, string>[]: Map of key value
-  //          pairs for AGent Record
+  //          pairs for Agent Record
   //  agencies: Agency[]: List of all Agencies for
   //          validating incoming Agency ID's are correct
   //  selectedRuleSet: ImportRuleSet: Rulset to apply
@@ -169,7 +178,15 @@ export class DomainService {
       agent[AgentKeys.dietary_consideration] = line_data.get(AgentKeys.dietary_consideration);
     }
     if (line_data.has(AgentKeys.dietary_consideration_type)) {
-      agent[AgentKeys.dietary_consideration_type] = line_data.get(AgentKeys.dietary_consideration_type);
+      this.dietaryConsiderationTypesLookup$.pipe(take(1)).subscribe(vals => {
+        let lookup: ActiveLookup  = vals.find(val => val.description == line_data.get(AgentKeys.dietary_consideration_type))
+
+        console.log('lookup', lookup)
+        if(lookup){
+          agent[AgentKeys.dietary_consideration_type] = lookup.dbId
+        }
+      })
+
     }
     if (line_data.has(AgentKeys.upline)) {
       agent[AgentKeys.upline] = line_data.get(AgentKeys.upline);
@@ -353,7 +370,7 @@ export class DomainService {
     agent[AgentKeys.is_rmd] = false;
     agent[AgentKeys.is_credited] = false;
 
-    const agentAssociations = await this.domainAssociationsService.extractAssociations(splitVals);
+
 
     if (!this.validateAgency(agent, agencies)) {
       return null;
@@ -363,7 +380,6 @@ export class DomainService {
 
     if (!Array.isArray(agentEmailAddresses) || agentEmailAddresses?.length == 0) {
       this.messages.push('No Email Addresses were set for this agent. Not Importing ' + agent[AgentKeys.p_agent_name]);
-      console.log('not creating', agent);
       return null;
     }
 
@@ -388,13 +404,14 @@ export class DomainService {
         this.approveDenyReasonService.create(new_agent[BaseModelKeys.dbId], approve_deny_reason, true);
       }
 
-      const promises = agentAssociations.map((association) => {
-        return this.agentAssociationsService.create(new_agent[BaseModelKeys.dbId], association);
-      });
+      
+      // const promises = agentAssociations.map((association) => {
+      //   return this.agentAssociationsService.create(new_agent[BaseModelKeys.dbId], association);
+      // });
 
       this.messages.push(`Agent ${new_agent.p_email} was created`);
 
-      return Promise.all(promises).then(() => new_agent);
+      return new_agent;
     });
   }
 
@@ -846,7 +863,7 @@ export class DomainService {
       return null;
     }
 
-    await this.domainAssociationsService.updateAssociations(line_data, agent, selectedRuleSet, this.messages);
+    //await this.domainAssociationsService.updateAssociations(line_data, agent, selectedRuleSet, this.messages, "assocations");
 
     return this.agentService.updateFields(agent[BaseModelKeys.dbId], agent).then((updatedAgent) => {
       this.messages.push(`Agent ${agent.p_email} was updated`);
@@ -854,32 +871,31 @@ export class DomainService {
     });
   }
 
-  createGuestsArray(agents: Agent[], data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[]) {
-    data.forEach((registrant_data) => {
-      let invitees = agents.filter((a) => a.p_email == registrant_data.get('invitee_email'));
+  createOrUpdateAssociations(agents: Agent[], guest_data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[], id_key: string) {
+    guest_data.forEach((guest) => {
+      let invitees = agents.filter((a) => a.p_email == guest.get('invitee_email'));
 
       if (invitees.length == 1) {
-        this.domainAssociationsService.updateAssociations(registrant_data, invitees[0], selectedRuleSet, messages);
+        this.domainAssociationsService.updateAssociations(guest, invitees[0], selectedRuleSet, messages, id_key);
       }
     });
   }
 
   createRegistrantArrayForInvitees(
     agents: Agent[],
-    registrant_data: Map<string, string>[],
+    invitee_maps: Map<string, string>[],
     selectedConference: string,
     createdBy: string,
     conferenceRegistrationPolicy: string
   ) {
     let promises: Promise<Registrant>[] = [];
 
-    registrant_data.forEach(async (data) => {
+    invitee_maps.forEach(async (invitee_map) => {
       let registrant: Registrant;
 
       let qp: QueryParam[] = [];
-      qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
-      qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, data.get('p_agent_first_name')));
-      qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('p_agent_last_name')));
+      qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, invitee_map.get('invitee_email')));
+      qp.push(new QueryParam('invitee_guest', WhereFilterOperandKeys.equal, invitee_map.get('invitee_guest')));
       qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
 
       let p = this.registrantsService.getAllByValue(qp).then(async (registrants) => {
@@ -892,44 +908,45 @@ export class DomainService {
             registrant = { ...new Registrant() };
             this.registrantsService.delete(registrants[0][BaseModelKeys.dbId]);
           }
+        } else {
+          console.log('Found too many registrants matching', qp);
+
+          return null;
         }
+
+        registrant.invitee_guest = invitee_map.get('invitee_guest');
+        registrant.invitee_email = invitee_map.get('invitee_email');
 
         registrant.registration_source = 'Conference Import';
         registrant.event_id = selectedConference;
         registrant.created_date = new Date();
         registrant.created_by = createdBy;
-
         registrant.approved_by = createdBy;
         registrant.approved_date = new Date();
-        registrant.registered_date = new Date();
-        registrant.invitee_guest = data.get('invitee_guest');
-
         registrant.last_eval_date = new Date();
 
-        if (data.has('registration_status') && data.get('registration_status').toLowerCase() == 'approved') {
+        if (invitee_map.has('registration_status') && invitee_map.get('registration_status').toLowerCase() == 'confirmed') {
           registrant.approved = true;
         } else {
           registrant.approved = false;
         }
 
-        if (data.has('registration_type')) {
-          registrant.registration_type = data.get('registration_type');
+        if (invitee_map.has('registration_type')) {
+          registrant.registration_type = invitee_map.get('registration_type');
         }
 
-        if (data.has('qualified_as')) {
-          registrant.qualified_as = data.get('qualified_as');
+        if (invitee_map.has('qualified_as')) {
+          registrant.qualified_as = invitee_map.get('qualified_as');
         }
 
-        registrant.invitee_email = data.get('invitee_email');
-
-        let agent: LegacyAgent = agents.find(
-          (agent) => agent.p_email == data.get('invitee_email').toLowerCase().trim()
-        );
+        let agent: LegacyAgent = agents.find((agent) => agent.p_email == invitee_map.get('invitee_email').toLowerCase().trim());
 
         if (!agent) {
-          agent = { ...new Agent() };
+          console.log("Can't create Registration. No agent found for " + invitee_map.get('invitee_email').toLowerCase().trim());
+          return null;
         }
 
+        //if agent has addresses
         if(agent.addresses?.length > 0){
           let primary_billing_address: Address = agent.addresses.find(address => address.is_primary_billing == true);
           
@@ -944,6 +961,7 @@ export class DomainService {
           }          
         }
 
+        //if agent has email addresses
         if(agent.email_addresses.length > 0){
           let primary_email: EmailAddress = agent.email_addresses.find(email => email.is_login == true);
         
@@ -964,6 +982,7 @@ export class DomainService {
           }
         }
 
+        //if agent has phone numbers
         if(agent.phone_numbers?.length > 0){
           let mobile_phone_numbers: PhoneNumber = agent.phone_numbers.find(number => number.phone_type == PhoneNumberType.Mobile);
 
@@ -978,144 +997,146 @@ export class DomainService {
           }
         }        
 
-        if (data.has('first_name')) {
-          registrant.first_name = data.get('first_name');
+        if (invitee_map.has('first_name')) {
+          registrant.first_name = invitee_map.get('first_name');
         } else if (agent.p_agent_first_name){
           registrant.first_name = agent.p_agent_first_name;
         }
 
-        if (data.has('middle_name')) {
-          registrant.middle_name = data.get('middle_name');
+        if (invitee_map.has('middle_name')) {
+          registrant.middle_name = invitee_map.get('middle_name');
         } else if (agent.p_agent_middle_name){
           registrant.middle_name = agent.p_agent_middle_name;
         }
 
-        if (data.has('last_name')) {
-          registrant.last_name = data.get('last_name');
+        if (invitee_map.has('last_name')) {
+          registrant.last_name = invitee_map.get('last_name');
         } else if (agent.p_agent_last_name){
           registrant.last_name = agent.p_agent_last_name;
         }
 
-        if (data.has('prefix')) {
-          registrant.prefix = data.get('prefix');
+        if (invitee_map.has('prefix')) {
+          registrant.prefix = invitee_map.get('prefix');
         } else if (agent.p_prefix){
           registrant.prefix = agent.p_prefix;
         }
 
-        if (data.has('suffix')) {
-          registrant.suffix = data.get('suffix');
+        if (invitee_map.has('suffix')) {
+          registrant.suffix = invitee_map.get('suffix');
         } else if (agent.p_suffix){
           registrant.suffix = agent.p_suffix;
         }
 
-        if (data.has('nick_name')) {
-          registrant.nick_name = data.get('nick_name');
+        if (invitee_map.has('nick_name')) {
+          registrant.nick_name = invitee_map.get('nick_name');
         } else if (agent.p_nick_name){
           registrant.nick_name = agent.p_nick_name;
         }
 
-        if (data.has('nick_last_name')) {
-          registrant.nick_last_name = data.get('nick_last_name');
+        if (invitee_map.has('nick_last_name')) {
+          registrant.nick_last_name = invitee_map.get('nick_last_name');
         } else if (agent.p_nick_last_name){
           registrant.nick_last_name = agent.p_nick_last_name;
         }
 
-        if (data.has('mga_id')) {
-          registrant.mga_id = data.get('mga_id');
+        if (invitee_map.has('mga_id')) {
+          registrant.mga_id = invitee_map.get('mga_id');
         } else if (agent.p_mga_id){
           registrant.mga_id = agent.p_mga_id;
         }
 
-        if (data.has('agent_id')) {
-          registrant.agent_id = data.get('agent_id');
+        if (invitee_map.has('agency_id')) {
+          registrant.agency_id = invitee_map.get('agency_id');
+        } else if (agent.p_agency_id){
+          registrant.agency_id = agent.p_agency_id;
+        }
+        
+        if (invitee_map.has('agent_id')) {
+          registrant.agent_id = invitee_map.get('agent_id');
         } else if (agent.p_agent_id){
           registrant.agent_id = agent.p_agent_id;
         }
 
-        if (data.has('agency_id')) {
-          registrant.agency_id = data.get('agency_id');
-        } else if (agent.p_agency_id){
-          registrant.agency_id = agent.p_agency_id;
-        }
-
-        if (data.has('upline')) {
-          registrant.upline = data.get('upline');
+        if (invitee_map.has('upline')) {
+          registrant.upline = invitee_map.get('upline');
         } else if (agent.upline){
           registrant.upline = agent.upline;
         }
 
-        if (data.has('dietary_or_personal_considerations')) {
-          registrant.dietary_or_personal_considerations = data.get('dietary_or_personal_considerations');
+        if (invitee_map.has('dietary_or_personal_considerations')) {
+          registrant.dietary_or_personal_considerations = invitee_map.get('dietary_or_personal_considerations');
         } else if (agent.dietary_or_personal_considerations){
           registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(agent.dietary_or_personal_considerations.trim());
         }
 
-        if (data.has('dietary_consideration_type')) {
-          registrant.dietary_consideration_type = data.get('dietary_consideration_type');
+        if (invitee_map.has('dietary_consideration_type')) {
+          registrant.dietary_consideration_type = invitee_map.get('dietary_consideration_type');
         } else if (agent.dietary_consideration_type){
           registrant.dietary_consideration_type = agent.dietary_consideration_type
         }
 
-        if (data.has('dietary_consideration')) {
-          registrant.dietary_consideration = data.get('dietary_consideration');
+        if (invitee_map.has('dietary_consideration')) {
+          registrant.dietary_consideration = invitee_map.get('dietary_consideration');
         } else if (agent.dietary_consideration){
           registrant.dietary_consideration = agent.dietary_consideration
         }
 
-        if (data.has('favorite_destination')) {
-          registrant.favorite_destination = data.get('favorite_destination');
+        if (invitee_map.has('favorite_destination')) {
+          registrant.favorite_destination = invitee_map.get('favorite_destination');
         } else if (agent.favorite_destination){
           registrant.favorite_destination = agent.favorite_destination;
         }
 
-        if (data.has('unisex_tshirt_size')) {
-          registrant.unisex_tshirt_size = data.get('unisex_tshirt_size');
+        if (invitee_map.has('unisex_tshirt_size')) {
+          registrant.unisex_tshirt_size = invitee_map.get('unisex_tshirt_size');
         } else if (agent.unisex_tshirt_size){
           registrant.unisex_tshirt_size = agent.unisex_tshirt_size;
         }
 
-        if (data.has('unisex_tshirt_size_other')) {
-          registrant.unisex_tshirt_size_other = data.get('unisex_tshirt_size_other');
+        if (invitee_map.has('unisex_tshirt_size_other')) {
+          registrant.unisex_tshirt_size_other = invitee_map.get('unisex_tshirt_size_other');
         } else if (agent.unisex_tshirt_size_other){
           registrant.unisex_tshirt_size_other = agent.unisex_tshirt_size_other;
         }
 
-        if (data.has('tshirt_size')) {
-          registrant.tshirt_size = data.get('tshirt_size');
+        if (invitee_map.has('tshirt_size')) {
+          registrant.tshirt_size = invitee_map.get('tshirt_size');
         } else if (agent.p_tshirt_size){
           registrant.tshirt_size = agent.p_tshirt_size;
         }
 
-        if (data.has('tshirt_size_other')) {
-          registrant.tshirt_size_other = data.get('tshirt_size_other');
+        if (invitee_map.has('tshirt_size_other')) {
+          registrant.tshirt_size_other = invitee_map.get('tshirt_size_other');
         } else if (agent.p_tshirt_size_other){
           registrant.tshirt_size_other = agent.p_tshirt_size_other;
         }
 
-        if (data.has('gender')) {
-          registrant.gender = data.get('gender');
+        if (invitee_map.has('gender')) {
+          registrant.gender = invitee_map.get('gender');
         } else if (agent.gender){
           registrant.gender = agent.gender;
         }
 
-        if (data.has('dob')) {
-          registrant.dob = data.get('dob');
+        if (invitee_map.has('dob')) {
+          registrant.dob = invitee_map.get('dob');
         } else if (agent.dob){
           registrant.dob = agent.dob;
         }
 
-        if (data.has('headshot')) {
-          registrant.headshot_link = data.get('headshot');
+        if (invitee_map.has('headshot')) {
+          registrant.headshot_link = invitee_map.get('headshot');
         } else if (agent.p_headshot_link){
           registrant.headshot_link = agent.p_headshot_link;
         }
 
-        data.forEach((value, key) => {
+        //custom fields
+        invitee_map.forEach((value, key) => {
           if (key.startsWith('custom.')) {
             registrant[key.split('.')[1]] = value;
           }
         });
       
+        //get emergency contact
         let contacts = await this.agentAssociationsService.getAll(agent[BaseModelKeys.dbId]);
         
         if (contacts.length > 0) {
@@ -1128,6 +1149,7 @@ export class DomainService {
           }
         }
             
+        //save registrant
         if(registrant[BaseModelKeys.dbId]){
           this.messages.push('Registration Updated for ' + registrant.first_name + ' ' + registrant.last_name);
           this.registrantsService.update(registrant);
@@ -1142,147 +1164,160 @@ export class DomainService {
       promises.push(p);
     });
 
-    return Promise.all(promises);
+    return promises;
   }
 
   createRegistrantArrayForGuests(
-    registrant_data: Map<string, string>[],
+    guest_data: Map<string, string>,
     selectedConference: string,
     createdBy: string,
     conferenceRegistrationPolicy: string
   ) {
+    let invitee_email = guest_data.get('invitee_email');
+    let invitee_guest = guest_data.get('invitee_guest');
+
+    let guests: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
+
+    guest_data.forEach((v,k) => {
+      let key_split: string[] = k.split(".");
+
+      let guest_vals: Map<string, string>
+
+      if(guests.has(key_split[0] + "." + key_split[1])){
+        guest_vals = guests.get(key_split[0] + "." + key_split[1]);
+      } else {
+        guest_vals = new Map<string, string>();
+      }
+
+      if(k.startsWith(key_split[0] + "." + key_split[1])){
+        if(key_split.length == 4){
+          guest_vals.set(key_split[key_split.length - 2] + "." + key_split[key_split.length - 1], v);
+        } else {
+          guest_vals.set(key_split[key_split.length - 1], v);
+        }
+
+        guests.set(key_split[0] + "." + key_split[1], guest_vals)
+      }
+    })
+
     let promises: Promise<Registrant>[] = [];
 
-    registrant_data.forEach((data) => {
-      let registrant: Registrant = { ...new Registrant() };
-
-      let qp: QueryParam[] = [];
-      qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, data.get('invitee_email')));
-      qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, data.get('association.1.first_name')));
-      qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, data.get('association.1.last_name')));
-      qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
-
-      let p = this.registrantsService.getAllByValue(qp).then((registrants) => {
-        if (registrants.length == 0) {
-          registrant = { ...new Registrant() };
-        } else if (registrants.length == 1) {
-          registrant = registrants[0];
-
-          if (conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE) {
+    guests.forEach(guest => {
+      if(guest.has('first_name') && guest.has('last_name')){
+        console.log("creating guest for", guest)
+        let qp: QueryParam[] = [];
+        qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, invitee_email));
+        qp.push(new QueryParam('invitee_guest', WhereFilterOperandKeys.equal, invitee_guest));
+        qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, guest.get('first_name')));
+        qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, guest.get('last_name')));
+        qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
+  
+        let promise = this.registrantsService.getAllByValue(qp).then((registrants) => {
+          let registrant: Registrant = { ...new Registrant() };
+  
+          if (registrants.length == 0) {
+            // if not found -> create new Registrant
             registrant = { ...new Registrant() };
-            this.registrantsService.delete(registrants[0][BaseModelKeys.dbId]);
+          } else if (registrants.length == 1) {
+            // if found -> set found registrant to be edited
+            registrant = registrants[0];
+  
+            if (conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE) {
+              // if this is a full replace, create new registrant record and delete old one
+              registrant = { ...new Registrant() };
+              this.registrantsService.delete(registrants[0][BaseModelKeys.dbId]);
+            }
+          } else {
+            console.log('Found too many registrants matching guest', qp)
+  
+            return null;
           }
-        }
-
-        registrant.registration_source = 'Conference Import';
-        registrant.event_id = selectedConference;
-        registrant.created_date = new Date();
-        registrant.created_by = createdBy;
-
-        registrant.approved_by = createdBy;
-        registrant.approved_date = new Date();
-        registrant.registered_date = new Date();
-        registrant.invitee_guest = data.get('invitee_guest');
-
-        registrant.last_eval_date = new Date();
-
-        if (data.has('invitee_status') && data.get('invitee_status').toLowerCase() == 'approved') {
+  
+          registrant.invitee_guest = invitee_guest;
+          registrant.invitee_email = invitee_email;
+          
+          registrant.registration_source = 'Conference Import';
+          registrant.event_id = selectedConference;
+          registrant.created_date = new Date();
+          registrant.created_by = createdBy;
+          registrant.approved_by = createdBy;
+          registrant.approved_date = new Date();
           registrant.approved = true;
-        } else {
-          registrant.approved = false;
-        }
-
-        if (data.has('registration_type')) {
-          registrant.registration_type = data.get('registration_type');
-        }
-
-        registrant.invitee_email = data.get('invitee_email');
-
-        this.domainAssociationsService.extractAssociations(data).then((guests) => {
-          if (guests.length == 1) {
-            let guest: Association = guests[0];
-
-            if (guest.first_name) {
-              registrant.first_name = guest.first_name;
-            }
-
-            if (guest.last_name) {
-              registrant.last_name = guest.last_name;
-            }
-
-            if (guest.email_address) {
-              let address: EmailAddress = { ...new EmailAddress() };
-              address.address = guest.email_address;
-              registrant.primary_email_address = address;
-            }
-
-            if (guest.association_type) {
-              registrant.relationship = guest.association_type;
-            }
-
-            if (guest.p_nick_first_name) {
-              registrant.nick_name = guest.p_nick_first_name;
-            }
-
-            if (guest.p_nick_last_name) {
-              registrant.nick_last_name = guest.p_nick_last_name;
-            }
-
-            if (guest.dietary_or_personal_considerations) {
-              registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
-                guest.dietary_or_personal_considerations.trim()
-              );
-            }
-
-            if (guest.dietary_consideration_type) {
-              registrant.dietary_consideration_type = guest.dietary_consideration_type;
-            }
-
-            if (guest.dietary_consideration) {
-              registrant.dietary_consideration = guest.dietary_consideration;
-            }
-
-            if (guest.unisex_tshirt_size) {
-              registrant.unisex_tshirt_size = guest.unisex_tshirt_size;
-            }
-
-            if (guest.unisex_tshirt_size_other) {
-              registrant.unisex_tshirt_size_other = guest.unisex_tshirt_size_other;
-            }
-
-            if (guest.address) {
-              registrant.address = guest.address;
-            }
-
-            if (guest.contact_number) {
-              let pn: PhoneNumber = { ...new PhoneNumber() };
-              pn.number = guest.contact_number;
-              registrant.mobile_phone = pn;
-            }
-
-            data.forEach((value, key) => {
-              if (key.startsWith('custom.')) {
-                registrant[key.split('.')[1]] = value;
-              }
-            });
-
-            if (registrant[BaseModelKeys.dbId]) {
-              this.messages.push('Registration Updated for ' + registrant.first_name + ' ' + registrant.last_name);
-              this.registrantsService.update(registrant);
-            } else {
-              this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
-              this.registrantsService.create(registrant);
-            }
+          registrant.last_eval_date = new Date();
+  
+          if (guest.has("first_name")) {
+            registrant.first_name = guest.get("first_name");
           }
-        });
+  
+          if (guest.has('last_name')) {
+            registrant.last_name = guest.get("last_name");
+          }
+  
+          if (guest.has('email_address')) {
+            let address: EmailAddress = { ...new EmailAddress() };
+            address.address = guest.get("email_address");
+            registrant.primary_email_address = address;
+          }
+  
+          if (guest.has('association_type')) {
+            registrant.relationship = guest.get("association_type");
+          }
+  
+          if (guest.has('p_nick_first_name')) {
+            registrant.nick_name = guest.get("p_nick_first_name");
+          }
+  
+          if (guest.has('p_nick_last_name')) {
+            registrant.nick_last_name = guest.get("p_nick_last_name");
+          }
+  
+          if (guest.has('dietary_or_personal_considerations')) {
+            registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
+              guest.get("dietary_or_personal_considerations").trim()
+            );
+          }
+  
+          if (guest.has('dietary_consideration_type')) {
+            registrant.dietary_consideration_type = guest.get("dietary_consideration_type");
+          }
+  
+          if (guest.has('dietary_consideration')) {
+            registrant.dietary_consideration = guest.get("dietary_consideration");
+          }
+  
+          if (guest.has('unisex_tshirt_size')) {
+            registrant.unisex_tshirt_size = guest.get("unisex_tshirt_size");
+          }
+  
+          if (guest.has('unisex_tshirt_size_other')) {
+            registrant.unisex_tshirt_size_other = guest.get("unisex_tshirt_size_other");
+          }
+  
+          guest.forEach((value, key) => {
+            if (key.startsWith('custom.')) {
+              registrant[key.split('.')[1]] = value;
+            }
+          });
+  
+          console.log('saving registrant', registrant)
+          if (registrant[BaseModelKeys.dbId]) {
+            this.messages.push('Registration Updated for ' + registrant.first_name + ' ' + registrant.last_name);
+            this.registrantsService.update(registrant);
+          } else {
+            this.messages.push('Registration Created for ' + registrant.first_name + ' ' + registrant.last_name);
+            this.registrantsService.create(registrant);
+          }
+  
+          return registrant;
+      
+        })
+        promises.push(promise);        
+      }
 
-        return registrant;
-      });
 
-      promises.push(p);
-    });
+    })
 
-    return Promise.all(promises);
+    return promises;
   }
 
   validateAgency(agent: Agent, agencies: Agency[]): boolean {

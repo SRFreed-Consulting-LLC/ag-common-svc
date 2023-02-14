@@ -4,7 +4,7 @@ import {
   ImportRuleSetKeys,
   PrimaryFieldRule
 } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
-import { Agent, AgentKeys, BUSINESS_PERSONAL_TYPE, PhoneNumber } from 'ag-common-lib/public-api';
+import { Agent, AgentKeys, BUSINESS_PERSONAL_TYPE, PhoneNumber, PhoneNumberType } from 'ag-common-lib/public-api';
 import { DomainUtilService } from './domain-util.service';
 
 @Injectable({
@@ -72,7 +72,7 @@ export class DomainPhoneNumberService {
     }
 
     if (invals.has('phone_numbers.' + key + '.phone_type')) {
-      a.phone_type = BUSINESS_PERSONAL_TYPE[invals.get('phone_numbers.' + key + '.phone_type').toUpperCase()];
+      a.phone_type = PhoneNumberType[invals.get('phone_numbers.' + key + '.phone_type')];
     }
 
     if (

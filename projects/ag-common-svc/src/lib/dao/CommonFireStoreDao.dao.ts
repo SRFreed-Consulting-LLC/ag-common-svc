@@ -226,7 +226,6 @@ export class CommonFireStoreDao<T> {
 
   public getDocument(table: string, id: string): Observable<any> {
     const ref = this.getDocReference(table, id);
-    console.log('ref', id, ref);
 
     return fromEventPattern(
       (handler) => onSnapshot(ref, handler),

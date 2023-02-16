@@ -5,6 +5,7 @@
 export * from './lib/config/firebase-config.model';
 
 export * from './lib/dao/CommonFireStoreDao.dao';
+export * from './lib/dao/FireAuthDao.dao';
 
 export * from './lib/services/agent.service';
 export * from './lib/services/agent-external-persons.service';
@@ -13,6 +14,7 @@ export * from './lib/services/carrier.service';
 export * from './lib/services/prospect.service';
 export * from './lib/services/lookups.service';
 export * from './lib/services/lookups-manager.service';
+export * from './lib/services/auth.service';
 export * from './lib/ag-common-svc.module';
 
 export * from './lib/injections/firebase-app';

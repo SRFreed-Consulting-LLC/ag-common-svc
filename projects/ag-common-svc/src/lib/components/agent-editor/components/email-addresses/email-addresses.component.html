@@ -30,7 +30,7 @@
       <span>No Email Addresses Currently Exist</span>
     </div>
   </div>
-  <ng-container *ngFor="let address of emailAddresses">
+  <ng-container *ngFor="let address of emailAddresses$ | async">
     <div class="row mb-2 px-3 py-1">
       <div class="col-6 text-start">
         {{ address.address }}
@@ -57,7 +57,7 @@
 >
   <dx-data-grid
     #dataGridRef
-    [dataSource]="emailAddresses"
+    [dataSource]="emailAddressesDataSource$ | async"
     [showRowLines]="true"
     [showBorders]="true"
     [showColumnLines]="true"
@@ -90,6 +90,12 @@
     <dxi-column dataField="address">
       <dxi-validation-rule type="required" [message]="'Email Address is Required'"></dxi-validation-rule>
       <dxi-validation-rule type="email" [message]="'Email Address is incorrectly formatted'"></dxi-validation-rule>
+
+      <dxi-validation-rule
+        type="async"
+        message="Email is already registered"
+        [validationCallback]="asyncUniqEmailValidation"
+      ></dxi-validation-rule>
     </dxi-column>
 
     <dxi-column dataField="email_type" caption="Type">

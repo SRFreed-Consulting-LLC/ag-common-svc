@@ -9,6 +9,6 @@ import { IsLoginEmailPipe } from './is-login-email.pipe';
 @NgModule({
   imports: [SharedModule, ModalWindowModule, ButtonWithIndicatorModule, DxCheckBoxModule],
   declarations: [EmailAddressesComponent, IsLoginEmailPipe],
-  exports: [EmailAddressesComponent]
+  exports: [EmailAddressesComponent],
 })
 export class EmailAddressesModule {}

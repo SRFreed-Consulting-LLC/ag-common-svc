@@ -23,6 +23,7 @@ import {
   updateDoc,
   startAfter,
   startAt,
+  collectionGroup,
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
 import { fromEventPattern, Observable, Subject } from 'rxjs';
@@ -128,6 +129,39 @@ export class CommonFireStoreDao<T> {
     );
   }
 
+  public getCollectionGroup(table, queries: QueryParam[] = []) {
+    const queryConstraints: QueryConstraint[] = queries.map((query) =>
+      where(query.field, query.operation, query.value),
+    );
+    const collectionGroupRef = collectionGroup(this.db, table).withConverter({
+      toFirestore: null,
+      fromFirestore: this.convertResponse,
+    });
+
+    const collectionGroupQuery = query(collectionGroupRef, ...queryConstraints);
+
+    return fromEventPattern(
+      (handler) => onSnapshot(collectionGroupQuery, handler),
+      (handler, unsubscribe) => {
+        unsubscribe();
+      },
+    ).pipe(
+      map((collectionSnapshot: any) => {
+        const items = collectionSnapshot.docs.map((document) => {
+          debugger;
+          if (!document.exists()) {
+            return null;
+          }
+          const data = document.data();
+
+          return data;
+        });
+
+        return items;
+      }),
+    );
+  }
+
   public async getAll(table: string, sortField?: string): Promise<T[]> {
     const collectionRef = collection(this.db, table).withConverter({
       toFirestore: null,
@@ -135,25 +169,6 @@ export class CommonFireStoreDao<T> {
     });
 
     const querySnapshot = await getDocs(collectionRef);
-
-    const docsData = querySnapshot.docs.map((item) => (item.exists() ? item.data() : null));
-
-    if (sortField) {
-      docsData.sort((left, right) =>
-        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions),
-      );
-    }
-
-    return docsData;
-  }
-
-  public async getAllllllll(table: string, sortField: string, skip: number): Promise<T[]> {
-    const collectionRef = collection(this.db, table).withConverter({
-      toFirestore: null,
-      fromFirestore: this.convertResponse,
-    });
-
-    const querySnapshot = await getDocs(query(collectionRef, orderBy(sortField), limit(100), startAfter(skip)));
 
     const docsData = querySnapshot.docs.map((item) => (item.exists() ? item.data() : null));
 

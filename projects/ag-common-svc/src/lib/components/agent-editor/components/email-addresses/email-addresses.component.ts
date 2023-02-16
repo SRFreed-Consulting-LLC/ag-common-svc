@@ -10,11 +10,14 @@ import {
 } from 'ag-common-lib/public-api';
 import { ToastrService } from 'ngx-toastr';
 import { AgentService } from '../../../../services/agent.service';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
 import { LookupsService } from '../../../../services/lookups.service';
 import { confirm } from 'devextreme/ui/dialog';
-import { tap } from 'rxjs/operators';
+import { filter, map, shareReplay, switchMap, take, tap } from 'rxjs/operators';
+import DataSource from 'devextreme/data/data_source';
+import ArrayStore from 'devextreme/data/array_store';
+import { AgentEmailAddressesService } from '../../../../services/agent-email-addresses.service';
 
 @Component({
   selector: 'ag-shr-email-addresses',
@@ -23,7 +26,9 @@ import { tap } from 'rxjs/operators';
   providers: [],
 })
 export class EmailAddressesComponent {
-  @Input() agentId: string;
+  @Input() set agentId(value) {
+    this.agentId$.next(value);
+  }
   @Input() agentEmail: string;
   @Input() isSetAsLoginVisible: boolean = false;
   @Input() emailAddresses: EmailAddress[] = [];
@@ -38,17 +43,39 @@ export class EmailAddressesComponent {
   public inProgress = false;
   public inProgress$: Observable<boolean>;
   public emailTypeLookup$: Observable<ActiveLookup[]>;
+  public emailAddresses$: Observable<EmailAddress[]>;
+  public emailAddressesDataSource$: Observable<DataSource>;
 
   private defaultEmailTypeLookup: ActiveLookup;
+  private readonly agentId$ = new BehaviorSubject<string>(undefined);
 
   constructor(
     lookupsService: LookupsService,
     private toastrService: ToastrService,
     private agentService: AgentService,
+    private agentEmailAddressesService: AgentEmailAddressesService,
   ) {
     this.emailTypeLookup$ = lookupsService.emailTypeLookup$.pipe(
       tap((items) => {
         this.defaultEmailTypeLookup = items?.find((item) => item?.isDefault);
+      }),
+    );
+
+    this.emailAddresses$ = this.agentId$.pipe(
+      filter(Boolean),
+      switchMap((agentId: string) => this.agentEmailAddressesService.getList(agentId)),
+
+      shareReplay(1),
+    );
+
+    this.emailAddressesDataSource$ = this.emailAddresses$.pipe(
+      map((emailAddresses) => {
+        return new DataSource({
+          store: new ArrayStore({
+            key: 'dbId',
+            data: Array.isArray(emailAddresses) ? emailAddresses : [],
+          }),
+        });
       }),
     );
   }
@@ -81,45 +108,15 @@ export class EmailAddressesComponent {
   public onRowInserting = (e) => {
     const { __KEY__: key, ...data } = e?.data;
 
-    const isUniq = this.checkIsEmailAddressUniq(data);
-
-    if (!isUniq) {
-      this.toastrService.error('Same Email Address already exists in this profile');
-
-      e.cancel = true;
-      return;
-    }
-
-    const emailAddresses = this.normalizeEmailAddresses(data);
-
-    emailAddresses.push(Object.assign({ id: key }, data));
-
-    e.cancel = this.updateEmailAddresses(emailAddresses);
+    e.cancel = this.addEmailAddress(data);
   };
 
   public onRowUpdating = (e) => {
-    const data = Object.assign({}, e?.oldData, e?.newData);
-
-    const isUniq = this.checkIsEmailAddressUniq(data, e?.key);
-
-    if (!isUniq) {
-      this.toastrService.error('Same Email Address already exists in this profile');
-
-      e.cancel = true;
-      return;
-    }
-
-    const emailAddresses = this.normalizeEmailAddresses(data, e?.key);
-
-    e.cancel = this.updateEmailAddresses(emailAddresses);
+    e.cancel = this.updateEmailAddress(e.key, e?.newData);
   };
 
   public onRowRemoving = (e) => {
-    const emailAddresses = this.emailAddresses.filter((address) => {
-      return address !== e.key;
-    });
-
-    e.cancel = this.updateEmailAddresses(emailAddresses);
+    e.cancel = this.agentEmailAddressesService.delete(this.agentId$.value, e.key);
   };
 
   public canDeleteEmailAddress = (e) => {
@@ -130,52 +127,70 @@ export class EmailAddressesComponent {
     return this.isSetAsLoginVisible && !e.row.data.is_login;
   };
 
-  public setLoginEmail = (e) => {
+  public setLoginEmail = async (e) => {
     const emailAddress = e.row.data.address;
-    const result = confirm(`<i>Are you sure you want to set "${emailAddress}" as Login Email?</i>`, 'Confirm');
-    result.then((dialogResult) => {
-      if (dialogResult) {
-        this.setLoginEmailAddress.emit(emailAddress);
-      }
-    });
+    const result = await confirm(`<i>Are you sure you want to set "${emailAddress}" as Login Email?</i>`, 'Confirm');
+
+    if (!result) {
+      return;
+    }
+
+    const isEmailAlreadyUsedAsLogin = firstValueFrom(
+      this.agentEmailAddressesService
+        .findSameLoginEmails(emailAddress)
+        .pipe(map((items) => Array.isArray(items) && !!items?.length)),
+    );
+
+    if (isEmailAlreadyUsedAsLogin) {
+      this.toastrService.error('Same Email Address already used as Login Email.');
+      return;
+    }
+
+    this.setLoginEmailAddress.emit(emailAddress);
   };
 
-  private checkIsEmailAddressUniq = (data, key?: EmailAddress) => {
-    return this.emailAddresses.every((emailAddress) => {
-      if (key && emailAddress === key) {
-        return true;
-      }
+  public asyncUniqEmailValidation = async ({ data, value }) => {
+    const emailAddresses = await firstValueFrom(this.emailAddresses$);
 
-      return data?.number !== emailAddress?.address;
-    });
+    return !emailAddresses.some((emailAddress) => emailAddress?.address === value && data?.dbId !== emailAddress?.dbId);
   };
 
-  private normalizeEmailAddresses = (data, key?: EmailAddress) => {
-    const isPrimary = data?.is_primary;
-    return this.emailAddresses.map((emailAddress) => {
-      if (key && emailAddress === key) {
-        return data;
-      }
+  private addEmailAddress = async (emailAddress: EmailAddress) => {
+    const promises = [this.agentEmailAddressesService.create(this.agentId$.value, emailAddress)];
 
-      const normalizedEmailAddress = Object.assign({}, emailAddress);
-      if (isPrimary) {
-        Object.assign(normalizedEmailAddress, { is_primary: false });
-      }
+    if (emailAddress?.is_primary) {
+      const previousPrimaryEmailAddress = await this.getPrimaryEmailAddress();
+      previousPrimaryEmailAddress &&
+        promises.push(
+          this.agentEmailAddressesService.update(this.agentId$.value, previousPrimaryEmailAddress?.dbId, {
+            is_primary: false,
+          }),
+        );
+    }
 
-      return normalizedEmailAddress;
-    });
+    return Promise.all(promises).then(() => false);
   };
 
-  private updateEmailAddresses = (emailAddresses) => {
-    this.inProgress = true;
-    return this.agentService
-      .updateFields(this.agentId, { [AgentKeys.email_addresses]: emailAddresses })
-      .then(() => {
-        this.emailAddresses = emailAddresses;
-        this.emailAddressesChange.emit(emailAddresses);
-      })
-      .finally(() => {
-        this.inProgress = false;
-      });
+  private updateEmailAddress = async (documentId: string, emailAddressUpdates: Partial<EmailAddress>) => {
+    const promises = [this.agentEmailAddressesService.update(this.agentId$.value, documentId, emailAddressUpdates)];
+
+    if (emailAddressUpdates?.is_primary) {
+      const previousPrimaryEmailAddress = await this.getPrimaryEmailAddress();
+      previousPrimaryEmailAddress &&
+        promises.push(
+          this.agentEmailAddressesService.update(this.agentId$.value, previousPrimaryEmailAddress?.dbId, {
+            is_primary: false,
+          }),
+        );
+    }
+
+    return Promise.all(promises).then(() => false);
+  };
+
+  private getPrimaryEmailAddress = async (): Promise<EmailAddress> => {
+    const emailAddresses = await firstValueFrom(this.emailAddresses$);
+    const emailAddress = emailAddresses.find((item) => item?.is_primary);
+
+    return emailAddress;
   };
 }

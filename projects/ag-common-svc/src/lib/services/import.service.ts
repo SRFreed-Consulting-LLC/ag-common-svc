@@ -102,10 +102,21 @@ export class ImportService {
       
       import_mappings.forEach(import_mapping => {
         if(incoming_data_map.has(import_mapping.mapped_to)){
-          data.set(import_mapping.field_name, incoming_data_map.get(import_mapping.mapped_to));
+          if(import_mapping.field_name_registrant){
+            data.set(import_mapping.field_name_registrant, incoming_data_map.get(import_mapping.mapped_to));
+          }
+          if(import_mapping.field_name_agent){
+            data.set(import_mapping.field_name_agent, incoming_data_map.get(import_mapping.mapped_to));
+          }
+          
         } else {
           if(import_mapping.mapped_to == 'Set Default Value' && import_mapping.default_value){
-            data.set(import_mapping.field_name, import_mapping.default_value);
+            if(import_mapping.field_name_registrant){
+              data.set(import_mapping.field_name_registrant, import_mapping.default_value);
+            }
+            if(import_mapping.field_name_agent){
+              data.set(import_mapping.field_name_agent, import_mapping.default_value);
+            }
           }
         }
       })

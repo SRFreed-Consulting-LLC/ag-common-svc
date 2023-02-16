@@ -149,6 +149,12 @@ export class DomainPhoneNumberService {
       if (!is_primary_set && agent[AgentKeys.phone_numbers].length > 0) {
         agent[AgentKeys.phone_numbers][0].is_primary = true;
       }
+
+      agent[AgentKeys.phone_numbers].forEach(phone => {
+        if(!phone.phone_type){
+          phone.phone_type = PhoneNumberType.Mobile;
+        }
+      })
     }
 
     return true;
@@ -185,11 +191,11 @@ export class DomainPhoneNumberService {
 
   private stripPhonNumber(incoming_phone_number: string) {
     return incoming_phone_number
-      .replace('(', '')
-      .replace(')', '')
-      .replace(' ', '')
-      .replace(' ', '')
-      .replace('-', '')
-      .replace('-', '');
+      ?.replace('(', '')
+      ?.replace(')', '')
+      ?.replace(' ', '')
+      ?.replace(' ', '')
+      ?.replace('-', '')
+      ?.replace('-', '');
   }
 }

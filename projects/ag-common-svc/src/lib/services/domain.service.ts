@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { ImportMapping } from 'ag-common-lib/lib/models/import-rules/import-mapping.model';
 import { ImportRuleSet, ImportRuleSetKeys } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {
   ActiveLookup,
@@ -23,8 +24,6 @@ import {
   Registrant,
   Role
 } from 'ag-common-lib/public-api';
-import { Observable } from 'rxjs';
-import { take } from 'rxjs/operators';
 import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { AgentApproveDenyReasonsService } from './agent-approve-deny-reason.service';
 import { AgentAssociationsService } from './agent-associations.service';
@@ -50,7 +49,12 @@ export class DomainService {
   REGISTRATION_POLICY_REPLACE: string = 'Replace Existing Registrations';
   REGISTRATION_POLICY_UPDATE: string = 'Update Existing Registrations';
 
-  dietaryConsiderationTypesLookup$: Observable<ActiveLookup[]>;
+  dietaryConsiderationTypesLookups: ActiveLookup[];
+  gendersLookups: ActiveLookup[];
+  prefixesLookups: ActiveLookup[];
+  suffixesLookup: ActiveLookup[];
+  tshirtSizesLookup: ActiveLookup[];
+  relationshipsLookup: ActiveLookup[];
 
   constructor(
     private agentService: AgentService,
@@ -66,7 +70,12 @@ export class DomainService {
     private domainUtilService: DomainUtilService,
     private lookupsService: LookupsService
   ) {
-    this.dietaryConsiderationTypesLookup$ = this.lookupsService.dietaryConsiderationTypesLookup$;
+    this.lookupsService.dietaryConsiderationTypesLookup$.subscribe(lookups => this.dietaryConsiderationTypesLookups = lookups);
+    this.lookupsService.gendersLookup$.subscribe(lookups => this.gendersLookups = lookups);
+    this.lookupsService.prefixesLookup$.subscribe(lookups => this.prefixesLookups = lookups);
+    this.lookupsService.suffixesLookup$.subscribe(lookups => this.suffixesLookup = lookups);
+    this.lookupsService.tShortSizesLookup$.subscribe(lookups => this.tshirtSizesLookup = lookups);
+    this.lookupsService.associationTypeLookup$.subscribe(lookups => this.relationshipsLookup = lookups);
   }
 
   //************************************************************* */
@@ -90,7 +99,8 @@ export class DomainService {
     agencies: Agency[],
     selectedRuleSet: ImportRuleSet,
     createdBy: string,
-    messages: string[]
+    messages: string[],
+    importMapping: ImportMapping[]
   ): Promise<Agent[]> {
     this.messages = messages;
 
@@ -161,10 +171,10 @@ export class DomainService {
       agent[AgentKeys.title] = line_data.get(AgentKeys.title);
     }
     if (line_data.has(AgentKeys.p_prefix)) {
-      agent[AgentKeys.p_prefix] = line_data.get(AgentKeys.p_prefix);
+      agent[AgentKeys.p_prefix] = this.getLookupValue(this.prefixesLookups, line_data.get(AgentKeys.p_prefix))
     }
     if (line_data.has(AgentKeys.p_suffix)) {
-      agent[AgentKeys.p_suffix] = line_data.get(AgentKeys.p_suffix);
+      agent[AgentKeys.p_suffix] = this.getLookupValue(this.suffixesLookup, line_data.get(AgentKeys.p_suffix))
     }
     if (line_data.has(AgentKeys.npn)) {
       agent[AgentKeys.npn] = line_data.get(AgentKeys.npn);
@@ -178,15 +188,7 @@ export class DomainService {
       agent[AgentKeys.dietary_consideration] = line_data.get(AgentKeys.dietary_consideration);
     }
     if (line_data.has(AgentKeys.dietary_consideration_type)) {
-      this.dietaryConsiderationTypesLookup$.pipe(take(1)).subscribe(vals => {
-        let lookup: ActiveLookup  = vals.find(val => val.description == line_data.get(AgentKeys.dietary_consideration_type))
-
-        console.log('lookup', lookup)
-        if(lookup){
-          agent[AgentKeys.dietary_consideration_type] = lookup.dbId
-        }
-      })
-
+        agent[AgentKeys.dietary_consideration_type] = this.getLookupValue(this.dietaryConsiderationTypesLookups, line_data.get(AgentKeys.dietary_consideration_type));
     }
     if (line_data.has(AgentKeys.upline)) {
       agent[AgentKeys.upline] = line_data.get(AgentKeys.upline);
@@ -228,7 +230,7 @@ export class DomainService {
       agent[AgentKeys.ethnicity] = line_data.get(AgentKeys.ethnicity);
     }
     if (line_data.has(AgentKeys.gender)) {
-      agent[AgentKeys.gender] = line_data.get(AgentKeys.gender);
+      agent[AgentKeys.gender] = this.getLookupValue(this.gendersLookups, line_data.get(AgentKeys.gender));
     }
     if (line_data.has(AgentKeys.primary_language)) {
       agent[AgentKeys.primary_language] = line_data.get(AgentKeys.primary_language);
@@ -240,10 +242,16 @@ export class DomainService {
       agent[AgentKeys.hobbies] = line_data.get(AgentKeys.hobbies);
     }
     if (line_data.has(AgentKeys.p_tshirt_size)) {
-      agent[AgentKeys.p_tshirt_size] = line_data.get(AgentKeys.p_tshirt_size);
+      agent[AgentKeys.p_tshirt_size] = this.getLookupValue(this.tshirtSizesLookup, line_data.get(AgentKeys.p_tshirt_size));
+    }
+    if (line_data.has(AgentKeys.p_tshirt_size_other)) {
+      agent[AgentKeys.p_tshirt_size_other] = line_data.get(AgentKeys.p_tshirt_size_other);
     }
     if (line_data.has(AgentKeys.unisex_tshirt_size)) {
-      agent[AgentKeys.unisex_tshirt_size] = line_data.get(AgentKeys.unisex_tshirt_size);
+      agent[AgentKeys.unisex_tshirt_size] = this.getLookupValue(this.tshirtSizesLookup, line_data.get(AgentKeys.unisex_tshirt_size));
+    }
+    if (line_data.has(AgentKeys.unisex_tshirt_size_other)) {
+      agent[AgentKeys.unisex_tshirt_size_other] = line_data.get(AgentKeys.unisex_tshirt_size_other);
     }
     if (line_data.has(AgentKeys.favorite_destination)) {
       agent[AgentKeys.favorite_destination] = line_data.get(AgentKeys.favorite_destination);
@@ -251,10 +259,10 @@ export class DomainService {
     if (line_data.has(AgentKeys.shoe_size)) {
       agent[AgentKeys.shoe_size] = line_data.get(AgentKeys.shoe_size);
     }
+    
     if (line_data.has(AgentKeys.christmas_card)) {
       agent[AgentKeys.christmas_card] = this.domainUtilService.getBoolean(line_data.get(AgentKeys.christmas_card));
     }
-
     if (line_data.has(AgentKeys.p_strategic_agent)) {
       agent[AgentKeys.p_strategic_agent] = this.domainUtilService.getBoolean(
         line_data.get(AgentKeys.p_strategic_agent)
@@ -356,7 +364,6 @@ export class DomainService {
     }
 
     agent[AgentKeys.role] = [Role.AGENT];
-
     agent[AgentKeys.login_count] = 0;
     agent[AgentKeys.logged_in] = false;
     agent[AgentKeys.emailVerified] = false;
@@ -369,8 +376,6 @@ export class DomainService {
     agent[AgentKeys.approvedBy] = createdBy;
     agent[AgentKeys.is_rmd] = false;
     agent[AgentKeys.is_credited] = false;
-
-
 
     if (!this.validateAgency(agent, agencies)) {
       return null;
@@ -403,11 +408,6 @@ export class DomainService {
 
         this.approveDenyReasonService.create(new_agent[BaseModelKeys.dbId], approve_deny_reason, true);
       }
-
-      
-      // const promises = agentAssociations.map((association) => {
-      //   return this.agentAssociationsService.create(new_agent[BaseModelKeys.dbId], association);
-      // });
 
       this.messages.push(`Agent ${new_agent.p_email} was created`);
 
@@ -487,19 +487,23 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_prefix)) {
+      let lookupval: string = this.getLookupValue(this.prefixesLookups, line_data.get(AgentKeys.p_prefix));
+
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_prefix],
         agent,
         AgentKeys.p_prefix,
-        line_data.get(AgentKeys.p_prefix).trim() // TODO use dbId
+        lookupval.trim()
       );
     }
     if (line_data.has(AgentKeys.p_suffix)) {
+      let lookupval: string = this.getLookupValue(this.suffixesLookup, line_data.get(AgentKeys.p_suffix));
+
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_prefix],
         agent,
         AgentKeys.p_suffix,
-        line_data.get(AgentKeys.p_suffix).trim()
+        lookupval.trim()
       );
     }
 
@@ -528,11 +532,13 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.dietary_consideration_type)) {
+      let lookupval: string = this.getLookupValue(this.dietaryConsiderationTypesLookups, line_data.get(AgentKeys.dietary_consideration_type));
+
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.dietary_consideration_type],
         agent,
         AgentKeys.dietary_consideration_type,
-        line_data.get(AgentKeys.dietary_consideration_type).trim()
+        lookupval.trim()
       );
     }
     if (line_data.has(AgentKeys.upline)) {
@@ -608,11 +614,13 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.gender)) {
+      let lookupval: string = this.getLookupValue(this.gendersLookups, line_data.get(AgentKeys.gender));
+
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.gender],
         agent,
         AgentKeys.gender,
-        line_data.get(AgentKeys.gender).trim()
+        lookupval.trim()
       );
     }
     if (line_data.has(AgentKeys.primary_language)) {
@@ -640,19 +648,39 @@ export class DomainService {
       );
     }
     if (line_data.has(AgentKeys.p_tshirt_size)) {
+      let lookupval: string = this.getLookupValue(this.tshirtSizesLookup, line_data.get(AgentKeys.p_tshirt_size));
+      
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.p_tshirt_size],
         agent,
         AgentKeys.p_tshirt_size,
-        line_data.get(AgentKeys.p_tshirt_size).trim()
+        lookupval.trim()
+      );
+    }
+    if (line_data.has(AgentKeys.p_tshirt_size_other)) {
+      this.domainUtilService.updateField(
+        selectedRuleSet[ImportRuleSetKeys.p_tshirt_size_other],
+        agent,
+        AgentKeys.p_tshirt_size_other,
+        line_data.get(AgentKeys.p_tshirt_size_other).trim()
       );
     }
     if (line_data.has(AgentKeys.unisex_tshirt_size)) {
+      let lookupval: string = this.getLookupValue(this.tshirtSizesLookup, line_data.get(AgentKeys.unisex_tshirt_size));
+
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.unisex_tshirt_size],
         agent,
         AgentKeys.unisex_tshirt_size,
-        line_data.get(AgentKeys.unisex_tshirt_size).trim()
+        lookupval.trim()
+      );
+    }
+    if (line_data.has(AgentKeys.unisex_tshirt_size_other)) {
+      this.domainUtilService.updateField(
+        selectedRuleSet[ImportRuleSetKeys.unisex_tshirt_size_other],
+        agent,
+        AgentKeys.unisex_tshirt_size_other,
+        line_data.get(AgentKeys.unisex_tshirt_size_other).trim()
       );
     }
     if (line_data.has(AgentKeys.favorite_destination)) {
@@ -863,15 +891,18 @@ export class DomainService {
       return null;
     }
 
-    //await this.domainAssociationsService.updateAssociations(line_data, agent, selectedRuleSet, this.messages, "assocations");
-
     return this.agentService.updateFields(agent[BaseModelKeys.dbId], agent).then((updatedAgent) => {
       this.messages.push(`Agent ${agent.p_email} was updated`);
       return updatedAgent;
     });
   }
 
-  createOrUpdateAssociations(agents: Agent[], guest_data: Map<string, string>[], selectedRuleSet: ImportRuleSet, messages: string[], id_key: string) {
+  createOrUpdateAssociations(agents: Agent[], 
+    guest_data: Map<string, string>[], 
+    selectedRuleSet: ImportRuleSet, 
+    messages: string[], 
+    id_key: string,
+    importMapping: ImportMapping[]) {
     guest_data.forEach((guest) => {
       let invitees = agents.filter((a) => a.p_email == guest.get('invitee_email'));
 
@@ -886,9 +917,21 @@ export class DomainService {
     invitee_maps: Map<string, string>[],
     selectedConference: string,
     createdBy: string,
-    conferenceRegistrationPolicy: string
+    conferenceRegistrationPolicy: string,
+    importMapping: ImportMapping[]
   ) {
     let promises: Promise<Registrant>[] = [];
+
+    // if (conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE) {
+    //   let qp: QueryParam[] = [];
+    //   qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
+
+    //   this.registrantsService.getAllByValue(qp).then(async (registrants) => {
+    //     registrants.forEach(registrant => {
+    //       this.registrantsService.delete(registrant);
+    //     })
+    //   })
+    // }
 
     invitee_maps.forEach(async (invitee_map) => {
       let registrant: Registrant;
@@ -925,18 +968,27 @@ export class DomainService {
         registrant.approved_date = new Date();
         registrant.last_eval_date = new Date();
 
-        if (invitee_map.has('registration_status') && invitee_map.get('registration_status').toLowerCase() == 'confirmed') {
-          registrant.approved = true;
-        } else {
-          registrant.approved = false;
+        if(invitee_map.has('approved')){
+          let mapping: ImportMapping = importMapping.find(mapping => mapping.field_name_registrant == 'approved');
+
+          if(mapping.default_value){
+            registrant.approved = Boolean( mapping.default_value);
+          } else {
+            registrant.approved = invitee_map.get('approved').toLowerCase() == 'approved'? true : false;
+          }
+          
         }
 
-        if (invitee_map.has('registration_type')) {
-          registrant.registration_type = invitee_map.get('registration_type');
+        if (invitee_map.has('registration_status')) {
+          registrant.registration_status = invitee_map.get('registration_status');
         }
 
-        if (invitee_map.has('qualified_as')) {
-          registrant.qualified_as = invitee_map.get('qualified_as');
+        if (invitee_map.has(this.getRegistrantMappedName('registration_type', importMapping))) {
+          registrant.registration_type = invitee_map.get(this.getRegistrantMappedName('registration_type', importMapping));
+        }
+
+        if (invitee_map.has(this.getRegistrantMappedName('qualified_as', importMapping))) {
+          registrant.qualified_as = invitee_map.get(this.getRegistrantMappedName('qualified_as', importMapping));
         }
 
         let agent: LegacyAgent = agents.find((agent) => agent.p_email == invitee_map.get('invitee_email').toLowerCase().trim());
@@ -997,134 +1049,140 @@ export class DomainService {
           }
         }        
 
-        if (invitee_map.has('first_name')) {
-          registrant.first_name = invitee_map.get('first_name');
+        if (invitee_map.has(this.getRegistrantMappedName('first_name', importMapping))) {
+          registrant.first_name = invitee_map.get(this.getRegistrantMappedName('first_name', importMapping));
         } else if (agent.p_agent_first_name){
           registrant.first_name = agent.p_agent_first_name;
         }
 
-        if (invitee_map.has('middle_name')) {
-          registrant.middle_name = invitee_map.get('middle_name');
+        if (invitee_map.has(this.getRegistrantMappedName('middle_name', importMapping))) {
+          registrant.middle_name = invitee_map.get(this.getRegistrantMappedName('middle_name', importMapping));
         } else if (agent.p_agent_middle_name){
           registrant.middle_name = agent.p_agent_middle_name;
         }
 
-        if (invitee_map.has('last_name')) {
-          registrant.last_name = invitee_map.get('last_name');
+        if (invitee_map.has(this.getRegistrantMappedName('last_name', importMapping))) {
+          registrant.last_name = invitee_map.get(this.getRegistrantMappedName('last_name', importMapping));
         } else if (agent.p_agent_last_name){
           registrant.last_name = agent.p_agent_last_name;
         }
 
-        if (invitee_map.has('prefix')) {
-          registrant.prefix = invitee_map.get('prefix');
+        if (invitee_map.has(this.getRegistrantMappedName('prefix', importMapping))) {
+          let value = invitee_map.get(this.getRegistrantMappedName("prefix", importMapping)).trim();
+          registrant.prefix = this.getLookupValue(this.prefixesLookups, value);
         } else if (agent.p_prefix){
           registrant.prefix = agent.p_prefix;
         }
 
-        if (invitee_map.has('suffix')) {
-          registrant.suffix = invitee_map.get('suffix');
+        if (invitee_map.has(this.getRegistrantMappedName('suffix', importMapping))) {
+          let value = invitee_map.get(this.getRegistrantMappedName("suffix", importMapping)).trim();
+          registrant.suffix = this.getLookupValue(this.suffixesLookup, value);
         } else if (agent.p_suffix){
           registrant.suffix = agent.p_suffix;
         }
 
-        if (invitee_map.has('nick_name')) {
-          registrant.nick_name = invitee_map.get('nick_name');
+        if (invitee_map.has(this.getRegistrantMappedName('nick_name', importMapping))) {
+          registrant.nick_name = invitee_map.get(this.getRegistrantMappedName('nick_name', importMapping));
         } else if (agent.p_nick_name){
           registrant.nick_name = agent.p_nick_name;
         }
 
-        if (invitee_map.has('nick_last_name')) {
-          registrant.nick_last_name = invitee_map.get('nick_last_name');
+        if (invitee_map.has(this.getRegistrantMappedName('nick_last_name', importMapping))) {
+          registrant.nick_last_name = invitee_map.get(this.getRegistrantMappedName('nick_last_name', importMapping));
         } else if (agent.p_nick_last_name){
           registrant.nick_last_name = agent.p_nick_last_name;
         }
 
-        if (invitee_map.has('mga_id')) {
-          registrant.mga_id = invitee_map.get('mga_id');
+        if (invitee_map.has(this.getRegistrantMappedName('mga_id', importMapping))) {
+          registrant.mga_id = invitee_map.get(this.getRegistrantMappedName('mga_id', importMapping));
         } else if (agent.p_mga_id){
           registrant.mga_id = agent.p_mga_id;
         }
 
-        if (invitee_map.has('agency_id')) {
-          registrant.agency_id = invitee_map.get('agency_id');
+        if (invitee_map.has(this.getRegistrantMappedName('agency_id', importMapping))) {
+          registrant.agency_id = invitee_map.get(this.getRegistrantMappedName('agency_id', importMapping));
         } else if (agent.p_agency_id){
           registrant.agency_id = agent.p_agency_id;
         }
         
-        if (invitee_map.has('agent_id')) {
-          registrant.agent_id = invitee_map.get('agent_id');
+        if (invitee_map.has(this.getRegistrantMappedName('agent_id', importMapping))) {
+          registrant.agent_id = invitee_map.get(this.getRegistrantMappedName('agent_id', importMapping));
         } else if (agent.p_agent_id){
           registrant.agent_id = agent.p_agent_id;
         }
 
-        if (invitee_map.has('upline')) {
-          registrant.upline = invitee_map.get('upline');
+        if (invitee_map.has(this.getRegistrantMappedName('upline', importMapping))) {
+          registrant.upline = invitee_map.get(this.getRegistrantMappedName('upline', importMapping));
         } else if (agent.upline){
           registrant.upline = agent.upline;
         }
 
-        if (invitee_map.has('dietary_or_personal_considerations')) {
-          registrant.dietary_or_personal_considerations = invitee_map.get('dietary_or_personal_considerations');
+        if (invitee_map.has(this.getRegistrantMappedName('dietary_or_personal_considerations', importMapping))) {
+          registrant.dietary_or_personal_considerations = invitee_map.get(this.getRegistrantMappedName('dietary_or_personal_considerations', importMapping));
         } else if (agent.dietary_or_personal_considerations){
           registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(agent.dietary_or_personal_considerations.trim());
         }
 
-        if (invitee_map.has('dietary_consideration_type')) {
-          registrant.dietary_consideration_type = invitee_map.get('dietary_consideration_type');
+        if (invitee_map.has(this.getRegistrantMappedName('dietary_consideration_type', importMapping))) {
+          let value = invitee_map.get(this.getRegistrantMappedName("dietary_consideration_type", importMapping)).trim();
+          registrant.dietary_consideration_type = this.getLookupValue(this.dietaryConsiderationTypesLookups, value);
         } else if (agent.dietary_consideration_type){
           registrant.dietary_consideration_type = agent.dietary_consideration_type
         }
 
-        if (invitee_map.has('dietary_consideration')) {
-          registrant.dietary_consideration = invitee_map.get('dietary_consideration');
+        if (invitee_map.has(this.getRegistrantMappedName('dietary_consideration', importMapping))) {
+          registrant.dietary_consideration = invitee_map.get(this.getRegistrantMappedName('dietary_consideration', importMapping));
         } else if (agent.dietary_consideration){
           registrant.dietary_consideration = agent.dietary_consideration
         }
 
-        if (invitee_map.has('favorite_destination')) {
-          registrant.favorite_destination = invitee_map.get('favorite_destination');
+        if (invitee_map.has(this.getRegistrantMappedName('favorite_destination', importMapping))) {
+          registrant.favorite_destination = invitee_map.get(this.getRegistrantMappedName('favorite_destination', importMapping));
         } else if (agent.favorite_destination){
           registrant.favorite_destination = agent.favorite_destination;
         }
 
-        if (invitee_map.has('unisex_tshirt_size')) {
-          registrant.unisex_tshirt_size = invitee_map.get('unisex_tshirt_size');
+        if (invitee_map.has(this.getRegistrantMappedName('unisex_tshirt_size', importMapping))) {
+          let value = invitee_map.get(this.getRegistrantMappedName("unisex_tshirt_size", importMapping)).trim();
+          registrant.unisex_tshirt_size = this.getLookupValue(this.tshirtSizesLookup, value);
         } else if (agent.unisex_tshirt_size){
           registrant.unisex_tshirt_size = agent.unisex_tshirt_size;
         }
 
-        if (invitee_map.has('unisex_tshirt_size_other')) {
-          registrant.unisex_tshirt_size_other = invitee_map.get('unisex_tshirt_size_other');
+        if (invitee_map.has(this.getRegistrantMappedName('unisex_tshirt_size_other', importMapping))) {
+          registrant.unisex_tshirt_size_other = invitee_map.get(this.getRegistrantMappedName('unisex_tshirt_size_other', importMapping));
         } else if (agent.unisex_tshirt_size_other){
           registrant.unisex_tshirt_size_other = agent.unisex_tshirt_size_other;
         }
 
-        if (invitee_map.has('tshirt_size')) {
-          registrant.tshirt_size = invitee_map.get('tshirt_size');
+        if (invitee_map.has(this.getRegistrantMappedName('tshirt_size', importMapping))) {
+          let value = invitee_map.get(this.getRegistrantMappedName("tshirt_size", importMapping)).trim();
+          registrant.tshirt_size = this.getLookupValue(this.tshirtSizesLookup, value);
         } else if (agent.p_tshirt_size){
           registrant.tshirt_size = agent.p_tshirt_size;
         }
 
-        if (invitee_map.has('tshirt_size_other')) {
-          registrant.tshirt_size_other = invitee_map.get('tshirt_size_other');
+        if (invitee_map.has(this.getRegistrantMappedName('tshirt_size_other', importMapping))) {
+          registrant.tshirt_size_other = invitee_map.get(this.getRegistrantMappedName('tshirt_size_other', importMapping));
         } else if (agent.p_tshirt_size_other){
           registrant.tshirt_size_other = agent.p_tshirt_size_other;
         }
 
-        if (invitee_map.has('gender')) {
-          registrant.gender = invitee_map.get('gender');
+        if (invitee_map.has(this.getRegistrantMappedName('gender', importMapping))) {
+          let value = invitee_map.get(this.getRegistrantMappedName("gender", importMapping)).trim();
+          registrant.gender = this.getLookupValue(this.gendersLookups, value);
         } else if (agent.gender){
           registrant.gender = agent.gender;
         }
 
-        if (invitee_map.has('dob')) {
-          registrant.dob = invitee_map.get('dob');
+        if (invitee_map.has(this.getRegistrantMappedName('dob', importMapping))) {
+          registrant.dob = invitee_map.get(this.getRegistrantMappedName('dob', importMapping)).trim();
         } else if (agent.dob){
           registrant.dob = agent.dob;
         }
 
-        if (invitee_map.has('headshot')) {
-          registrant.headshot_link = invitee_map.get('headshot');
+        if (invitee_map.has(this.getRegistrantMappedName('headshot', importMapping))) {
+          registrant.headshot_link = invitee_map.get(this.getRegistrantMappedName('headshot', importMapping));
         } else if (agent.p_headshot_link){
           registrant.headshot_link = agent.p_headshot_link;
         }
@@ -1171,7 +1229,8 @@ export class DomainService {
     guest_data: Map<string, string>,
     selectedConference: string,
     createdBy: string,
-    conferenceRegistrationPolicy: string
+    conferenceRegistrationPolicy: string,
+    importMapping: ImportMapping[]
   ) {
     let invitee_email = guest_data.get('invitee_email');
     let invitee_guest = guest_data.get('invitee_guest');
@@ -1204,12 +1263,12 @@ export class DomainService {
 
     guests.forEach(guest => {
       if(guest.has('first_name') && guest.has('last_name')){
-        console.log("creating guest for", guest)
+        
         let qp: QueryParam[] = [];
         qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, invitee_email));
         qp.push(new QueryParam('invitee_guest', WhereFilterOperandKeys.equal, invitee_guest));
-        qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, guest.get('first_name')));
-        qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, guest.get('last_name')));
+        qp.push(new QueryParam('first_name', WhereFilterOperandKeys.equal, guest.get(this.getRegistrantMappedName('first_name', importMapping))));
+        qp.push(new QueryParam('last_name', WhereFilterOperandKeys.equal, guest.get(this.getRegistrantMappedName('last_name', importMapping))));
         qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, selectedConference));
   
         let promise = this.registrantsService.getAllByValue(qp).then((registrants) => {
@@ -1245,52 +1304,64 @@ export class DomainService {
           registrant.approved = true;
           registrant.last_eval_date = new Date();
   
-          if (guest.has("first_name")) {
-            registrant.first_name = guest.get("first_name");
+          if (guest.has(this.getRegistrantMappedName("first_name", importMapping))) {
+            registrant.first_name = guest.get(this.getRegistrantMappedName("first_name", importMapping));
           }
   
-          if (guest.has('last_name')) {
-            registrant.last_name = guest.get("last_name");
+          if (guest.has(this.getRegistrantMappedName('last_name', importMapping))) {
+            registrant.last_name = guest.get(this.getRegistrantMappedName("last_name", importMapping));
           }
   
-          if (guest.has('email_address')) {
+          if (guest.has(this.getRegistrantMappedName('email_address', importMapping))) {
             let address: EmailAddress = { ...new EmailAddress() };
-            address.address = guest.get("email_address");
+            address.address = guest.get(this.getRegistrantMappedName("email_address", importMapping));
             registrant.primary_email_address = address;
           }
   
-          if (guest.has('association_type')) {
-            registrant.relationship = guest.get("association_type");
+          if (guest.has(this.getRegistrantMappedName('relationship', importMapping))) {
+            let value = guest.get(this.getRegistrantMappedName("relationship", importMapping))
+            registrant.relationship = this.getLookupValue(this.relationshipsLookup, value)
           }
   
-          if (guest.has('p_nick_first_name')) {
-            registrant.nick_name = guest.get("p_nick_first_name");
+          if (guest.has(this.getRegistrantMappedName('nick_name', importMapping))) {
+            registrant.nick_name = guest.get(this.getRegistrantMappedName("nick_name", importMapping));
           }
   
-          if (guest.has('p_nick_last_name')) {
-            registrant.nick_last_name = guest.get("p_nick_last_name");
+          if (guest.has(this.getRegistrantMappedName('nick_last_name', importMapping))) {
+            registrant.nick_last_name = guest.get(this.getRegistrantMappedName("nick_last_name", importMapping));
           }
   
-          if (guest.has('dietary_or_personal_considerations')) {
+          if (guest.has(this.getRegistrantMappedName('dietary_or_personal_considerations', importMapping))) {
             registrant.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
-              guest.get("dietary_or_personal_considerations").trim()
+              guest.get(this.getRegistrantMappedName("dietary_or_personal_considerations", importMapping)).trim()
             );
           }
   
-          if (guest.has('dietary_consideration_type')) {
-            registrant.dietary_consideration_type = guest.get("dietary_consideration_type");
+          if (guest.has(this.getRegistrantMappedName('dietary_consideration_type', importMapping))) {
+            let value = guest.get(this.getRegistrantMappedName("dietary_consideration_type", importMapping));
+            registrant.dietary_consideration_type = this.getLookupValue(this.dietaryConsiderationTypesLookups, value);
           }
   
           if (guest.has('dietary_consideration')) {
-            registrant.dietary_consideration = guest.get("dietary_consideration");
+            registrant.dietary_consideration = guest.get(this.getRegistrantMappedName("dietary_consideration", importMapping));
           }
   
+          if (guest.has('tshirt_size')) {
+            let value = guest.get(this.getRegistrantMappedName("tshirt_size", importMapping));
+            registrant.tshirt_size = this.getLookupValue(this.tshirtSizesLookup, value);
+          }
+  
+          if (guest.has('tshirt_size_other')) {
+            registrant.tshirt_size_other = guest.get(this.getRegistrantMappedName("tshirt_size_other", importMapping));
+          }
+
           if (guest.has('unisex_tshirt_size')) {
-            registrant.unisex_tshirt_size = guest.get("unisex_tshirt_size");
+            let value = guest.get(this.getRegistrantMappedName("unisex_tshirt_size", importMapping));
+            registrant.unisex_tshirt_size = this.getLookupValue(this.tshirtSizesLookup, value);
           }
   
           if (guest.has('unisex_tshirt_size_other')) {
-            registrant.unisex_tshirt_size_other = guest.get("unisex_tshirt_size_other");
+            registrant.unisex_tshirt_size_other = guest.get(this.getRegistrantMappedName("unisex_tshirt_size_other", importMapping));
           }
   
           guest.forEach((value, key) => {
@@ -1299,7 +1370,6 @@ export class DomainService {
             }
           });
   
-          console.log('saving registrant', registrant)
           if (registrant[BaseModelKeys.dbId]) {
             this.messages.push('Registration Updated for ' + registrant.first_name + ' ' + registrant.last_name);
             this.registrantsService.update(registrant);
@@ -1348,5 +1418,27 @@ export class DomainService {
     }
 
     return retval;
+  }
+
+  getRegistrantMappedName(field: string, import_mappings:ImportMapping[]) {
+    let mapping: ImportMapping =  import_mappings.find(mapping => mapping.field_name_registrant == field)
+
+    if(mapping){
+      return mapping.mapped_to;
+    } else {
+      console.log("Can't find mapping for field " + field);
+      return '';
+    }
+  }
+
+  getLookupValue(lookups: ActiveLookup[],  matchVal: string): string{
+    let lookup: ActiveLookup  = lookups.find(val => val.description == matchVal);
+
+    if(lookup){
+      return lookup.dbId
+    } else {
+      console.log("Couldn't find lookup value for ", matchVal)
+      return matchVal
+    }
   }
 }

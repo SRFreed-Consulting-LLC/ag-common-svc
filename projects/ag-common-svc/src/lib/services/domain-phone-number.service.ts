@@ -61,6 +61,7 @@ export class DomainPhoneNumberService {
     if (invals.has('phone_numbers.' + key + '.number')) {
       a.number = invals
         .get('phone_numbers.' + key + '.number')
+        .replace('+', '')
         .replace('.', '')
         .replace('.', '')
         .replace('-', '')
@@ -69,10 +70,18 @@ export class DomainPhoneNumberService {
         .replace(' ', '')
         .replace('(', '')
         .replace(')', '');
+
+      if(a.number.startsWith('1')){
+        a.number = a.number.substring(1, a.number.length-1)
+      }
     }
 
     if (invals.has('phone_numbers.' + key + '.phone_type')) {
       a.phone_type = PhoneNumberType[invals.get('phone_numbers.' + key + '.phone_type')];
+    }
+
+    if (invals.has('phone_numbers.' + key + '.extension')) {
+      a.extension = invals.get('phone_numbers.' + key + '.extension');
     }
 
     if (
@@ -127,6 +136,14 @@ export class DomainPhoneNumberService {
               matching_phone,
               'phone_type',
               incoming_phone.phone_type
+            );
+          }
+          if (incoming_phone.extension) {
+            this.domainUtilService.updateField(
+              selectedRuleSet[ImportRuleSetKeys.phone_extension],
+              matching_phone,
+              'extension',
+              incoming_phone.extension
             );
           }
           if (incoming_phone.is_primary && required_to_update_primary) {

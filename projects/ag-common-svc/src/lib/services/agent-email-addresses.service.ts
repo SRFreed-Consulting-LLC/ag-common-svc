@@ -77,13 +77,12 @@ export class AgentEmailAddressesService {
     });
   }
 
-  public findSameLoginEmails(email): Observable<EmailAddress[]> {
+  public findSameEmails(email): Observable<EmailAddress[]> {
     const qp: QueryParam[] = [];
 
     const emailAddressQuery = new QueryParam('address', WhereFilterOperandKeys.equal, email);
-    const isLoginQuery = new QueryParam('is_login', WhereFilterOperandKeys.equal, true);
 
-    qp.push(emailAddressQuery, isLoginQuery);
+    qp.push(emailAddressQuery);
 
     return this.fsDao.getCollectionGroup(this.emailAddressCollectionPath, qp);
   }

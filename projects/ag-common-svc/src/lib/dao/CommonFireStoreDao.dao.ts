@@ -148,7 +148,6 @@ export class CommonFireStoreDao<T> {
     ).pipe(
       map((collectionSnapshot: any) => {
         const items = collectionSnapshot.docs.map((document) => {
-          debugger;
           if (!document.exists()) {
             return null;
           }

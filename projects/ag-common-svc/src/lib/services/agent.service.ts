@@ -8,7 +8,7 @@ import { dateFromTimestamp } from '../utils/date-from-timestamp';
 import { DataService } from './data.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AgentService extends DataService<Agent> {
   constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp) {
@@ -26,11 +26,11 @@ export class AgentService extends DataService<Agent> {
     return Object.assign({}, data, {
       [AgentKeys.p_agent_name]: fullName,
       [AgentKeys.registrant_review_level_update_date]: dateFromTimestamp(
-        data?.registrant_review_level_update_date as Timestamp
+        data?.registrant_review_level_update_date as Timestamp,
       ),
       [AgentKeys.prospect_status_update_date]: dateFromTimestamp(data?.prospect_status_update_date as Timestamp),
       [AgentKeys.campaigns_user_since]: dateFromTimestamp(data?.campaigns_user_since as Timestamp),
-      [AgentKeys.dob]: dateFromTimestamp(data?.dob as Timestamp)
+      [AgentKeys.dob]: dateFromTimestamp(data?.dob as Timestamp),
     });
   };
 
@@ -61,8 +61,9 @@ export class AgentService extends DataService<Agent> {
 
   getAgentByAnyEmailIn(email: string[]): Promise<Agent> {
     return this.getAllByValue([
-      new QueryParam('email_Addresses.address', WhereFilterOperandKeys.arrayContainsAny, email)
+      new QueryParam('email_Addresses.address', WhereFilterOperandKeys.arrayContainsAny, email),
     ]).then((agents) => {
+      debugger;
       if (agents.length == 0) {
         return null;
       } else if (agents.length == 1) {
@@ -71,6 +72,12 @@ export class AgentService extends DataService<Agent> {
         console.error('More than 1 agent found with this email address');
         return null;
       }
+    });
+  }
+
+  getAgentByAuthUID(uid: string): Promise<Agent> {
+    return this.getAllByValue([new QueryParam(AgentKeys.uid, WhereFilterOperandKeys.equal, uid)]).then((agents) => {
+      return agents[0];
     });
   }
 

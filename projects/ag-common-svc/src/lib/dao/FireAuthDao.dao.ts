@@ -56,7 +56,6 @@ export class FireAuthDao {
   constructor(
     @Inject(FIREBASE_APP) fireBaseApp: FirebaseApp,
     @Inject(AUTH_COOKIE_NAME) private authCookieName: string,
-    @Inject(USER_COOKIE_NAME) private userCookieName: string,
     @Inject(ID_TOKEN_COOKIE_NAME) private idTokenCookieName: string,
     public router: Router,
     public ngZone: NgZone,
@@ -81,7 +80,7 @@ export class FireAuthDao {
         const qp: QueryParam[] = [];
 
         if (!!user) {
-          qp.push(new QueryParam(AgentKeys.p_email, WhereFilterOperandKeys.equal, user.email));
+          qp.push(new QueryParam(AgentKeys.uid, WhereFilterOperandKeys.equal, user.uid));
         }
         return this.agentService.getList(qp);
       }),
@@ -103,7 +102,6 @@ export class FireAuthDao {
       .subscribe(([agent, userPermissions]) => {
         this.userPermissions$.next(userPermissions);
         this.currentAgent$.next(agent);
-        debugger;
       });
   }
 
@@ -111,9 +109,8 @@ export class FireAuthDao {
     this.auth.onAuthStateChanged((user) => {
       this.authSate$.next(!!user);
       if (!user) {
-        localStorage.removeItem(this.userCookieName);
         this.cookieService.delete(this.authCookieName);
-        this.cookieService.delete(this.userCookieName);
+
         this.cookieService.delete(this.idTokenCookieName);
       }
     });

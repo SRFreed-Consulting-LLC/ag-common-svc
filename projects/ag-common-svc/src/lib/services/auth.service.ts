@@ -4,9 +4,9 @@ import { ToastrService } from 'ngx-toastr';
 import { CookieService } from 'ngx-cookie-service';
 import { Agent, AGENT_STATUS, LogMessage } from 'ag-common-lib/public-api';
 import { getAuth, updateEmail, UserCredential } from 'firebase/auth';
-import { map, mergeMap } from 'rxjs';
+import { mergeMap } from 'rxjs';
 import { addMinutes } from 'date-fns';
-import { FireAuthDao, ID_TOKEN_COOKIE_NAME, USER_COOKIE_NAME } from '../dao/FireAuthDao.dao';
+import { FireAuthDao, ID_TOKEN_COOKIE_NAME } from '../dao/FireAuthDao.dao';
 import { LoggerService } from './logger.service';
 import { AgentService } from './agent.service';
 
@@ -22,7 +22,6 @@ export class AuthService {
   public showPWReset = false;
 
   constructor(
-    @Inject(USER_COOKIE_NAME) private userCookieName: string,
     @Inject(ID_TOKEN_COOKIE_NAME) private idTokenCookieName: string,
     @Inject(DOMAIN) private domain: string,
     @Inject(SESSION_EXPIRATION) private sessionExpiration: number,
@@ -38,7 +37,6 @@ export class AuthService {
   ) {}
 
   public signInWithEmailAndPassword(email: string, password: string) {
-    this.cookieService.delete(this.userCookieName);
     this.cookieService.delete(this.idTokenCookieName);
     this.showLoader = true;
 
@@ -46,7 +44,9 @@ export class AuthService {
       .signIn(email, password)
       .then(
         (result) => {
-          return this.agentService.getAgentByEmail(result.user.email.toLowerCase()).then((agent) => {
+          debugger;
+          return this.agentService.getAgentByAuthUID(result.user.uid).then((agent) => {
+            debugger;
             if (!agent) {
               this.logMessage('LOGIN', result.user.email, 'Could not find agent record for user').then((ec) => {
                 this.toster.error(
@@ -163,7 +163,7 @@ export class AuthService {
           this.router.navigate(['auth', 'register-landing']);
         });
       } else {
-        this.setAuthUserData(agent).then(() => {
+        this.setAuthExpirationTime().then(() => {
           let destination: string = 'dashboard';
           if (this.route.snapshot.queryParamMap.has('returnUrl')) {
             destination = this.route.snapshot.queryParamMap.get('returnUrl');
@@ -180,10 +180,6 @@ export class AuthService {
   }
 
   public logOut() {
-    localStorage.removeItem(this.userCookieName);
-
-    // this.dashboardService.logOutCurrentAgent();
-
     this.cookieService.delete(this.idTokenCookieName, '/', this.domain);
 
     this.router.routeReuseStrategy.shouldReuseRoute = () => {
@@ -212,29 +208,7 @@ export class AuthService {
       });
   }
 
-  public isLoggedIn(): boolean {
-    return this.cookieService.check(this.idTokenCookieName);
-  }
-
-  /**
-   * @deprecated Use currentAgent$ BehaviorSubject from FireAuthDao
-   */
-  public getAuthUserData(): Agent {
-    if (localStorage.getItem(this.userCookieName)) {
-      return JSON.parse(localStorage.getItem(this.userCookieName));
-    } else {
-      this.ngZone.run(() => {
-        this.router.navigate(['auth', 'login']);
-      });
-
-      return null;
-    }
-  }
-
-  /**
-   * @deprecated Use currentAgent$ BehaviorSubject FireAuthDao
-   */
-  public setAuthUserData(user: Agent, session_expiration?: number) {
+  public setAuthExpirationTime(session_expiration?: number) {
     const dateNow = new Date();
 
     if (session_expiration) {
@@ -243,15 +217,13 @@ export class AuthService {
       dateNow.setMinutes(dateNow.getMinutes() + this.sessionExpiration);
     }
 
-    localStorage.setItem(this.userCookieName, JSON.stringify(user));
-
     if (this.authDao.auth.currentUser) {
       return this.authDao.auth.currentUser.getIdToken(true).then((t) => {
         this.cookieService.set(this.idTokenCookieName, t, dateNow, '/', this.domain, false, 'Lax');
       });
     }
 
-    return null;
+    return Promise.reject();
   }
 
   changeUserEmail(email: string) {
@@ -287,7 +259,7 @@ export class AuthService {
         ...new LogMessage(type, created_by, message, ec, data),
       };
 
-      console.log('logMessage', logMessage);
+      console.warn('logMessage', logMessage);
 
       return this.loggerService.create(logMessage).then(() => {
         return ec;

@@ -135,18 +135,16 @@ export class EmailAddressesComponent {
       return;
     }
 
-    const isEmailAlreadyUsedAsLogin = firstValueFrom(
-      this.agentEmailAddressesService
-        .findSameLoginEmails(emailAddress)
-        .pipe(map((items) => Array.isArray(items) && !!items?.length)),
-    );
+    const agentsWithSameEmail = await firstValueFrom(this.agentEmailAddressesService.findSameEmails(emailAddress));
 
-    if (isEmailAlreadyUsedAsLogin) {
+    debugger;
+
+    if (agentsWithSameEmail.some()) {
       this.toastrService.error('Same Email Address already used as Login Email.');
       return;
     }
 
-    this.setLoginEmailAddress.emit(emailAddress);
+    // this.setLoginEmailAddress.emit(emailAddress);
   };
 
   public asyncUniqEmailValidation = async ({ data, value }) => {

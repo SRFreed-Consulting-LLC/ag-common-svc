@@ -65,12 +65,19 @@ export class DomainAssociationsService {
     if (invals.has(key + '.' + iteration + '.contact_number')) {
       association.contact_number = invals
         .get(key + '.' + iteration + '.contact_number')
-        .replace('(', '')
-        .replace(')', '')
-        .replace(' ', '')
-        .replace(' ', '')
+        .replace('+', '')
+        .replace('.', '')
+        .replace('.', '')
         .replace('-', '')
-        .replace('-', '');
+        .replace('-', '')
+        .replace(' ', '')
+        .replace(' ', '')
+        .replace('(', '')
+        .replace(')', '');
+
+        if(association.contact_number.startsWith('1')){
+          association.contact_number = association.contact_number.substring(1);
+        }
     }
 
     if (invals.has(key + '.' + iteration + '.association_type')) {
@@ -138,8 +145,8 @@ export class DomainAssociationsService {
       association.dietary_consideration_type = invals.get(key + '.' + iteration + '.dietary_consideration_type');
     }
 
-    if (invals.has(key + '.' + iteration + '.p_nick_name')) {
-      association.p_nick_first_name = invals.get(key + '.' + iteration + '.p_nick_name');
+    if (invals.has(key + '.' + iteration + '.p_nick_first_name')) {
+      association.p_nick_first_name = invals.get(key + '.' + iteration + '.p_nick_first_name');
     }
 
     if (invals.has(key + '.' + iteration + '.p_nick_last_name')) {
@@ -152,6 +159,14 @@ export class DomainAssociationsService {
 
     if (invals.has(key + '.' + iteration + '.unisex_tshirt_size_other')) {
       association.unisex_tshirt_size_other = invals.get(key + '.' + iteration + '.unisex_tshirt_size_other');
+    }
+
+    if (invals.has(key + '.' + iteration + '.gender')) {
+      association.gender = invals.get(key + '.' + iteration + '.gender');
+    }
+
+    if (invals.has(key + '.' + iteration + '.dob')) {
+      association.dob = new Date(invals.get(key + '.' + iteration + '.dob'));
     }
     return association;
   }

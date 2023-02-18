@@ -52,7 +52,7 @@ export class DomainPhoneNumberService {
       phone_numbers[0].is_primary = true;
     }
 
-    return this.extractPhoneNumbers(invals);
+    return phone_numbers;
   }
 
   private createPhoneNumber(invals: Map<string, string>, key: string): PhoneNumber {
@@ -72,7 +72,7 @@ export class DomainPhoneNumberService {
         .replace(')', '');
 
       if(a.number.startsWith('1')){
-        a.number = a.number.substring(1, a.number.length-1)
+        a.number = a.number.substring(1)
       }
     }
 

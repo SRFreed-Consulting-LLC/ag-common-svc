@@ -42,7 +42,7 @@ export class AgentAssociationsService {
       })
 
       .catch((e) => {
-        console.log('e', e);
+        console.log('e', e, agentId, data);
       });
   }
 

@@ -37,31 +37,31 @@ export class ImportService {
     });
   }
 
-  public createAgentMap(csvText): Map<string, string>[] {
-    let retval: Map<string, string>[] = [];
-    let lines: string[] = csvText.split('\n');
-    let headers: string[] = lines[0].split(',');
+  // public createAgentMap(csvText): Map<string, string>[] {
+  //   let retval: Map<string, string>[] = [];
+  //   let lines: string[] = csvText.split('\n');
+  //   let headers: string[] = lines[0].split(',');
 
-    for (var i = 1; i < lines.length - 1; i++) {
-      let data: Map<string, string> = new Map<string, string>();
+  //   for (var i = 1; i < lines.length - 1; i++) {
+  //     let data: Map<string, string> = new Map<string, string>();
 
-      for (var j = 0; j < headers.length; j++) {
-        let line: string = lines[i];
+  //     for (var j = 0; j < headers.length; j++) {
+  //       let line: string = lines[i];
 
-        let val = line.split(',')[j];
+  //       let val = line.split(',')[j];
 
-        if (val && val != '') {
-          let mapped_header: string = headers[j];
+  //       if (val && val != '') {
+  //         let mapped_header: string = headers[j];
 
-          data.set(mapped_header, val);
-        }
-      }
+  //         data.set(mapped_header, val);
+  //       }
+  //     }
 
-      retval.push(data);
-    }
+  //     retval.push(data);
+  //   }
 
-    return retval;
-  }
+  //   return retval;
+  // }
 
     //iterate through each incoming data map
     //  iterate through each mapped field
@@ -129,34 +129,6 @@ export class ImportService {
     return retval;
   }
 
-  public createAssociationsMap(agent_map: Map<string, string>, identity_key: string): Map<string, string> {
-    let retval: Map<string, string>  = new Map<string, string>();
-
-    agent_map.forEach((value , key) => {
-      if(key.startsWith("association")){
-        retval.set(key, value);
-      }
-    })
-
-    retval.set(identity_key, agent_map.get(identity_key))
-
-    return retval;
-  }
-
-  public createGuestMap(invitee_map: Map<string, string>, identity_key: string): Map<string, string> {
-    let retval: Map<string, string> = new Map<string, string>();
-
-    invitee_map.forEach((value , key) => {
-      if(key.startsWith("guest")){
-        retval.set(key, value);
-      }
-    })
-
-    retval.set(identity_key, invitee_map.get(identity_key))
-    retval.set('invitee_guest', 'Guest')
-
-    return retval;
-  }
 
   validateFile(csvText, messages: String[], import_type: string): Promise<boolean>{
     let lines: string[] = csvText.split('\n');

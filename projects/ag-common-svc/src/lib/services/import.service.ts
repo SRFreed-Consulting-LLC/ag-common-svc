@@ -130,7 +130,7 @@ export class ImportService {
   }
 
 
-  validateFile(csvText, messages: String[], import_type: string): Promise<boolean>{
+  validateFile(csvText, messages: String[], import_type: string, import_mappings: ImportMapping[]): Promise<boolean>{
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
 
@@ -144,44 +144,62 @@ export class ImportService {
       }
     }
 
-    // if(import_type == "registration"){
-    //   let invitee_email_exist = headers.filter(h => h == 'invitee_email').length > 0;
+    if(import_type == "registration"){
+      let email_mapping: ImportMapping = import_mappings.find(mapping => mapping.field_name_registrant == 'invitee_email');
+
+      if(email_mapping){
+        let invitee_email_exist = headers.filter(h => h == email_mapping.mapped_to).length > 0;
       
-    //   if(!invitee_email_exist){
-    //     messages.push("The 'Registration' import must contain a field called 'invitee_email'")
-    //   }
+        if(!invitee_email_exist){
+          messages.unshift("The 'Registration' import must contain a field mapped to 'invitee_email'")
+        }
+      }
 
-    //   let invitee_guest_exist = headers.filter((h) => h == 'invitee_guest').length > 0;
+      // let is_login_mapping: ImportMapping = import_mappings.find(mapping => mapping.field_name_registrant == 'invitee_email_is_login');
 
-    //   if (!invitee_guest_exist) {
-    //     messages.push("The 'Registration' import must contain a field called 'invitee_guest'");
-    //   }
-    // } else {
-    //   let email_address = headers.filter((h) => h == this.PRIMARY_EMAIL_IDENTIFIER).length > 0;
+      // if(is_login_mapping){
+      //   let invitee_is_login_exist = headers.filter(h => h == is_login_mapping.mapped_to).length > 0;
 
-    //   if (!email_address) {
-    //     messages.push("The import must contain a field called '" + this.PRIMARY_EMAIL_IDENTIFIER + "'");
-    //   }
-    // }
+      //   if(!invitee_is_login_exist){
+      //     messages.unshift("The 'Registration' import must contain a field mapped to 'invitee_email_is_login'")
+      //   }
+      // }
+
+    } else {
+      let email_mapping: ImportMapping = import_mappings.find(mapping => mapping.field_name_agent == this.PRIMARY_EMAIL_IDENTIFIER);
+
+      if(email_mapping){
+        let email_address = headers.filter((h) => h == email_mapping.mapped_to).length > 0;
+
+        if (!email_address) {
+          messages.unshift("The import must contain a field called '" + this.PRIMARY_EMAIL_IDENTIFIER + "'");
+        }      
+      }
+
+      let is_login_mapping: ImportMapping = import_mappings.find(mapping => mapping.field_name_agent == 'email_addresses.1.is_login');
+
+      // if(is_login_mapping){
+      //   let invitee_is_login_exist = headers.filter(h => h == is_login_mapping.mapped_to).length > 0;
+
+      //   if(!invitee_is_login_exist){
+      //     messages.unshift("The 'Agent' import must contain a field mapped to 'email_addresses.1.is_login'")
+      //   }
+      // }
+    }
 
     if (messages.length == 0) {
-      messages.push('The file format appears to be valid!.');
+      messages.unshift('The file format appears to be valid!.');
       return Promise.resolve(true);
     } else {
-      messages.push('Please fix the file format and reimport it!.');
+      messages.unshift('Please fix the file format and reimport it!.');
       return Promise.resolve(false);
     }
   }
 
-  validateInvitee2(invitee: Map<string, any>, messages: String[]) {
+  validateInvitee(invitee: Map<string, any>, messages: String[]) {
     let isValid = true;
 
     let agent_name = invitee.get('p_agent_first_name') + ' ' + invitee.get('p_agent_last_name') + '(' + invitee.get(this.PRIMARY_EMAIL_IDENTIFIER) + ')'
-
-    if(invitee.has(AgentKeys.campaigns_user_name) && !this.isDate(invitee.get(AgentKeys.campaigns_user_since))){
-      messages.push('ERROR: Invitee ' + agent_name + " has an invalid date in " + AgentKeys.campaigns_user_name);
-      isValid = false;
-    }
 
     if(invitee.has('email_addresses.1.address')){
       if(invitee.get('email_addresses.1.address').trim() != invitee.get('invitee_email').trim()){

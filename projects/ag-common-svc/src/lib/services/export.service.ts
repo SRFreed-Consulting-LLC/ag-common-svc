@@ -14,7 +14,7 @@ export class ExportService {
       { title: 'Email Address', mapped_to: 'email_addresses.1.address', required: true},
       { title: 'email_address_type', mapped_to: 'email_addresses.1.email_type', required: false},
       { title: 'cc_email', mapped_to: 'cc_email', required: false},//<--- NEW - in model
-      { title: 'registration_type', mapped_to: 'registration_type', required: false},
+      { title: 'registration_type', mapped_to: 'qualified_as', required: false},
       { title: 'agent_occupancy', mapped_to: 'agent_occupancy', required: false},//<--- NEW - in model
       { title: 'mga_id_1', mapped_to: 'mga_id', required: false},
       { title: 'mga_id_2', mapped_to: 'mga_id', required: false},

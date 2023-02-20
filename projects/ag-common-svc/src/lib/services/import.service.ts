@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { ImportMapping } from 'ag-common-lib/lib/models/import-rules/import-mapping.model';
 import { ImportRuleSet } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import { Address, AgentKeys, EmailAddress, PhoneNumber } from 'ag-common-lib/public-api';
 import { AgentService } from './agent.service';
@@ -36,15 +37,10 @@ export class ImportService {
     });
   }
 
-  public createDataMap(csvText, ruleSet: ImportRuleSet, isConferenceImport: boolean): Map<string, string>[] {
+  public createAgentMap(csvText): Map<string, string>[] {
     let retval: Map<string, string>[] = [];
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
-
-    if(isConferenceImport){
-      headers.push('email_addresses.1.address')
-      headers.push('email_addresses.1.is_login');
-    }
 
     for (var i = 1; i < lines.length - 1; i++) {
       let data: Map<string, string> = new Map<string, string>();
@@ -57,25 +53,107 @@ export class ImportService {
         if (val && val != '') {
           let mapped_header: string = headers[j];
 
-          if(ruleSet.import_mappings){
-            let possible_heading = ruleSet.import_mappings.find(val => val.field_name == headers[j]);
-
-            if(possible_heading && possible_heading.mapped_to){
-              mapped_header = possible_heading.mapped_to;
-            }
-          }
-
           data.set(mapped_header, val);
-        }
-
-        if(isConferenceImport){
-          data.set('email_addresses.1.address', data.get('invitee_email'))
-          data.set('email_addresses.1.is_login', 'TRUE');
         }
       }
 
       retval.push(data);
     }
+
+    return retval;
+  }
+
+    //iterate through each incoming data map
+    //  iterate through each mapped field
+    //    check to see if incoming data map has field that matches the mapped_to field
+    //    if there is a match
+    //      set the k -> v pair to be the 'field_value' -> incoming data value
+    //    if no match
+    //      check to see 'mapped_to' field == 'Set Default Value' and default value exists
+    //      if exists
+    //        set 'field_value' to 'default value'
+  public createInviteeMap(csvText, import_mappings: ImportMapping[]): Map<string, string>[] {
+    let retval: Map<string, string>[] = [];
+    let lines: string[] = csvText.split('\n');
+    let headers: string[] = lines[0].split(',');
+
+    let incoming_data_maps: Map<string, string>[] = [];
+
+    for (var i = 1; i < lines.length - 1; i++) {
+      let incoming_data: Map<string, string> = new Map<string, string>();
+
+      for (var j = 0; j < headers.length; j++) {
+        let line: string = lines[i];
+
+        let val = line.split(',')[j];
+        
+        if (val && val != '') {
+          let mapped_header: string = headers[j]
+
+          incoming_data.set(mapped_header, val);
+        }
+      }
+
+      incoming_data_maps.push(incoming_data)
+    }
+
+    incoming_data_maps.forEach(incoming_data_map => {
+      let data: Map<string, string> = new Map<string, string>();
+      
+      import_mappings.forEach(import_mapping => {
+        if(incoming_data_map.has(import_mapping.mapped_to)){
+          if(import_mapping.field_name_registrant){
+            data.set(import_mapping.field_name_registrant, incoming_data_map.get(import_mapping.mapped_to));
+          }
+          if(import_mapping.field_name_agent){
+            data.set(import_mapping.field_name_agent, incoming_data_map.get(import_mapping.mapped_to));
+          }
+          
+        } else {
+          if(import_mapping.mapped_to == 'Set Default Value' && import_mapping.default_value){
+            if(import_mapping.field_name_registrant){
+              data.set(import_mapping.field_name_registrant, import_mapping.default_value);
+            }
+            if(import_mapping.field_name_agent){
+              data.set(import_mapping.field_name_agent, import_mapping.default_value);
+            }
+          }
+        }
+      })
+
+      data.set('invitee_guest', 'Invitee')
+
+      retval.push(data);
+    })
+
+    return retval;
+  }
+
+  public createAssociationsMap(agent_map: Map<string, string>, identity_key: string): Map<string, string> {
+    let retval: Map<string, string>  = new Map<string, string>();
+
+    agent_map.forEach((value , key) => {
+      if(key.startsWith("association")){
+        retval.set(key, value);
+      }
+    })
+
+    retval.set(identity_key, agent_map.get(identity_key))
+
+    return retval;
+  }
+
+  public createGuestMap(invitee_map: Map<string, string>, identity_key: string): Map<string, string> {
+    let retval: Map<string, string> = new Map<string, string>();
+
+    invitee_map.forEach((value , key) => {
+      if(key.startsWith("guest")){
+        retval.set(key, value);
+      }
+    })
+
+    retval.set(identity_key, invitee_map.get(identity_key))
+    retval.set('invitee_guest', 'Guest')
 
     return retval;
   }
@@ -123,7 +201,7 @@ export class ImportService {
     }
   }
 
-  validateInvitee(invitee: Map<string, any>, messages: String[]) {
+  validateInvitee2(invitee: Map<string, any>, messages: String[]) {
     let isValid = true;
 
     let agent_name = invitee.get('p_agent_first_name') + ' ' + invitee.get('p_agent_last_name') + '(' + invitee.get(this.PRIMARY_EMAIL_IDENTIFIER) + ')'

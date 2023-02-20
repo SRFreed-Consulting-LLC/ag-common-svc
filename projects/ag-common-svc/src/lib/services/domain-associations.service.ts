@@ -33,12 +33,12 @@ export class DomainAssociationsService {
     this.associationTypeLookup$ = this.lookupsService.associationTypeLookup$;
   }
 
-  async extractAssociations(invals: Map<string, string>): Promise<Association[]> {
+  async extractAssociations(invals: Map<string, string>, key: string): Promise<Association[]> {
     const associations: Association[] = [];
-    const incomingAssociationsMap: Map<string, string> = this.domainUtilService.getCount(invals, 'association');
+    const incomingAssociationsMap: Map<string, string> = this.domainUtilService.getCount(invals, key);
 
     for (const iterator of incomingAssociationsMap) {
-      const association: Association = await this.createAssociation(invals, iterator[1]);
+      const association: Association = await this.createAssociation(invals, iterator[1], key);
       if (association.first_name) {
         associations.push(association);
       }
@@ -47,24 +47,24 @@ export class DomainAssociationsService {
     return associations;
   }
 
-  async createAssociation(invals: Map<string, string>, key: string): Promise<Association> {
+  async createAssociation(invals: Map<string, string>, iteration: string, key: string): Promise<Association> {
     const association: Association = { ...new Association() };
 
-    if (invals.has('association.' + key + '.first_name')) {
-      association.first_name = invals.get('association.' + key + '.first_name');
+    if (invals.has(key + '.' + iteration + '.first_name')) {
+      association.first_name = invals.get(key + '.' + iteration + '.first_name');
     }
 
-    if (invals.has('association.' + key + '.last_name')) {
-      association.last_name = invals.get('association.' + key + '.last_name');
+    if (invals.has(key + '.' + iteration + '.last_name')) {
+      association.last_name = invals.get(key + '.' + iteration + '.last_name');
     }
 
-    if (invals.has('association.' + key + '.email_address')) {
-      association.email_address = invals.get('association.' + key + '.email_address');
+    if (invals.has(key + '.' + iteration + '.email_address')) {
+      association.email_address = invals.get(key + '.' + iteration + '.email_address');
     }
 
-    if (invals.has('association.' + key + '.contact_number')) {
+    if (invals.has(key + '.' + iteration + '.contact_number')) {
       association.contact_number = invals
-        .get('association.' + key + '.contact_number')
+        .get(key + '.' + iteration + '.contact_number')
         .replace('(', '')
         .replace(')', '')
         .replace(' ', '')
@@ -73,9 +73,9 @@ export class DomainAssociationsService {
         .replace('-', '');
     }
 
-    if (invals.has('association.' + key + '.association_type')) {
+    if (invals.has(key + '.' + iteration + '.association_type')) {
       const associations = await this.associationTypeLookup$.pipe(take(1)).toPromise();
-      const associationType = invals.get('association.' + key + '.association_type');
+      const associationType = invals.get(key + '.' + iteration + '.association_type');
       const lookupValue = associations.find((lookup) => {
         return `${associationType}`
           .replace(/\W|_/g, '')
@@ -86,8 +86,8 @@ export class DomainAssociationsService {
       association[AssociationKeys.associationTypeRef] = lookupValue[LookupKeys.reference];
     }
 
-    if (invals.has('association.' + key + '.is_emergency_contact')) {
-      if (invals.get('association.' + key + '.is_emergency_contact').toUpperCase() == 'TRUE') {
+    if (invals.has(key + '.' + iteration + '.is_emergency_contact')) {
+      if (invals.get(key + '.' + iteration + '.is_emergency_contact').toUpperCase() == 'TRUE') {
         association.is_emergency_contact = true;
       } else {
         association.is_emergency_contact = false;
@@ -96,62 +96,62 @@ export class DomainAssociationsService {
 
     association.address = { ...new Address() };
 
-    if (invals.has('association.' + key + '.address.address1')) {
-      association.address.address1 = invals.get('association.' + key + '.address.address1');
+    if (invals.has(key + '.' + iteration + '.address.address1')) {
+      association.address.address1 = invals.get(key + '.' + iteration + '.address.address1');
     }
 
-    if (invals.has('association.' + key + '.address.address2')) {
-      association.address.address2 = invals.get('association.' + key + '.address.address2');
+    if (invals.has(key + '.' + iteration + '.address.address2')) {
+      association.address.address2 = invals.get(key + '.' + iteration + '.address.address2');
     }
 
-    if (invals.has('association.' + key + '.address.city')) {
-      association.address.city = invals.get('association.' + key + '.address.city');
+    if (invals.has(key + '.' + iteration + '.address.city')) {
+      association.address.city = invals.get(key + '.' + iteration + '.address.city');
     }
 
-    if (invals.has('association.' + key + '.address.state')) {
-      association.address.state = invals.get('association.' + key + '.address.state');
+    if (invals.has(key + '.' + iteration + '.address.state')) {
+      association.address.state = invals.get(key + '.' + iteration + '.address.state');
     }
 
-    if (invals.has('association.' + key + '.address.zip')) {
-      association.address.zip = invals.get('association.' + key + '.address.zip');
+    if (invals.has(key + '.' + iteration + '.address.zip')) {
+      association.address.zip = invals.get(key + '.' + iteration + '.address.zip');
     }
 
-    if (invals.has('association.' + key + '.address.county')) {
-      association.address.county = invals.get('association.' + key + '.address.county');
+    if (invals.has(key + '.' + iteration + '.address.county')) {
+      association.address.county = invals.get(key + '.' + iteration + '.address.county');
     }
 
-    if (invals.has('association.' + key + '.address.country')) {
-      association.address.country = invals.get('association.' + key + '.address.country');
+    if (invals.has(key + '.' + iteration + '.address.country')) {
+      association.address.country = invals.get(key + '.' + iteration + '.address.country');
     }
 
-    if (invals.has('association.' + key + '.dietary_or_personal_considerations')) {
+    if (invals.has(key + '.' + iteration + '.dietary_or_personal_considerations')) {
       association.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
-        invals.get('association.' + key + '.dietary_or_personal_considerations').trim()
+        invals.get(key + '.' + iteration + '.dietary_or_personal_considerations').trim()
       );
     }
 
-    if (invals.has('association.' + key + '.dietary_consideration')) {
-      association.dietary_consideration = invals.get('association.' + key + '.dietary_consideration');
+    if (invals.has(key + '.' + iteration + '.dietary_consideration')) {
+      association.dietary_consideration = invals.get(key + '.' + iteration + '.dietary_consideration');
     }
 
-    if (invals.has('association.' + key + '.dietary_consideration_type')) {
-      association.dietary_consideration_type = invals.get('association.' + key + '.dietary_consideration_type');
+    if (invals.has(key + '.' + iteration + '.dietary_consideration_type')) {
+      association.dietary_consideration_type = invals.get(key + '.' + iteration + '.dietary_consideration_type');
     }
 
-    if (invals.has('association.' + key + '.p_nick_name')) {
-      association.p_nick_first_name = invals.get('association.' + key + '.p_nick_name');
+    if (invals.has(key + '.' + iteration + '.p_nick_name')) {
+      association.p_nick_first_name = invals.get(key + '.' + iteration + '.p_nick_name');
     }
 
-    if (invals.has('association.' + key + '.p_nick_last_name')) {
-      association.p_nick_last_name = invals.get('association.' + key + '.p_nick_last_name');
+    if (invals.has(key + '.' + iteration + '.p_nick_last_name')) {
+      association.p_nick_last_name = invals.get(key + '.' + iteration + '.p_nick_last_name');
     }
 
-    if (invals.has('association.' + key + '.unisex_tshirt_size')) {
-      association.unisex_tshirt_size = invals.get('association.' + key + '.unisex_tshirt_size');
+    if (invals.has(key + '.' + iteration + '.unisex_tshirt_size')) {
+      association.unisex_tshirt_size = invals.get(key + '.' + iteration + '.unisex_tshirt_size');
     }
 
-    if (invals.has('association.' + key + '.unisex_tshirt_size_other')) {
-      association.unisex_tshirt_size_other = invals.get('association.' + key + '.unisex_tshirt_size_other');
+    if (invals.has(key + '.' + iteration + '.unisex_tshirt_size_other')) {
+      association.unisex_tshirt_size_other = invals.get(key + '.' + iteration + '.unisex_tshirt_size_other');
     }
     return association;
   }
@@ -160,11 +160,12 @@ export class DomainAssociationsService {
     data: Map<string, string>,
     agent: Agent,
     selectedRuleSet: ImportRuleSet,
-    messages: string[]
+    messages: string[], 
+    key: string
   ) {
     const promises: Promise<any>[] = [];
     const existingAssociations: Association[] = await this.agentAssociationsService.getAll(agent[BaseModelKeys.dbId]);
-    const incomingAssociations: Association[] = await this.extractAssociations(data);
+    const incomingAssociations: Association[] = await this.extractAssociations(data, key);
 
     for (const incomingAssociation of incomingAssociations) {
       const matchingAssociation: Association = existingAssociations.find(

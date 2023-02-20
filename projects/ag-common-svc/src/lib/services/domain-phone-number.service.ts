@@ -77,8 +77,13 @@ export class DomainPhoneNumberService {
     }
 
     if (invals.has('phone_numbers.' + key + '.phone_type')) {
-      a.phone_type = PhoneNumberType[invals.get('phone_numbers.' + key + '.phone_type')];
+      let phone_type = PhoneNumberType[invals.get('phone_numbers.' + key + '.phone_type')];
+    
+      if(phone_type){
+        a.phone_type = phone_type;
+      }
     }
+    
 
     if (invals.has('phone_numbers.' + key + '.extension')) {
       a.extension = invals.get('phone_numbers.' + key + '.extension');

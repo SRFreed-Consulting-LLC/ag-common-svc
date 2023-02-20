@@ -296,10 +296,14 @@ export class DomainService {
 
     if (line_data.has(AgentKeys.agent_status)) {
       agent[AgentKeys.agent_status] = AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim().toUpperCase()];
+    } else {
+      agent[AgentKeys.agent_status] = AGENT_STATUS.APPROVED;
     }
+     
     if (line_data.has(AgentKeys.prospect_status)) {
       agent[AgentKeys.prospect_status] = PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim().toUpperCase()];
     }
+    
     if (line_data.has(AgentKeys.prospect_priority)) {
       agent[AgentKeys.prospect_priority] =
         PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim().toUpperCase()];
@@ -1401,10 +1405,6 @@ export class DomainService {
           qp.push(new QueryParam('unique_id', WhereFilterOperandKeys.equal, unique_id));
     
           let promise = this.registrantsService.getAllByValue(qp).then((registrants) => {
-            if(invitee_email == 'jeff.synergyfinancialpartners@gmail.com'){
-              console.log('found')
-            }
-
             let guest: Registrant;
     
             if (registrants.length == 0) {
@@ -1593,7 +1593,7 @@ export class DomainService {
     
             selectedConference.registrantFields.forEach(field => {
               if(guest_map.has(field.name)){
-                guest[field.name] = guest_map.has(field.name);
+                guest[field.name] = guest_map.get(field.name);
               }
             })
     
@@ -1654,10 +1654,10 @@ export class DomainService {
     let lookup: ActiveLookup  = lookups.find(val => val.description == matchVal);
 
     if(lookup){
-      return lookup.dbId
+      return lookup.dbId;
     } else {
       console.log("Couldn't find lookup value for ", matchVal)
-      return matchVal
+      return '';
     }
   }
 }

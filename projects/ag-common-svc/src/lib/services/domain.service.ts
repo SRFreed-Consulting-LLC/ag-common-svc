@@ -319,7 +319,6 @@ export class DomainService implements OnInit {
         }
 
         if (mapping.data_type == 'lookup') {
-          console.log('looking for', mapping.values);
           let lookupval: string = await this.getLookupValue(mapping.values, line_data.get(mapping.field_name_agent));
 
           this.domainUtilService.updateField(
@@ -340,6 +339,27 @@ export class DomainService implements OnInit {
         }
       }
     });
+
+    if (line_data.has(AgentKeys.approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.approve_deny_reason].valueOf() == 'ADD_TO_LIST') {
+      let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+      approve_deny_reason.created_by = updatedBy;
+      approve_deny_reason.created_date = new Date();
+      approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AllianceGroupLevel;
+      approve_deny_reason.isDeleted = false;
+      approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason).trim();
+
+      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
+    }
+    if (line_data.has(AgentKeys.agency_approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST') {
+      let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+      approve_deny_reason.created_by = updatedBy;
+      approve_deny_reason.created_date = new Date();
+      approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AgencyLevel;
+      approve_deny_reason.isDeleted = false;
+      approve_deny_reason.activity = line_data.get(AgentKeys.agency_approve_deny_reason).trim();
+
+      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
+    }
 
     if (line_data.has(AgentKeys.agent_type)) {
       this.domainUtilService.updateField(
@@ -527,7 +547,7 @@ export class DomainService implements OnInit {
           return null;
         }
 
-        importMappings.forEach((mapping) => {
+        importMappings.forEach(async (mapping) => {
           if (invitee_map.has(mapping.field_name_registrant) && invitee_map.get(mapping.field_name_registrant) != '') {
             let incoming_value: string = invitee_map.get(mapping.field_name_registrant);
 
@@ -544,7 +564,7 @@ export class DomainService implements OnInit {
             }
 
             if (mapping.data_type == 'lookup') {
-              invitee[mapping.field_name_registrant] = this.getLookupValue(mapping.values, incoming_value.trim());
+              invitee[mapping.field_name_registrant] = await this.getLookupValue(mapping.values, incoming_value.trim());
             }
 
             if (mapping.data_type == 'boolean') {
@@ -767,11 +787,10 @@ export class DomainService implements OnInit {
               guest.approved_date = new Date();
             }
 
-            importMappings.forEach((mapping) => {
+            importMappings.forEach(async (mapping) => {
               if (
                 (invitee_map.has(mapping.field_name_registrant) &&
-                  invitee_map.get(mapping.field_name_registrant) != '') ||
-                (invitee_map.has(mapping.field_name_agent) && invitee_map.get(mapping.field_name_agent) != '')
+                  invitee_map.get(mapping.field_name_registrant) != '')
               ) {
                 if (mapping.data_type == 'string' || mapping.data_type == 'select') {
                   guest[mapping.field_name_registrant] = invitee_map.get(mapping.field_name_registrant);
@@ -788,7 +807,7 @@ export class DomainService implements OnInit {
                 }
 
                 if (mapping.data_type == 'lookup') {
-                  guest[mapping.field_name_registrant] = this.getLookupValue(
+                  guest[mapping.field_name_registrant] = await this.getLookupValue(
                     mapping.values,
                     invitee_map.get(mapping.field_name_registrant)
                   );
@@ -886,12 +905,12 @@ export class DomainService implements OnInit {
 
     let retval: ActiveLookup[] = await lookupsMap.get(lookupName).pipe(take(1)).toPromise();
 
-    let lookup: ActiveLookup = retval.find((val) => val.description == matchVal);
+    let lookup: ActiveLookup = retval.find((val) => val.value == matchVal);
 
     if (lookup) {
       return lookup.dbId;
     } else {
-      console.log("Couldn't find lookup value for ", matchVal);
+      console.log("Couldn't find lookup value for ", lookupName, matchVal);
       return '';
     }
   };

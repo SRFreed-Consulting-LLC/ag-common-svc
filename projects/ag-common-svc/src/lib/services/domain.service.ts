@@ -53,14 +53,6 @@ export class DomainService implements OnInit {
   REGISTRATION_POLICY_REPLACE: string = 'Replace Existing Registrations';
   REGISTRATION_POLICY_UPDATE: string = 'Update Existing Registrations';
 
-  dietaryConsiderationTypesLookups: Observable<ActiveLookup[]>;
-  gendersLookups: Observable<ActiveLookup[]>;
-  prefixesLookups: Observable<ActiveLookup[]>;
-  suffixesLookup: Observable<ActiveLookup[]>;
-  tshirtSizesLookup: Observable<ActiveLookup[]>;
-  relationshipsLookup: Observable<ActiveLookup[]>;
-  emailTypeLookup: Observable<ActiveLookup[]>;
-
   constructor(
     private agentService: AgentService,
     private registrantsService: RegistrantsService,
@@ -161,7 +153,7 @@ export class DomainService implements OnInit {
 
         if (mapping.data_type == 'lookup') {
           agent[mapping.field_name_agent] = this.getLookupValue(
-            this[mapping.values],
+            mapping.values,
             line_data.get(mapping.field_name_agent)
           );
         }
@@ -328,10 +320,7 @@ export class DomainService implements OnInit {
 
         if (mapping.data_type == 'lookup') {
           console.log('looking for', mapping.values);
-          let lookupval: string = await this.getLookupValue(
-            this[mapping.values],
-            line_data.get(mapping.field_name_agent)
-          );
+          let lookupval: string = await this.getLookupValue(mapping.values, line_data.get(mapping.field_name_agent));
 
           this.domainUtilService.updateField(
             selectedRuleSet[mapping.field_name_agent],
@@ -555,7 +544,7 @@ export class DomainService implements OnInit {
             }
 
             if (mapping.data_type == 'lookup') {
-              invitee[mapping.field_name_registrant] = this.getLookupValue(this[mapping.values], incoming_value.trim());
+              invitee[mapping.field_name_registrant] = this.getLookupValue(mapping.values, incoming_value.trim());
             }
 
             if (mapping.data_type == 'boolean') {
@@ -800,7 +789,7 @@ export class DomainService implements OnInit {
 
                 if (mapping.data_type == 'lookup') {
                   guest[mapping.field_name_registrant] = this.getLookupValue(
-                    this[mapping.values],
+                    mapping.values,
                     invitee_map.get(mapping.field_name_registrant)
                   );
                 }
@@ -819,7 +808,7 @@ export class DomainService implements OnInit {
 
             if (guest_map.has('relationship')) {
               let value = guest_map.get('relationship');
-              guest.relationship = await this.getLookupValue(this.relationshipsLookup, value);
+              guest.relationship = await this.getLookupValue('relationshipsLookup', value);
             }
 
             selectedConference.registrantFields.forEach((field) => {
@@ -876,8 +865,26 @@ export class DomainService implements OnInit {
     return retval;
   }
 
-  async getLookupValue(lookups: Observable<ActiveLookup[]>, matchVal: string): Promise<string> {
-    let retval: ActiveLookup[] = await lookups.pipe(take(1)).toPromise();
+  getLookupValue = async (lookupName: string, matchVal: string): Promise<string> => {
+    const lookupsMap = new Map([
+      ['associationTypeLookup', this.lookupsService.associationTypeLookup$],
+      ['dietaryConsiderationTypesLookup', this.lookupsService.dietaryConsiderationTypesLookup$],
+      ['gendersLookup', this.lookupsService.gendersLookup$],
+      ['prefixesLookup', this.lookupsService.prefixesLookup$],
+      ['suffixesLookup', this.lookupsService.suffixesLookup$],
+      ['tShortSizesLookup', this.lookupsService.tShortSizesLookup$],
+      ['relationshipsLookup', this.lookupsService.associationTypeLookup$],
+      ['emailTypeLookup', this.lookupsService.emailTypeLookup$],
+      ['statesLookup', this.lookupsService.statesLookup$]
+    ]);
+
+    if (!lookupsMap.has(lookupName)) {
+      debugger;
+      console.log("Couldn't find lookups for ", lookupName);
+      return '';
+    }
+
+    let retval: ActiveLookup[] = await lookupsMap.get(lookupName).pipe(take(1)).toPromise();
 
     let lookup: ActiveLookup = retval.find((val) => val.description == matchVal);
 
@@ -887,5 +894,5 @@ export class DomainService implements OnInit {
       console.log("Couldn't find lookup value for ", matchVal);
       return '';
     }
-  }
+  };
 }

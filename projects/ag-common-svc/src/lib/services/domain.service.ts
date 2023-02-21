@@ -74,18 +74,8 @@ export class DomainService implements OnInit {
     private domainAssociationsService: DomainAssociationsService,
     private domainUtilService: DomainUtilService,
     private lookupsService: LookupsService
-  ) {
-
-  }
-  ngOnInit(): void {
-    this.emailTypeLookup = this.lookupsService.emailTypeLookup$
-    this.prefixesLookups = this.lookupsService.prefixesLookup$
-    this.suffixesLookup = this.lookupsService.suffixesLookup$
-    this.dietaryConsiderationTypesLookups = this.lookupsService.dietaryConsiderationTypesLookup$
-    this.gendersLookups = this.lookupsService.gendersLookup$
-    this.tshirtSizesLookup = this.lookupsService.tShortSizesLookup$
-    this.relationshipsLookup = this.lookupsService.associationTypeLookup$
-  }
+  ) {}
+  ngOnInit(): void {}
 
   //************************************************************* */
   //  Method to import Agents from import file
@@ -145,43 +135,53 @@ export class DomainService implements OnInit {
     });
   }
 
-  async createAgent(line_data: Map<string, string>, createdBy: string, agencies: Agency[], importMappings: ImportMapping[]): Promise<Agent> {
+  async createAgent(
+    line_data: Map<string, string>,
+    createdBy: string,
+    agencies: Agency[],
+    importMappings: ImportMapping[]
+  ): Promise<Agent> {
     const agent = { ...new Agent() };
 
-    importMappings.forEach(mapping => {
-      if(line_data.has(mapping.field_name_agent)){
-        if(mapping.data_type == 'string' || mapping.data_type == 'select'){
+    importMappings.forEach((mapping) => {
+      if (line_data.has(mapping.field_name_agent)) {
+        if (mapping.data_type == 'string' || mapping.data_type == 'select') {
           agent[mapping.field_name_agent] = line_data.get(mapping.field_name_agent);
         }
 
-        if(mapping.data_type == 'yes-no'){
-          agent[mapping.field_name_agent] = this.domainUtilService.getYesNoValue(line_data.get(mapping.field_name_agent).trim());
+        if (mapping.data_type == 'yes-no') {
+          agent[mapping.field_name_agent] = this.domainUtilService.getYesNoValue(
+            line_data.get(mapping.field_name_agent).trim()
+          );
         }
 
-        if(mapping.data_type == 'date'){
+        if (mapping.data_type == 'date') {
           agent[mapping.field_name_agent] = new Date(line_data.get(mapping.field_name_agent));
         }
 
-        if(mapping.data_type == 'lookup'){
-          agent[mapping.field_name_agent] = this.getLookupValue(this[mapping.values], line_data.get(mapping.field_name_agent));
+        if (mapping.data_type == 'lookup') {
+          agent[mapping.field_name_agent] = this.getLookupValue(
+            this[mapping.values],
+            line_data.get(mapping.field_name_agent)
+          );
         }
 
-        if(mapping.data_type == 'boolean'){
+        if (mapping.data_type == 'boolean') {
           agent[mapping.field_name_agent] = this.domainUtilService.getBoolean(line_data.get(mapping.field_name_agent));
-        }        
+        }
       }
-    })
+    });
 
     if (line_data.has(AgentKeys.agent_status)) {
       agent[AgentKeys.agent_status] = AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim().toUpperCase()];
     } else {
       agent[AgentKeys.agent_status] = AGENT_STATUS.APPROVED;
     }
-     
+
     if (line_data.has(AgentKeys.prospect_status)) {
       agent[AgentKeys.prospect_status] = PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim().toUpperCase()];
     }
-    
+
     if (line_data.has(AgentKeys.prospect_priority)) {
       agent[AgentKeys.prospect_priority] =
         PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim().toUpperCase()];
@@ -257,7 +257,9 @@ export class DomainService implements OnInit {
     const agentEmailAddresses = agent[AgentKeys.email_addresses];
 
     if (!Array.isArray(agentEmailAddresses) || agentEmailAddresses?.length == 0) {
-      this.messages.unshift('No Email Addresses were set for this agent. Not Importing ' + agent[AgentKeys.p_agent_name]);
+      this.messages.unshift(
+        'No Email Addresses were set for this agent. Not Importing ' + agent[AgentKeys.p_agent_name]
+      );
       return null;
     }
 
@@ -295,10 +297,9 @@ export class DomainService implements OnInit {
     agencies: Agency[],
     updatedBy: string
   ): Promise<Agent> {
-
-    selectedRuleSet.import_mappings.forEach(async mapping => {
-      if(line_data.has(mapping.field_name_agent)){
-        if(mapping.data_type == 'string' || mapping.data_type == 'select'){
+    selectedRuleSet.import_mappings.forEach(async (mapping) => {
+      if (line_data.has(mapping.field_name_agent)) {
+        if (mapping.data_type == 'string' || mapping.data_type == 'select') {
           this.domainUtilService.updateField(
             selectedRuleSet[mapping.field_name_agent],
             agent,
@@ -307,46 +308,49 @@ export class DomainService implements OnInit {
           );
         }
 
-        if(mapping.data_type == 'yes-no'){
+        if (mapping.data_type == 'yes-no') {
           this.domainUtilService.updateField(
             selectedRuleSet[mapping.field_name_agent],
             agent,
             mapping.field_name_agent,
             this.domainUtilService.getYesNoValue(line_data.get(mapping.field_name_agent).trim())
-          ); 
+          );
         }
 
-        if(mapping.data_type == 'date'){
+        if (mapping.data_type == 'date') {
           this.domainUtilService.updateField(
             selectedRuleSet[mapping.field_name_agent],
             agent,
             mapping.field_name_agent,
             new Date(line_data.get(mapping.field_name_agent).trim())
-          );         
-        }  
+          );
+        }
 
-        if(mapping.data_type == 'lookup'){
-          console.log('looking for', mapping.values)
-          let lookupval: string = await this.getLookupValue(this[mapping.values], line_data.get(mapping.field_name_agent));
+        if (mapping.data_type == 'lookup') {
+          console.log('looking for', mapping.values);
+          let lookupval: string = await this.getLookupValue(
+            this[mapping.values],
+            line_data.get(mapping.field_name_agent)
+          );
 
           this.domainUtilService.updateField(
             selectedRuleSet[mapping.field_name_agent],
             agent,
             mapping.field_name_agent,
             lookupval.trim()
-          );        
+          );
         }
 
-        if(mapping.data_type == 'boolean'){
+        if (mapping.data_type == 'boolean') {
           this.domainUtilService.updateField(
             selectedRuleSet[mapping.field_name_agent],
             agent,
             mapping.field_name_agent,
             this.domainUtilService.getBoolean(line_data.get(mapping.field_name_agent).trim())
-          );         
-        }        
+          );
+        }
       }
-    })
+    });
 
     if (line_data.has(AgentKeys.agent_type)) {
       this.domainUtilService.updateField(
@@ -427,12 +431,13 @@ export class DomainService implements OnInit {
     });
   }
 
-  createOrUpdateAssociations(agents: Agent[], 
-    guest_data: Map<string, string>[], 
-    selectedRuleSet: ImportRuleSet, 
-    messages: string[], 
-    id_key: string) {
-    
+  createOrUpdateAssociations(
+    agents: Agent[],
+    guest_data: Map<string, string>[],
+    selectedRuleSet: ImportRuleSet,
+    messages: string[],
+    id_key: string
+  ) {
     guest_data.forEach((guest) => {
       let invitees = agents.filter((a) => a.p_email == guest.get('invitee_email'));
 
@@ -450,7 +455,6 @@ export class DomainService implements OnInit {
     conferenceRegistrationPolicy: string,
     importMappings: ImportMapping[]
   ): Promise<Registrant>[] {
-
     let promises: Promise<Registrant>[] = [];
 
     // if (conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE) {
@@ -468,8 +472,13 @@ export class DomainService implements OnInit {
       let invitee_email = invitee_map.get('invitee_email').toLowerCase();
       let invitee_guest = invitee_map.get('invitee_guest');
 
-      let unique_id = selectedConference.event_id.toLowerCase()+"_"+invitee_guest.toLowerCase()+"-"+invitee_email.toLowerCase();
-      
+      let unique_id =
+        selectedConference.event_id.toLowerCase() +
+        '_' +
+        invitee_guest.toLowerCase() +
+        '-' +
+        invitee_email.toLowerCase();
+
       let invitee: Registrant;
 
       let qp: QueryParam[] = [];
@@ -487,11 +496,13 @@ export class DomainService implements OnInit {
             invitee = { ...new Registrant() };
             this.registrantsService.delete(invitees[0][BaseModelKeys.dbId]);
 
-            await this.registrantsService.getAllByValue([new QueryParam('invitee_email', WhereFilterOperandKeys.equal, invitee_email)]).then(guests => {
-              guests.forEach(async guest => {
-                await this.registrantsService.delete(guest[BaseModelKeys.dbId]);  
-              })              
-            })
+            await this.registrantsService
+              .getAllByValue([new QueryParam('invitee_email', WhereFilterOperandKeys.equal, invitee_email)])
+              .then((guests) => {
+                guests.forEach(async (guest) => {
+                  await this.registrantsService.delete(guest[BaseModelKeys.dbId]);
+                });
+              });
           }
         } else {
           console.log('Found too many registrants matching', qp);
@@ -505,140 +516,150 @@ export class DomainService implements OnInit {
         invitee.registration_source = 'Conference Import';
         invitee.event_id = selectedConference.event_id;
 
-        if(invitee_map.has('invitee_status')){
-            if(invitee_map.get('invitee_status') == 'Approved'){
-              invitee.approved = true;
-            } else {
-              invitee.approved = false;
-            }
-          
-            invitee.approved_by = createdBy;
-            invitee.approved_date = new Date();
+        if (invitee_map.has('invitee_status')) {
+          if (invitee_map.get('invitee_status') == 'Approved') {
+            invitee.approved = true;
+          } else {
+            invitee.approved = false;
+          }
+
+          invitee.approved_by = createdBy;
+          invitee.approved_date = new Date();
         }
 
-        let agent: LegacyAgent = agents.find((agent) => agent.p_email == invitee_map.get('invitee_email').toLowerCase().trim());
+        let agent: LegacyAgent = agents.find(
+          (agent) => agent.p_email == invitee_map.get('invitee_email').toLowerCase().trim()
+        );
 
         if (!agent) {
-          console.log("Can't create Registration. No agent found for " + invitee_map.get('invitee_email').toLowerCase().trim());
+          console.log(
+            "Can't create Registration. No agent found for " + invitee_map.get('invitee_email').toLowerCase().trim()
+          );
           return null;
         }
 
-        importMappings.forEach(mapping => {
-          if((invitee_map.has(mapping.field_name_registrant) && invitee_map.get(mapping.field_name_registrant) != '')){            
-
+        importMappings.forEach((mapping) => {
+          if (invitee_map.has(mapping.field_name_registrant) && invitee_map.get(mapping.field_name_registrant) != '') {
             let incoming_value: string = invitee_map.get(mapping.field_name_registrant);
-            
-            if(mapping.data_type == 'string' || mapping.data_type == 'select'){
+
+            if (mapping.data_type == 'string' || mapping.data_type == 'select') {
               invitee[mapping.field_name_registrant] = incoming_value;
             }
-    
-            if(mapping.data_type == 'yes-no'){
+
+            if (mapping.data_type == 'yes-no') {
               invitee[mapping.field_name_registrant] = this.domainUtilService.getYesNoValue(incoming_value.trim());
             }
-    
-            if(mapping.data_type == 'date'){
+
+            if (mapping.data_type == 'date') {
               invitee[mapping.field_name_registrant] = new Date(incoming_value.trim());
             }
-    
-            if(mapping.data_type == 'lookup'){
+
+            if (mapping.data_type == 'lookup') {
               invitee[mapping.field_name_registrant] = this.getLookupValue(this[mapping.values], incoming_value.trim());
             }
-    
-            if(mapping.data_type == 'boolean'){
+
+            if (mapping.data_type == 'boolean') {
               invitee[mapping.field_name_registrant] = this.domainUtilService.getBoolean(incoming_value.trim());
-            }        
+            }
 
             if (!invitee[mapping.field_name_registrant] && agent[mapping.field_name_agent]) {
               invitee[mapping.field_name_registrant] = agent[mapping.field_name_agent];
             }
           }
-        })
+        });
 
         invitee.last_eval_date = new Date();
 
         //if agent has addresses
-        if(agent.addresses?.length > 0){
-          let primary_billing_address: Address = agent.addresses.find(address => address.is_primary_billing == true);
-          
-          if(primary_billing_address){
-            invitee.primary_billing_address = {... primary_billing_address};
-          }
-          
-          let primary_shipping_address: Address = agent.addresses.find(address => address.is_primary_shipping== true);
+        if (agent.addresses?.length > 0) {
+          let primary_billing_address: Address = agent.addresses.find((address) => address.is_primary_billing == true);
 
-          if(primary_shipping_address){
-            invitee.primary_shipping_address = {... primary_shipping_address};
-          }          
+          if (primary_billing_address) {
+            invitee.primary_billing_address = { ...primary_billing_address };
+          }
+
+          let primary_shipping_address: Address = agent.addresses.find(
+            (address) => address.is_primary_shipping == true
+          );
+
+          if (primary_shipping_address) {
+            invitee.primary_shipping_address = { ...primary_shipping_address };
+          }
         }
 
         //if agent has email addresses
-        if(agent.email_addresses.length > 0){
-          let primary_email: EmailAddress = agent.email_addresses.find(email => email.is_login == true);
-        
+        if (agent.email_addresses.length > 0) {
+          let primary_email: EmailAddress = agent.email_addresses.find((email) => email.is_login == true);
+
           if (primary_email) {
             invitee.primary_email_address = primary_email;
           }
 
-          let secondary_email: EmailAddress[] = agent.email_addresses.filter(email => email.is_login == false);
-        
+          let secondary_email: EmailAddress[] = agent.email_addresses.filter((email) => email.is_login == false);
+
           if (secondary_email?.length > 0) {
             invitee.secondary_email_address = secondary_email[0];
           }
         }
 
         //if agent has phone numbers
-        if(agent.phone_numbers?.length > 0){
-          let mobile_phone_numbers: PhoneNumber = agent.phone_numbers.find(number => number.phone_type == PhoneNumberType.Mobile);
+        if (agent.phone_numbers?.length > 0) {
+          let mobile_phone_numbers: PhoneNumber = agent.phone_numbers.find(
+            (number) => number.phone_type == PhoneNumberType.Mobile
+          );
 
           if (mobile_phone_numbers) {
             invitee.mobile_phone = mobile_phone_numbers;
           }
-          
-          let secondary_phone: PhoneNumber[] = agent.phone_numbers.filter(number =>  number.number != mobile_phone_numbers.number)
 
-          if(secondary_phone?.length){
+          let secondary_phone: PhoneNumber[] = agent.phone_numbers.filter(
+            (number) => number.number != mobile_phone_numbers.number
+          );
+
+          if (secondary_phone?.length) {
             invitee.secondary_phone = secondary_phone[0];
           }
-        }        
+        }
 
         //custom fields
-        selectedConference.registrantFields.forEach(field => {
-          if(invitee_map.has(field.name)){
+        selectedConference.registrantFields.forEach((field) => {
+          if (invitee_map.has(field.name)) {
             invitee[field.name] = invitee_map.get(field.name);
           }
-        })
+        });
 
         //get emergency contact
         let contacts = await this.agentAssociationsService.getAll(agent[BaseModelKeys.dbId]);
-        
+
         if (contacts.length > 0) {
-          let emergency_contacts: Association[] = contacts.filter(contact => contact.is_emergency_contact == true);
+          let emergency_contacts: Association[] = contacts.filter((contact) => contact.is_emergency_contact == true);
 
-          let selected_emergency_contact: Association = emergency_contacts.find(contact => 
-            contact[AssociationKeys.firsName] == invitee_map.get('association.1.first_name') 
-            && contact[AssociationKeys.lastName] == invitee_map.get('association.1.las_name')
-          )
+          let selected_emergency_contact: Association = emergency_contacts.find(
+            (contact) =>
+              contact[AssociationKeys.firsName] == invitee_map.get('association.1.first_name') &&
+              contact[AssociationKeys.lastName] == invitee_map.get('association.1.las_name')
+          );
 
-          if(selected_emergency_contact){
-            invitee.emergency_contact = selected_emergency_contact
+          if (selected_emergency_contact) {
+            invitee.emergency_contact = selected_emergency_contact;
           } else {
-            if(emergency_contacts.length > 0){
-              invitee.emergency_contact = emergency_contacts[0]  
+            if (emergency_contacts.length > 0) {
+              invitee.emergency_contact = emergency_contacts[0];
             } else {
               invitee.emergency_contact = contacts[0];
             }
           }
         }
-            
+
         //save registrant
-        if(invitee[BaseModelKeys.dbId]){
+        if (invitee[BaseModelKeys.dbId]) {
           this.messages.unshift('Registration Updated for ' + invitee.first_name + ' ' + invitee.last_name);
           this.registrantsService.update(invitee);
         } else {
           this.messages.unshift('Registration Created for ' + invitee.first_name + ' ' + invitee.last_name);
           this.registrantsService.create(invitee);
         }
-        
+
         return invitee;
       });
 
@@ -656,7 +677,6 @@ export class DomainService implements OnInit {
     importMappings: ImportMapping[],
     parents: Registrant[]
   ): Promise<Registrant>[] {
-
     let promises: Promise<Registrant>[] = [];
 
     invitees_map.forEach((invitee_map) => {
@@ -666,50 +686,57 @@ export class DomainService implements OnInit {
       let invitee_guest = 'Guest';
 
       //filter invitee map to create map with only guest fields
-      invitee_map.forEach((value , key) => {
-        if(key.startsWith("guest")){
+      invitee_map.forEach((value, key) => {
+        if (key.startsWith('guest')) {
           guest_map.set(key, value);
         }
-      })
+      });
 
       //split up into different guests
       let guests: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
 
-      guest_map.forEach((v,k) => {
-        let key_split: string[] = k.split(".");
+      guest_map.forEach((v, k) => {
+        let key_split: string[] = k.split('.');
 
-        let guest_vals: Map<string, string>
+        let guest_vals: Map<string, string>;
 
-        if(guests.has(key_split[0] + "." + key_split[1])){
-          guest_vals = guests.get(key_split[0] + "." + key_split[1]);
+        if (guests.has(key_split[0] + '.' + key_split[1])) {
+          guest_vals = guests.get(key_split[0] + '.' + key_split[1]);
         } else {
           guest_vals = new Map<string, string>();
         }
 
-        if(k.startsWith(key_split[0] + "." + key_split[1])){
-          if(key_split.length == 4){
-            guest_vals.set(key_split[key_split.length - 2] + "." + key_split[key_split.length - 1], v);
+        if (k.startsWith(key_split[0] + '.' + key_split[1])) {
+          if (key_split.length == 4) {
+            guest_vals.set(key_split[key_split.length - 2] + '.' + key_split[key_split.length - 1], v);
           } else {
             guest_vals.set(key_split[key_split.length - 1], v);
           }
 
-          guests.set(key_split[0] + "." + key_split[1], guest_vals)
+          guests.set(key_split[0] + '.' + key_split[1], guest_vals);
         }
-      })
+      });
 
       //create registrant for each guest
-      guests.forEach(guest_map => {
-        if(guest_map.has('first_name') && guest_map.has('last_name')){
+      guests.forEach((guest_map) => {
+        if (guest_map.has('first_name') && guest_map.has('last_name')) {
           //create unique id for quest for future searches
-          let unique_id = selectedConference.event_id.toLowerCase()+"_"+invitee_guest.toLowerCase()+"-"+
-          invitee_email.toLowerCase()+guest_map.get('first_name').toLowerCase()+"_"+guest_map.get('last_name').toLowerCase();
+          let unique_id =
+            selectedConference.event_id.toLowerCase() +
+            '_' +
+            invitee_guest.toLowerCase() +
+            '-' +
+            invitee_email.toLowerCase() +
+            guest_map.get('first_name').toLowerCase() +
+            '_' +
+            guest_map.get('last_name').toLowerCase();
 
           let qp: QueryParam[] = [];
           qp.push(new QueryParam('unique_id', WhereFilterOperandKeys.equal, unique_id));
-    
+
           let promise = this.registrantsService.getAllByValue(qp).then(async (registrants) => {
             let guest: Registrant;
-    
+
             if (registrants.length == 0) {
               // if not found -> create new Registrant
               guest = { ...new Registrant() };
@@ -719,15 +746,15 @@ export class DomainService implements OnInit {
             } else if (registrants.length == 1) {
               // if found -> set found registrant to be edited
               guest = registrants[0];
-    
+
               if (conferenceRegistrationPolicy == this.REGISTRATION_POLICY_REPLACE) {
                 // if this is a full replace, create new registrant record and delete old one
                 guest = { ...new Registrant() };
                 this.registrantsService.delete(registrants[0][BaseModelKeys.dbId]);
               }
             } else {
-              console.log('Found too many registrants matching guest', qp)
-    
+              console.log('Found too many registrants matching guest', qp);
+
               return null;
             }
 
@@ -736,61 +763,71 @@ export class DomainService implements OnInit {
 
             guest.registration_source = 'Conference Import';
             guest.event_id = selectedConference.event_id;
-    
-            let parentInvitee: Registrant = parents.find(registrant => registrant.invitee_email == invitee_email);
+
+            let parentInvitee: Registrant = parents.find((registrant) => registrant.invitee_email == invitee_email);
 
             //data from parent record
-            if(parentInvitee){
-              if(parentInvitee.invitee_status == 'Approved'){
+            if (parentInvitee) {
+              if (parentInvitee.invitee_status == 'Approved') {
                 guest.approved = true;
               } else {
                 guest.approved = false;
               }
-      
+
               guest.approved_by = createdBy;
               guest.approved_date = new Date();
             }
 
-            importMappings.forEach(mapping => {
-              if((invitee_map.has(mapping.field_name_registrant) && invitee_map.get(mapping.field_name_registrant) != '')
-              || invitee_map.has(mapping.field_name_agent) && invitee_map.get(mapping.field_name_agent) != ''){
-                if(mapping.data_type == 'string' || mapping.data_type == 'select'){
+            importMappings.forEach((mapping) => {
+              if (
+                (invitee_map.has(mapping.field_name_registrant) &&
+                  invitee_map.get(mapping.field_name_registrant) != '') ||
+                (invitee_map.has(mapping.field_name_agent) && invitee_map.get(mapping.field_name_agent) != '')
+              ) {
+                if (mapping.data_type == 'string' || mapping.data_type == 'select') {
                   guest[mapping.field_name_registrant] = invitee_map.get(mapping.field_name_registrant);
                 }
-        
-                if(mapping.data_type == 'yes-no'){
-                  guest[mapping.field_name_registrant] = this.domainUtilService.getYesNoValue(invitee_map.get(mapping.field_name_registrant).trim());
+
+                if (mapping.data_type == 'yes-no') {
+                  guest[mapping.field_name_registrant] = this.domainUtilService.getYesNoValue(
+                    invitee_map.get(mapping.field_name_registrant).trim()
+                  );
                 }
-        
-                if(mapping.data_type == 'date'){
+
+                if (mapping.data_type == 'date') {
                   guest[mapping.field_name_registrant] = new Date(invitee_map.get(mapping.field_name_registrant));
                 }
-        
-                if(mapping.data_type == 'lookup'){
-                  guest[mapping.field_name_registrant] = this.getLookupValue(this[mapping.values], invitee_map.get(mapping.field_name_registrant));
+
+                if (mapping.data_type == 'lookup') {
+                  guest[mapping.field_name_registrant] = this.getLookupValue(
+                    this[mapping.values],
+                    invitee_map.get(mapping.field_name_registrant)
+                  );
                 }
-        
-                if(mapping.data_type == 'boolean'){
-                  guest[mapping.field_name_registrant] = this.domainUtilService.getBoolean(invitee_map.get(mapping.field_name_registrant));
-                }        
-    
+
+                if (mapping.data_type == 'boolean') {
+                  guest[mapping.field_name_registrant] = this.domainUtilService.getBoolean(
+                    invitee_map.get(mapping.field_name_registrant)
+                  );
+                }
+
                 if (!guest[mapping.field_name_registrant] && parentInvitee[mapping.field_name_agent]) {
                   guest[mapping.field_name_registrant] = parentInvitee[mapping.field_name_agent];
                 }
               }
-            })
-            
+            });
+
             if (guest_map.has('relationship')) {
-              let value = guest_map.get("relationship")
-              guest.relationship = await this.getLookupValue(this.relationshipsLookup, value)
+              let value = guest_map.get('relationship');
+              guest.relationship = await this.getLookupValue(this.relationshipsLookup, value);
             }
-    
-            selectedConference.registrantFields.forEach(field => {
-              if(guest_map.has(field.name)){
+
+            selectedConference.registrantFields.forEach((field) => {
+              if (guest_map.has(field.name)) {
                 guest[field.name] = guest_map.get(field.name);
               }
-            })
-    
+            });
+
             if (guest[BaseModelKeys.dbId]) {
               this.messages.unshift('Registration Updated for ' + guest.first_name + ' ' + guest.last_name);
               this.registrantsService.update(guest);
@@ -798,14 +835,13 @@ export class DomainService implements OnInit {
               this.messages.unshift('Registration Created for ' + guest.first_name + ' ' + guest.last_name);
               this.registrantsService.create(guest);
             }
-    
+
             return guest;
-        
-          })
-          promises.push(promise);        
+          });
+          promises.push(promise);
         }
-      })
-    })
+      });
+    });
 
     return promises;
   }
@@ -840,15 +876,15 @@ export class DomainService implements OnInit {
     return retval;
   }
 
-  async getLookupValue(lookups: Observable<ActiveLookup[]>,  matchVal: string): Promise<string>{
-    let retval: ActiveLookup[] = await lookups.pipe(take(1)).toPromise()
+  async getLookupValue(lookups: Observable<ActiveLookup[]>, matchVal: string): Promise<string> {
+    let retval: ActiveLookup[] = await lookups.pipe(take(1)).toPromise();
 
-    let lookup: ActiveLookup  = retval.find(val => val.description == matchVal);
+    let lookup: ActiveLookup = retval.find((val) => val.description == matchVal);
 
-    if(lookup){
+    if (lookup) {
       return lookup.dbId;
     } else {
-      console.log("Couldn't find lookup value for ", matchVal)
+      console.log("Couldn't find lookup value for ", matchVal);
       return '';
     }
   }

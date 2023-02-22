@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { EmailAddress } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
+import { collectionGroup, getDocs, query, QueryConstraint, QuerySnapshot, where } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { CommonFireStoreDao, QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
@@ -77,14 +78,38 @@ export class AgentEmailAddressesService {
     });
   }
 
-  public findSameEmails(email): Observable<EmailAddress[]> {
-    const qp: QueryParam[] = [];
+  public findSameUserEmails(email): Promise<Array<{ data: EmailAddress; parentDbId: string }>> {
+    const queries: QueryParam[] = [];
 
     const emailAddressQuery = new QueryParam('address', WhereFilterOperandKeys.equal, email);
+    const isLoginQuery = new QueryParam('is_login', WhereFilterOperandKeys.equal, true);
 
-    qp.push(emailAddressQuery);
+    queries.push(emailAddressQuery);
 
-    return this.fsDao.getCollectionGroup(this.emailAddressCollectionPath, qp);
+    const queryConstraints: QueryConstraint[] = queries.map((query) =>
+      where(query.field, query.operation, query.value),
+    );
+
+    const collectionGroupRef = collectionGroup(this.fsDao.db, this.emailAddressCollectionPath).withConverter({
+      toFirestore: null,
+      fromFirestore: this.fsDao.convertResponse,
+    });
+
+    const collectionGroupQuery = query(collectionGroupRef, ...queryConstraints);
+
+    return getDocs(collectionGroupQuery).then((collectionSnapshot: QuerySnapshot<any>): any => {
+      const items = collectionSnapshot.docs.map((document) => {
+        if (!document.exists()) {
+          return null;
+        }
+        const data = document.data();
+
+        const parentDbId = document?.ref?.parent?.parent?.id;
+        return { data, parentDbId };
+      });
+
+      return items;
+    });
   }
 
   private getCollectionPath(agentId: string) {

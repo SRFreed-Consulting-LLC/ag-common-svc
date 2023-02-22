@@ -20,10 +20,6 @@ import {
   SnapshotOptions,
   Timestamp,
   orderBy,
-  updateDoc,
-  startAfter,
-  startAt,
-  collectionGroup,
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
 import { fromEventPattern, Observable, Subject } from 'rxjs';
@@ -120,38 +116,6 @@ export class CommonFireStoreDao<T> {
           if (includeRef) {
             Object.assign(data, { [BaseModelKeys.firebaseRef]: document.ref });
           }
-
-          return data;
-        });
-
-        return items;
-      }),
-    );
-  }
-
-  public getCollectionGroup(table, queries: QueryParam[] = []) {
-    const queryConstraints: QueryConstraint[] = queries.map((query) =>
-      where(query.field, query.operation, query.value),
-    );
-    const collectionGroupRef = collectionGroup(this.db, table).withConverter({
-      toFirestore: null,
-      fromFirestore: this.convertResponse,
-    });
-
-    const collectionGroupQuery = query(collectionGroupRef, ...queryConstraints);
-
-    return fromEventPattern(
-      (handler) => onSnapshot(collectionGroupQuery, handler),
-      (handler, unsubscribe) => {
-        unsubscribe();
-      },
-    ).pipe(
-      map((collectionSnapshot: any) => {
-        const items = collectionSnapshot.docs.map((document) => {
-          if (!document.exists()) {
-            return null;
-          }
-          const data = document.data();
 
           return data;
         });
@@ -406,7 +370,7 @@ export class CommonFireStoreDao<T> {
     return deleteDoc(ref);
   }
 
-  private convertResponse = (snapshot: QueryDocumentSnapshot, options: SnapshotOptions): any => {
+  public convertResponse = (snapshot: QueryDocumentSnapshot, options: SnapshotOptions): any => {
     const isExist = snapshot.exists();
     if (!isExist) {
       return;

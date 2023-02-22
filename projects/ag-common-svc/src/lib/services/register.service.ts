@@ -7,18 +7,18 @@ import {
   AGENT_STATUS,
   BUSINESS_PERSONAL_TYPE,
   EmailAddress,
+  Goal,
   LogMessage,
   PhoneNumber,
   PhoneNumberType,
 } from 'ag-common-lib/public-api';
-import { AgentService, FireAuthDao } from 'ag-common-svc/public-api';
+
 import { UserCredential } from '@firebase/auth';
-import { Goal } from 'src/app/alliance-group/core/models/utils/goal.model';
 import { Role } from 'ag-common-lib/public-api';
-import { environment } from 'src/environments/environment';
-import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
-import { LoggerService } from 'ag-common-svc/lib/services/logger.service';
+import { FireAuthDao } from '../dao/FireAuthDao.dao';
+import { AgentService } from './agent.service';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
@@ -27,7 +27,6 @@ export class RegisterService {
   public showLoader = false;
 
   constructor(
-    public http: HttpClient,
     private authDao: FireAuthDao,
     private authService: AuthService,
     public router: Router,
@@ -181,33 +180,28 @@ export class RegisterService {
 
     this.authDao.register(registrationForm).then(
       (userCredential) => {
-        agent.registrationDate = new Date();
-        agent.uid = userCredential.user.uid;
-        agent.emailVerified = false;
-        agent.p_email = userCredential.user.email.toLowerCase();
-
-        //set correct 'is_login'
-        agent.email_addresses.forEach((email) => {
-          email.is_login = false;
-
-          if (email.address == agent.p_email) {
-            email.is_login = true;
-          }
-        });
-
-        this.toster.success('You are about to be logged out now...');
-
-        let url = environment.user_admin_url + '/' + agent.dbId + '/' + currentEmailAddress;
-
-        this.http.get(url).subscribe((response) => {
-          this.agentService.update(agent).then(() => {
-            this.logMessage('ACCOUNT-DELETE', currentEmailAddress, 'Auth Account Deleted', [
-              { ...agent },
-              { ...response },
-            ]);
-            this.authService.logOut();
-          });
-        });
+        // agent.registrationDate = new Date();
+        // agent.uid = userCredential.user.uid;
+        // agent.emailVerified = false;
+        // agent.p_email = userCredential.user.email.toLowerCase();
+        // //set correct 'is_login'
+        // agent.email_addresses.forEach((email) => {
+        //   email.is_login = false;
+        //   if (email.address == agent.p_email) {
+        //     email.is_login = true;
+        //   }
+        // });
+        // this.toster.success('You are about to be logged out now...');
+        // let url = environment.user_admin_url + '/' + agent.dbId + '/' + currentEmailAddress;
+        // this.http.get(url).subscribe((response) => {
+        //   this.agentService.update(agent).then(() => {
+        //     this.logMessage('ACCOUNT-DELETE', currentEmailAddress, 'Auth Account Deleted', [
+        //       { ...agent },
+        //       { ...response },
+        //     ]);
+        //     this.authService.logOut();
+        //   });
+        // });
       },
       (err) => {
         this.logMessage('REGISTRATION', agent.p_email, 'There was an error Updating your agent record. ', [

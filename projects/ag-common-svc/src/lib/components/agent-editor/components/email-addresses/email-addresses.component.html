@@ -42,7 +42,7 @@
         <i *ngIf="address.is_primary" class="dx-icon-check"></i>
       </div>
       <div class="col-2 text-center">
-        <i *ngIf="address.address | isLoginEmail : agentEmail" class="dx-icon-check"></i>
+        <i *ngIf="address.is_login" class="dx-icon-check"></i>
       </div>
     </div>
   </ng-container>
@@ -107,13 +107,7 @@
       <dxi-validation-rule type="required"></dxi-validation-rule>
     </dxi-column>
     <dxi-column dataField="is_primary" caption="Primary" dataType="boolean"></dxi-column>
-    <dxi-column
-      dataField="address"
-      caption="Login"
-      [showEditorAlways]="true"
-      [alignment]="'center'"
-      editCellTemplate="isLoginEmailEditorCellTmp"
-    ></dxi-column>
+    <dxi-column dataField="is_login" caption="Login" dataType="boolean"></dxi-column>
 
     <dxi-column type="buttons">
       <dxi-button name="edit"></dxi-button>
@@ -125,13 +119,5 @@
         [onClick]="setLoginEmail"
       ></dxi-button>
     </dxi-column>
-
-    <div *dxTemplate="let cellInfo of 'isLoginEmailEditorCellTmp'">
-      <dx-check-box
-        class="dx-datagrid-checkbox-size"
-        [value]="cellInfo.value | isLoginEmail : agentEmail"
-        [disabled]="true"
-      ></dx-check-box>
-    </div>
   </dx-data-grid>
 </ag-shr-modal-window>

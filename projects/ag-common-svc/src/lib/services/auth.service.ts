@@ -2,8 +2,15 @@ import { Inject, Injectable, InjectionToken, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { CookieService } from 'ngx-cookie-service';
-import { Agent, AGENT_STATUS, LogMessage } from 'ag-common-lib/public-api';
-import { getAuth, updateEmail, UserCredential } from 'firebase/auth';
+import { Agent, AgentKeys, AGENT_STATUS, LogMessage } from 'ag-common-lib/public-api';
+import {
+  EmailAuthProvider,
+  getAuth,
+  reauthenticateWithPopup,
+  updateEmail,
+  UserCredential,
+  verifyBeforeUpdateEmail,
+} from 'firebase/auth';
 import { mergeMap } from 'rxjs';
 import { addMinutes } from 'date-fns';
 import { FireAuthDao, ID_TOKEN_COOKIE_NAME } from '../dao/FireAuthDao.dao';
@@ -17,8 +24,6 @@ export const SESSION_EXPIRATION = new InjectionToken<number>('SESSION_EXPIRATION
   providedIn: 'root',
 })
 export class AuthService {
-  public showLoader = false;
-
   public showPWReset = false;
 
   constructor(
@@ -31,65 +36,61 @@ export class AuthService {
     public authDao: FireAuthDao,
     private cookieService: CookieService,
     private route: ActivatedRoute,
-    // private dashboardService: DashboardService,
     private loggerService: LoggerService,
     private agentService: AgentService,
   ) {}
 
-  public signInWithEmailAndPassword(email: string, password: string) {
+  public async signInWithEmailAndPassword(email: string, password: string) {
     this.cookieService.delete(this.idTokenCookieName);
-    this.showLoader = true;
 
-    return this.authDao
-      .signIn(email, password)
-      .then(
-        (result) => {
-          debugger;
-          return this.agentService.getAgentByAuthUID(result.user.uid).then((agent) => {
-            debugger;
-            if (!agent) {
-              this.logMessage('LOGIN', result.user.email, 'Could not find agent record for user').then((ec) => {
-                this.toster.error(
-                  'An Agent record matching that Email Address could not be found. Please contact Alliance Group for Assistance with this code:' +
-                    ec,
-                  'Login Error',
-                  { disableTimeOut: true },
-                );
-              });
-            } else {
-              if (agent.agent_status == AGENT_STATUS.APPROVED) {
-                this.logUserIntoPortal(result, agent);
-              } else {
-                this.logMessage('LOGIN', result.user.email, 'User exists but not green lighted. ', [
-                  { ...agent[0] },
-                ]).then((ec) => {
-                  this.toster.error(
-                    'Your portal access status is under review. Please try again in 24-48 hours. If you believe you have reached this message in error, please contact Alliance Group for Assistance with this code:' +
-                      ec,
-                    'Login Error',
-                    { disableTimeOut: true },
-                  );
-                });
-              }
-            }
+    try {
+      const userCredentials = await this.authDao.signIn(email, password);
+      const agent = await this.agentService.getAgentByAuthUID(userCredentials.user.uid);
+
+      if (!agent) {
+        this.logMessage('LOGIN', userCredentials.user.email, 'Could not find agent record for user').then((ec) => {
+          this.toster.error(
+            'An Agent record matching that Email Address could not be found. Please contact Alliance Group for Assistance with this code:' +
+              ec,
+            'Login Error',
+            { disableTimeOut: true },
+          );
+        });
+        return;
+      }
+
+      if (agent.agent_status !== AGENT_STATUS.APPROVED) {
+        this.logMessage('LOGIN', userCredentials.user.email, 'User exists but not green lighted. ', [
+          { ...agent[0] },
+        ]).then((ec) => {
+          this.toster.error(
+            'Your portal access status is under review. Please try again in 24-48 hours. If you believe you have reached this message in error, please contact Alliance Group for Assistance with this code:' +
+              ec,
+            'Login Error',
+            { disableTimeOut: true },
+          );
+        });
+      }
+
+      await this.logUserIntoPortal(userCredentials, agent);
+    } catch (error) {
+      switch (error.code) {
+        case 'auth/wrong-password':
+          this.logMessage('LOGIN', email, 'You have entered an incorrect password for this email address.', [
+            { ...error },
+          ]).then((ec) => {
+            this.toster.error(
+              'You have entered an incorrect password for this email address. If you have forgotten your password, enter your Email Address and press the "Forgot Password" button. If the problem continues, please contact Alliance Group for assistance with this code: ' +
+                ec,
+              'Login Error',
+              { disableTimeOut: true },
+            );
           });
-        },
-        (error) => {
-          if (error.code == 'auth/wrong-password') {
-            this.logMessage('LOGIN', email, 'You have entered an incorrect password for this email address.', [
-              { ...error },
-            ]).then((ec) => {
-              this.toster.error(
-                'You have entered an incorrect password for this email address. If you have forgotten your password, enter your Email Address and press the "Forgot Password" button. If the problem continues, please contact Alliance Group for assistance with this code: ' +
-                  ec,
-                'Login Error',
-                { disableTimeOut: true },
-              );
-            });
-          } else if (error.code == 'auth/user-not-found') {
-            this.logMessage('LOGIN', email, 'The email address (' + email + ') is not recognized.', [
-              { ...error },
-            ]).then((ec) => {
+          break;
+
+        case 'auth/user-not-found':
+          this.logMessage('LOGIN', email, 'The email address (' + email + ') is not recognized.', [{ ...error }]).then(
+            (ec) => {
               this.toster.error(
                 'The email address (' +
                   email +
@@ -98,84 +99,83 @@ export class AuthService {
                 'Login Error',
                 { disableTimeOut: true },
               );
-            });
-          } else if (error.code == 'auth/too-many-requests') {
-            this.logMessage('LOGIN', email, 'Too many failed attempts. The account is temporarily locked.', [
-              { ...error },
-            ]).then((ec) => {
-              this.toster.error(
-                'There have been too many failed logins to this account. Please reset your password by going to the login screen, entering your password, and pressing the "Forgot Password" button. If the problem continues, please contact Alliance Group for assistance with this code: ' +
-                  ec,
-                'Login Error',
-                { disableTimeOut: true },
-              );
-            });
-          } else {
-            this.logMessage(
-              'LOGIN',
-              email,
-              'Unknown Error loggin in with the email address (' +
-                email +
-                '). Check Error details for more information',
-              [{ ...error }],
-            ).then((ec) => {
-              this.toster.error(
-                'There was an Error accessing your account. Please contact Alliance Group for Assistance with this code: ' +
-                  ec,
-                'Login Error',
-                { disableTimeOut: true },
-              );
-            });
-          }
-        },
-      )
-      .finally(() => (this.showLoader = false));
+            },
+          );
+          break;
+
+        case 'auth/too-many-requests':
+          this.logMessage('LOGIN', email, 'Too many failed attempts. The account is temporarily locked.', [
+            { ...error },
+          ]).then((ec) => {
+            this.toster.error(
+              'There have been too many failed logins to this account. Please reset your password by going to the login screen, entering your password, and pressing the "Forgot Password" button. If the problem continues, please contact Alliance Group for assistance with this code: ' +
+                ec,
+              'Login Error',
+              { disableTimeOut: true },
+            );
+          });
+          break;
+
+        default:
+          this.logMessage(
+            'LOGIN',
+            email,
+            'Unknown Error loggin in with the email address (' + email + '). Check Error details for more information',
+            [{ ...error }],
+          ).then((ec) => {
+            this.toster.error(
+              'There was an Error accessing your account. Please contact Alliance Group for Assistance with this code: ' +
+                ec,
+              'Login Error',
+              { disableTimeOut: true },
+            );
+          });
+          break;
+      }
+    }
   }
 
-  private logUserIntoPortal(authResult: UserCredential, agent: Agent) {
+  private async logUserIntoPortal(authResult: UserCredential, agent: Agent) {
+    const updates = {
+      [AgentKeys.login_count]: Number.isInteger(agent?.login_count) ? agent?.login_count + 1 : 1,
+      [AgentKeys.last_login_date]: new Date(),
+    };
     //if the user has never logged in before
     if (!agent.logged_in) {
-      agent.logged_in = true;
-      agent.first_login_date = new Date();
-      agent.login_count = 0;
-      agent.uid = authResult.user.uid;
-
-      if (isNaN(+agent.login_count)) {
-        agent.login_count = 0;
-      }
+      Object.assign(updates, {
+        [AgentKeys.logged_in]: true,
+        [AgentKeys.first_login_date]: new Date(),
+      });
     }
 
     //if(user has been verified, but not set in db)
     if (authResult.user.emailVerified && !agent.emailVerified) {
       agent.emailVerified = true;
+      Object.assign(updates, {
+        [AgentKeys.emailVerified]: true,
+      });
     }
 
-    //set last login date and increment login count
-    agent.last_login_date = new Date();
+    await this.agentService.updateFields(agent?.dbId, updates);
 
-    agent.login_count = agent.login_count + 1;
+    agent.showSplashScreen = true;
 
-    this.agentService.update(agent).then(() => {
-      agent.showSplashScreen = true;
+    if (!authResult.user.emailVerified && !agent.emailVerified) {
+      this.ngZone.run(() => {
+        this.router.navigate(['auth', 'register-landing']);
+      });
+      return;
+    }
 
-      if (!authResult.user.emailVerified && !agent.emailVerified) {
-        this.ngZone.run(() => {
-          this.router.navigate(['auth', 'register-landing']);
-        });
-      } else {
-        this.setAuthExpirationTime().then(() => {
-          let destination: string = 'dashboard';
-          if (this.route.snapshot.queryParamMap.has('returnUrl')) {
-            destination = this.route.snapshot.queryParamMap.get('returnUrl');
-          }
+    await this.setAuthExpirationTime();
 
-          this.ngZone.run(() => {
-            this.router.navigate([destination]);
-          });
+    let destination: string = 'dashboard';
+    if (this.route.snapshot.queryParamMap.has('returnUrl')) {
+      destination = this.route.snapshot.queryParamMap.get('returnUrl');
+    }
 
-          this.showLoader = false;
-        });
-      }
+    this.ngZone.run(() => {
+      this.router.navigate([destination]);
     });
   }
 
@@ -189,7 +189,6 @@ export class AuthService {
     return this.authDao
       .signOut()
       .then(() => {
-        this.showLoader = false;
         this.router.navigate(['auth', 'login']);
       })
       .catch((error) => {
@@ -226,29 +225,30 @@ export class AuthService {
     return Promise.reject();
   }
 
-  changeUserEmail(email: string) {
+  async changeUserEmail(email: string) {
+    debugger;
     let auth = getAuth();
-    return this.authDao.currentUser$.pipe(
-      mergeMap((user) => {
-        return user.getIdToken();
-      }),
-      mergeMap((token) => {
-        this.cookieService.set(
-          this.idTokenCookieName,
-          token,
-          addMinutes(new Date(), this.sessionExpiration),
-          '/',
-          this.domain,
-          false,
-          'Lax',
-        );
-        return updateEmail(auth.currentUser, email);
-      }),
-    );
-  }
+    const currentUser = auth.currentUser;
+    const provider = new EmailAuthProvider();
+    const userCredantials = await reauthenticateWithPopup(currentUser, provider);
+    return updateEmail(auth.currentUser, email);
 
-  public getLoadingStatus() {
-    return this.showLoader;
+    // return this.authDao.currentUser$.pipe(
+    //   mergeMap((user) => {
+    //     return user.getIdToken();
+    //   }),
+    //   mergeMap((token) => {
+    //     this.cookieService.set(
+    //       this.idTokenCookieName,
+    //       token,
+    //       addMinutes(new Date(), this.sessionExpiration),
+    //       '/',
+    //       this.domain,
+    //       false,
+    //       'Lax',
+    //     );
+    //   }),
+    // );
   }
 
   private logMessage(type: string, created_by: string, message: string, data?: any) {

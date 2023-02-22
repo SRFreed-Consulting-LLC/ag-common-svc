@@ -13,7 +13,6 @@ export class LookupDescriptionPipe implements PipeTransform {
       map((item) => {
         if (item?.exists()) {
           const data = item.data();
-          debugger;
           return data?.description;
         }
         return '';

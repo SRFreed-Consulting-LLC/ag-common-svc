@@ -34,6 +34,7 @@ export class AssociationsComponent {
   public associations$: Observable<DataSource>;
   public associationFormData: Association;
   public relationshipTypeLookup$: Observable<ActiveLookup[]>;
+  public selectedGender$: BehaviorSubject<Lookup>;
   public selectedTShortSize$: BehaviorSubject<Lookup>;
   public selectedUnisexTShortSize$: BehaviorSubject<Lookup>;
   public selectedDietaryConsiderationType$: BehaviorSubject<Lookup>;
@@ -48,6 +49,7 @@ export class AssociationsComponent {
   ) {
     this.relationshipTypeLookup$ = this.lookupsService.associationTypeLookup$;
     this.inProgress$ = this.associationFormService.inProgress$;
+    this.selectedGender$ = associationFormService.selectedGender$;
     this.selectedTShortSize$ = associationFormService.selectedTShortSize$;
     this.selectedUnisexTShortSize$ = associationFormService.selectedUnisexTShortSize$;
     this.selectedDietaryConsiderationType$ = associationFormService.selectedDietaryConsiderationType$;
@@ -107,6 +109,10 @@ export class AssociationsComponent {
     return this.phoneNumberMaskPipe.matcher(association?.contact_number);
   };
 
+  public handleGenderSelect = (item) => {
+    this.selectedGender$.next(item);
+  };
+
   public handleTShortSizeSelect = (item) => {
     this.selectedTShortSize$.next(item);
   };
@@ -120,8 +126,11 @@ export class AssociationsComponent {
   };
 
   public calculateNameDisplayValue = (association: Association) => {
+    return [association?.first_name, association?.last_name].filter(Boolean).join(' ');
+  };
+  public calculateNickNameDisplayValue = (association: Association) => {
     const nick = [association?.p_nick_first_name, association?.p_nick_last_name].filter(Boolean).join(' ');
 
-    return [association?.first_name, nick && `"${nick}"`, association?.last_name].filter(Boolean).join(' ');
+    return nick ? `"${nick}"` : '';
   };
 }

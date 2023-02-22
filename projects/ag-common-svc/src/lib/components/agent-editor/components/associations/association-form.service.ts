@@ -16,6 +16,7 @@ export class AssociationFormService {
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);
 
+  public selectedGender$ = new BehaviorSubject(null);
   public selectedTShortSize$ = new BehaviorSubject(null);
   public selectedUnisexTShortSize$ = new BehaviorSubject(null);
   public selectedDietaryConsiderationType$ = new BehaviorSubject(null);
@@ -70,7 +71,7 @@ export class AssociationFormService {
     this.formData = new Proxy(initialTaskTemplate, {
       set: (target, prop, value, receiver) => {
         const prevValue = target[prop];
-
+        debugger;
         const comparator = this.getComparator(prop);
         const isEqualToPrev = comparator ? comparator(value, prevValue) : false;
 
@@ -135,6 +136,7 @@ export class AssociationFormService {
 
   private onSuccess = () => {
     const assignedLookups = [
+      this.selectedGender$.value,
       this.selectedTShortSize$.value,
       this.selectedUnisexTShortSize$.value,
       this.selectedDietaryConsiderationType$?.value

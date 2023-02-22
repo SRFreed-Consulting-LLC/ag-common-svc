@@ -7,9 +7,19 @@ export class PhoneNumberMaskPipe implements PipeTransform {
     if (!phoneNumber || !phoneNumber?.number) {
       return '';
     }
-    const matcher = phoneNumber?.number.match(/(\d{3})(\d{3})(\d{4})/);
-    const number = matcher ? `(${matcher[1]}) ${matcher[2]} - ${matcher[3]}` : phoneNumber?.number;
+
+    const number = this.matcher(phoneNumber?.number);
 
     return `${number} ${showExtension && phoneNumber?.extension ? ` (ext. ${phoneNumber?.extension})` : ''}`;
   }
+
+  public matcher = (number) => {
+    if (!number) {
+      return '';
+    }
+    const matcher = number.match(/(\d{3})(\d{3})(\d{4})/);
+    const maskedNumber = matcher ? `(${matcher[1]}) ${matcher[2]} - ${matcher[3]}` : number;
+
+    return maskedNumber;
+  };
 }

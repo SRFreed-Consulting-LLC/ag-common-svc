@@ -9,75 +9,194 @@
   (onSaveClick)="handleSaveAssociation($event)"
   (onPopupClose)="handleAssociationFormPopupClose($event)"
 >
-  <dx-form #associationFormRef [formData]="associationFormData" [colCount]="12" labelMode="floating">
-    <dxi-item dataField="first_name" [label]="{ text: 'First Name' }" [colSpan]="6"></dxi-item>
-    <dxi-item dataField="last_name" [label]="{ text: 'Last Name' }" [colSpan]="6"></dxi-item>
-    <dxi-item dataField="email_address" [label]="{ text: 'Email Address' }" [colSpan]="6"></dxi-item>
-    <dxi-item
-      dataField="contact_number"
-      [label]="{ text: 'Phone Number' }"
-      [colSpan]="6"
-      [editorOptions]="{ mask: '(000) 000-0000' }"
-    >
-      <dxi-validation-rule
-        type="stringLength"
-        [min]="10"
-        [max]="10"
-        [ignoreEmptyValue]="true"
-        [trim]="true"
-        message="Please enter 10 digits for Phone Number"
+  <dx-form
+    #associationFormRef
+    *ngIf="!!associationFormData"
+    [formData]="associationFormData"
+    labelMode="floating"
+    [validationGroup]="validationGroup"
+  >
+    <dxi-item itemType="group" caption="Main Info" [colCount]="12">
+      <dxi-item [colSpan]="6">
+        <div *dxTemplate>
+          <dx-select-box
+            [label]="'Relationship Type'"
+            [labelMode]="'floating'"
+            [value]="associationFormData?.associationTypeRef?.id"
+            (onSelectionChanged)="onRelationshipTypeSelectionChanged($event)"
+            [dataSource]="relationshipTypeLookup$ | async"
+            [valueExpr]="BaseModelKeys.dbId"
+            [displayExpr]="LookupKeys.description"
+            [searchEnabled]="true"
+            [placeholder]="''"
+          >
+            <dxi-button name="dropDown"></dxi-button>
+          </dx-select-box>
+        </div>
+      </dxi-item>
+
+      <dxi-item
+        dataField="is_emergency_contact"
+        [label]="{ text: 'Is Emergency Contact?' }"
+        [alignItemLabels]="'left'"
+        [colSpan]="6"
+        editorType="dxSwitch"
+        [editorOptions]="{ switchedOffText: 'false', switchedOnText: 'true' }"
+      ></dxi-item>
+
+      <dxi-item dataField="first_name" [label]="{ text: 'First Name' }" [colSpan]="6"></dxi-item>
+
+      <dxi-item dataField="last_name" [label]="{ text: 'Last Name' }" [colSpan]="6"></dxi-item>
+
+      <dxi-item dataField="email_address" [label]="{ text: 'Email Address' }" [colSpan]="6"></dxi-item>
+
+      <dxi-item
+        dataField="contact_number"
+        [label]="{ text: 'Phone Number' }"
+        [colSpan]="6"
+        [editorOptions]="{ mask: '(000) 000-0000' }"
       >
-      </dxi-validation-rule>
-    </dxi-item>
-    <dxi-item dataField="address.address1" [label]="{ text: 'Address 1' }" [colSpan]="6"></dxi-item>
-    <dxi-item dataField="address.address2" [label]="{ text: 'Address 2' }" [colSpan]="6"></dxi-item>
-    <dxi-item dataField="address.city" [label]="{ text: 'City' }" [colSpan]="4"></dxi-item>
-    <dxi-item dataField="address.state" [colSpan]="4">
-      <div *dxTemplate>
-        <ag-shr-state-select-box [value]="associationFormData?.address?.state" (valueChange)="setState($event)">
-        </ag-shr-state-select-box>
-      </div>
-    </dxi-item>
-    <dxi-item dataField="address.zip" [label]="{ text: 'Zip Code' }" [colSpan]="4"></dxi-item>
-    <dxi-item
-      dataField="address.country"
-      [label]="{ text: 'Country' }"
-      editorType="dxSelectBox"
-      [editorOptions]="{
-        acceptCustomValue: true,
-        items: countries,
-        valueExpr: 'name',
-        displayExpr: 'name',
-        searchEnabled: true,
-        placeholder: ''
-      }"
-      [colSpan]="4"
-    ></dxi-item>
-    <dxi-item dataField="address.county" [label]="{ text: 'County' }" [colSpan]="4"></dxi-item>
-    <dxi-item
-      dataField="is_emergency_contact"
-      [label]="{ text: 'Is Emergency Contact?' }"
-      [alignItemLabels]="'left'"
-      [colSpan]="4"
-      editorType="dxSwitch"
-      [editorOptions]="{ switchedOffText: 'false', switchedOnText: 'true' }"
-    ></dxi-item>
-    <dxi-item [colSpan]="4">
-      <div *dxTemplate>
-        <dx-select-box
-          [label]="'Relationship Type'"
-          [labelMode]="'floating'"
-          [value]="associationFormData?.associationTypeRef?.id"
-          (onSelectionChanged)="onRelationshipTypeSelectionChanged($event)"
-          [dataSource]="relationshipTypeLookup$ | async"
-          [valueExpr]="BaseModelKeys.dbId"
-          [displayExpr]="LookupKeys.description"
-          [searchEnabled]="true"
-          [placeholder]="''"
+        <dxi-validation-rule
+          type="stringLength"
+          [min]="10"
+          [max]="10"
+          [ignoreEmptyValue]="true"
+          [trim]="true"
+          message="Please enter 10 digits for Phone Number"
         >
-          <dxi-button name="dropDown"></dxi-button>
-        </dx-select-box>
-      </div>
+        </dxi-validation-rule>
+      </dxi-item>
+
+      <dxi-item dataField="p_nick_first_name" [label]="{ text: 'Nick Name First' }" [colSpan]="6"></dxi-item>
+
+      <dxi-item dataField="p_nick_last_name" [label]="{ text: 'Nick Name Last' }" [colSpan]="6"></dxi-item>
+
+      <dxi-item itemType="group" [colSpan]="6" [colCount]="(selectedTShortSize$?.value | otherSize) ? 2 : 1">
+        <dxi-item dataField="tshirt_size">
+          <div *dxTemplate>
+            <ag-shr-t-short-size-select-box
+              [label]="'T-Shirt Size'"
+              [(value)]="associationFormData.tshirt_size"
+              (selectedItemChange)="handleTShortSizeSelect($event)"
+            ></ag-shr-t-short-size-select-box>
+          </div>
+        </dxi-item>
+
+        <dxi-item
+          dataField="tshirt_size_other"
+          [isRequired]="!!(selectedTShortSize$?.value | otherSize)"
+          [visible]="!!(selectedTShortSize$?.value | otherSize)"
+        >
+          <dxo-label [text]="'T-Shirt Size Other'"></dxo-label>
+        </dxi-item>
+      </dxi-item>
+
+      <dxi-item itemType="group" [colSpan]="6" [colCount]="(selectedUnisexTShortSize$?.value | otherSize) ? 2 : 1">
+        <dxi-item dataField="unisex_tshirt_size">
+          <div *dxTemplate>
+            <ag-shr-t-short-size-select-box
+              [label]="'Unisex T-Shirt Size'"
+              [(value)]="associationFormData.unisex_tshirt_size"
+              (selectedItemChange)="handleUnisexTShortSizeSelect($event)"
+            ></ag-shr-t-short-size-select-box>
+          </div>
+        </dxi-item>
+
+        <dxi-item
+          dataField="unisex_tshirt_size_other"
+          [isRequired]="!!(selectedUnisexTShortSize$?.value | otherSize)"
+          [visible]="!!(selectedUnisexTShortSize$?.value | otherSize)"
+        >
+          <dxo-label [text]="'Unisex T-Shirt Size Other'"></dxo-label>
+        </dxi-item>
+      </dxi-item>
+    </dxi-item>
+
+    <dxi-item itemType="group" caption="Address" [colCount]="12">
+      <dxi-item dataField="address.address1" [label]="{ text: 'Address 1' }" [colSpan]="6"></dxi-item>
+      <dxi-item dataField="address.address2" [label]="{ text: 'Address 2' }" [colSpan]="6"></dxi-item>
+      <dxi-item dataField="address.city" [label]="{ text: 'City' }" [colSpan]="6"></dxi-item>
+      <dxi-item dataField="address.state" [colSpan]="3">
+        <div *dxTemplate>
+          <ag-shr-state-select-box [value]="associationFormData?.address?.state" (valueChange)="setState($event)">
+          </ag-shr-state-select-box>
+        </div>
+      </dxi-item>
+      <dxi-item dataField="address.zip" [label]="{ text: 'Zip Code' }" [colSpan]="3"></dxi-item>
+      <dxi-item
+        dataField="address.country"
+        [label]="{ text: 'Country' }"
+        editorType="dxSelectBox"
+        [editorOptions]="{
+          acceptCustomValue: true,
+          items: countries,
+          valueExpr: 'name',
+          displayExpr: 'name',
+          searchEnabled: true,
+          placeholder: ''
+        }"
+        [colSpan]="6"
+      ></dxi-item>
+      <dxi-item dataField="address.county" [label]="{ text: 'County' }" [colSpan]="6"></dxi-item>
+    </dxi-item>
+
+    <dxi-item itemType="group" caption="Dietary Considerations" [colCount]="2">
+      <dxi-item
+        dataField="dietary_or_personal_considerations"
+        editorType="dxSelectBox"
+        [editorOptions]="{ items: ['Yes', 'No'] }"
+      >
+        <dxo-label [text]="'Do you have a Dietary or Personal Consideration?'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item
+        dataField="dietary_consideration_type"
+        [isRequired]="
+          associationFormData?.dietary_or_personal_considerations &&
+          associationFormData?.dietary_or_personal_considerations === 'Yes'
+        "
+      >
+        <dxo-label [text]="'Type of Dietary or Personal Consideration'"></dxo-label>
+
+        <div *dxTemplate>
+          <ag-shr-dietary-consideration-type-select-box
+            [readOnly]="
+              !associationFormData?.dietary_or_personal_considerations ||
+              associationFormData?.dietary_or_personal_considerations !== 'Yes'
+            "
+            [isRequired]="
+              associationFormData?.dietary_or_personal_considerations &&
+              associationFormData?.dietary_or_personal_considerations === 'Yes'
+            "
+            [validationGroup]="validationGroup"
+            (selectedItemChange)="handleDietaryConsiderationTypeSelect($event)"
+            [(value)]="associationFormData.dietary_consideration_type"
+          ></ag-shr-dietary-consideration-type-select-box>
+        </div>
+      </dxi-item>
+
+      <dxi-item
+        dataField="dietary_consideration"
+        editorType="dxTextArea"
+        [colSpan]="2"
+        [editorOptions]="{
+          height: 200,
+          readOnly:
+            !associationFormData?.dietary_or_personal_considerations ||
+            associationFormData?.dietary_or_personal_considerations !== 'Yes'
+        }"
+      >
+        <dxo-label [text]="'Description of Consideration(s)'"></dxo-label>
+        <dxi-validation-rule
+          *ngIf="
+            associationFormData?.dietary_or_personal_considerations &&
+            associationFormData?.dietary_or_personal_considerations === 'Yes'
+          "
+          type="required"
+          message="Required field"
+        >
+        </dxi-validation-rule>
+      </dxi-item>
     </dxi-item>
   </dx-form>
 </ag-shr-modal-window>
@@ -95,7 +214,7 @@
     [showBorders]="isEdit"
     [showColumnLines]="isEdit"
     [columnAutoWidth]="false"
-    [wordWrapEnabled]="true"
+    [wordWrapEnabled]="isEdit"
     [rowAlternationEnabled]="false"
     (onRowRemoving)="onRowRemoving($event)"
     height="100%"
@@ -128,16 +247,18 @@
     <dxo-editing mode="popup" [useIcons]="true" [allowUpdating]="false" [allowDeleting]="true" [allowAdding]="false">
     </dxo-editing>
 
-    <dxi-column dataField="first_name" caption="First Name"></dxi-column>
-    <dxi-column dataField="last_name" caption="Last Name"></dxi-column>
-    <dxi-column dataField="email_address" caption="Email Address"></dxi-column>
-    <dxi-column dataField="contact_number" caption="Contact Number" cellTemplate="contactNumberCellTemplate">
-    </dxi-column>
-    <div *dxTemplate="let data of 'contactNumberCellTemplate'">
-      {{ data.displayValue | phoneNumberMask }}
-    </div>
+    <dxi-column caption="Name" [calculateDisplayValue]="calculateNameDisplayValue"></dxi-column>
 
-    <dxi-column dataField="associationTypeRef.id" caption="Relationship">
+    <dxi-column dataField="email_address" [width]="150" caption="Email Address"></dxi-column>
+    <dxi-column
+      dataField="contact_number"
+      [width]="150"
+      caption="Contact Number"
+      [calculateDisplayValue]="calculateContactNumberDisplayValue"
+    >
+    </dxi-column>
+
+    <dxi-column dataField="associationTypeRef.id" [width]="150" caption="Relationship">
       <dxo-lookup
         [dataSource]="relationshipTypeLookup$ | async"
         [valueExpr]="BaseModelKeys.dbId"
@@ -145,9 +266,35 @@
       ></dxo-lookup>
     </dxi-column>
 
+    <dxi-column [width]="150" cellTemplate="tShirtSizeCellTemplate" [caption]="'T-Shirt Size'"></dxi-column>
+    <div *dxTemplate="let cell of 'tShirtSizeCellTemplate'" class="associations__address-container">
+      {{ cell?.data?.tshirt_size | tShortSize | async }}
+      <span *ngIf="cell?.data?.tshirt_size_other as tShirtSizeOther">/ {{ tShirtSizeOther }}</span>
+    </div>
+
+    <dxi-column
+      [width]="150"
+      cellTemplate="unisexTShirtSizeCellTemplate"
+      [caption]="'Unisex T-Shirt Size'"
+    ></dxi-column>
+    <div *dxTemplate="let cell of 'unisexTShirtSizeCellTemplate'" class="associations__address-container">
+      {{ cell?.data?.unisex_tshirt_size | tShortSize | async }}
+      <span *ngIf="cell?.data?.unisex_tshirt_size_other as tShirtSizeOther">/ {{ tShirtSizeOther }}</span>
+    </div>
+
     <dxi-column dataField="address" cellTemplate="addressCellTemplate" [caption]="'Address'"></dxi-column>
-    <div *dxTemplate="let data of 'addressCellTemplate'" title="{{ data.displayValue | fullAddress }}">
+    <div
+      *dxTemplate="let data of 'addressCellTemplate'"
+      title="{{ data.displayValue | fullAddress }}"
+      class="associations__address-container"
+    >
       {{ data.displayValue | fullAddress }}
+    </div>
+
+    <dxi-column cellTemplate="considerationCellTemplate" [caption]="'Consideration(s)'"></dxi-column>
+    <div *dxTemplate="let cell of 'considerationCellTemplate'" class="associations__address-container">
+      {{ cell?.data?.dietary_consideration_type | dietaryConsiderationType | async }}
+      <span *ngIf="cell?.data?.dietary_consideration as consideration">/ {{ consideration }}</span>
     </div>
 
     <dxi-column

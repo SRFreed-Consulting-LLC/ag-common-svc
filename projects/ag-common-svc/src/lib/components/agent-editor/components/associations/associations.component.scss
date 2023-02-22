@@ -37,4 +37,9 @@
       }
     }
   }
+
+  &__address-container {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }

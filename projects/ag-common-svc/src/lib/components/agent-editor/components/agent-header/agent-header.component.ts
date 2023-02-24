@@ -8,6 +8,7 @@ import { DropZoneComponent } from '../../../drop-zone/drop-zone.component';
 import { PhoneNumberMaskPipe } from '../../../../../shared/pipes/phone-number-mask.pipe';
 import { FullAddressPipe } from '../../../../../shared/pipes/full-address.pipe';
 import { AgentHeaderKeys } from './agent-header.model';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'ag-shr-agent-header',
@@ -48,8 +49,9 @@ export class AgentHeadersComponent {
     this.selectedSuffix$ = agentHeaderService.selectedSuffix$;
   }
 
-  public saveAgentProfileImagesUpdates = () => {
-    if (this.profilePictureDropZoneComponent.isImageValid) {
+  public saveAgentProfileImagesUpdates = async () => {
+    const isImageValid = await this.profilePictureDropZoneComponent.isImageValid$.pipe(take(1)).toPromise();
+    if (isImageValid) {
       this.agentHeaderService.handleSave(this.agent[BaseModelKeys.dbId]).then((data) => {
         this.onFieldsUpdated.emit(data);
         this.agentProfilePictureModalComponent.hideModal();
@@ -86,5 +88,9 @@ export class AgentHeadersComponent {
 
   public handleSuffixSelect = (item) => {
     this.selectedSuffix$.next(item);
+  };
+
+  public phoneNumberDisplayExpr = (item) => {
+    return this.phoneNumberMaskPipe.transform(item, true);
   };
 }

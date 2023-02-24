@@ -291,13 +291,13 @@
       ></dxo-lookup>
     </dxi-column>
 
-    <dxi-column dataField="dob" [caption]="'Date Of Birth'" [allowHiding]="true" [hidingPriority]="5"></dxi-column>
+    <dxi-column dataField="dob" [caption]="'Date Of Birth'" [allowHiding]="true" [hidingPriority]="4"></dxi-column>
 
     <dxi-column
       dataField="gender"
       [caption]="'Gender'"
       [allowHiding]="true"
-      [hidingPriority]="6"
+      [hidingPriority]="5"
       cellTemplate="genderCellTemplate"
     ></dxi-column>
     <div *dxTemplate="let cell of 'genderCellTemplate'" class="associations__address-container">
@@ -333,7 +333,7 @@
       cellTemplate="addressCellTemplate"
       [caption]="'Address'"
       [allowHiding]="true"
-      [hidingPriority]="4"
+      [hidingPriority]="7"
     ></dxi-column>
     <div
       *dxTemplate="let data of 'addressCellTemplate'"
@@ -347,7 +347,7 @@
       cellTemplate="considerationCellTemplate"
       [caption]="'Consideration(s)'"
       [allowHiding]="true"
-      [hidingPriority]="7"
+      [hidingPriority]="6"
     ></dxi-column>
     <div *dxTemplate="let cell of 'considerationCellTemplate'" class="associations__address-container">
       {{ cell?.data?.dietary_consideration_type | dietaryConsiderationType | async }}

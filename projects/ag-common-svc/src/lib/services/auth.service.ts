@@ -11,7 +11,7 @@ import {
   UserCredential,
   verifyBeforeUpdateEmail,
 } from 'firebase/auth';
-import { mergeMap } from 'rxjs';
+import { lastValueFrom, mergeMap, take } from 'rxjs';
 import { addMinutes } from 'date-fns';
 import { FireAuthDao, ID_TOKEN_COOKIE_NAME } from '../dao/FireAuthDao.dao';
 import { LoggerService } from './logger.service';
@@ -45,7 +45,8 @@ export class AuthService {
 
     try {
       const userCredentials = await this.authDao.signIn(email, password);
-      const agent = await this.agentService.getAgentByAuthUID(userCredentials.user.uid);
+
+      const agent = await lastValueFrom(this.authDao.currentAgent$.pipe(take(1)));
 
       if (!agent) {
         this.logMessage('LOGIN', userCredentials.user.email, 'Could not find agent record for user').then((ec) => {

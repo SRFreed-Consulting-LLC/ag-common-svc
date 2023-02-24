@@ -8,7 +8,13 @@ import {
   LookupKeys,
   Lookups,
 } from 'ag-common-lib/public-api';
-import { getFunctions, HttpsCallable, httpsCallable, HttpsCallableResult } from 'firebase/functions';
+import {
+  getFunctions,
+  HttpsCallable,
+  httpsCallable,
+  HttpsCallableOptions,
+  HttpsCallableResult,
+} from 'firebase/functions';
 import { ToastrService } from 'ngx-toastr';
 import { AgentService } from '../../../../services/agent.service';
 import { BehaviorSubject, firstValueFrom, lastValueFrom, Observable } from 'rxjs';
@@ -62,6 +68,7 @@ export class EmailAddressesComponent {
     private agentEmailAddressesService: AgentEmailAddressesService,
   ) {
     const functions = getFunctions(fireBaseApp);
+
     this.updateUserLoginEmail = httpsCallable(functions, 'updateUserLoginEmail');
 
     this.emailTypeLookup$ = lookupsService.emailTypeLookup$.pipe(

@@ -10,6 +10,7 @@ import {
   browserSessionPersistence,
   createUserWithEmailAndPassword,
   getAuth,
+  IdTokenResult,
   sendEmailVerification,
   sendPasswordResetEmail,
   setPersistence,
@@ -30,6 +31,7 @@ import {
   Observable,
   of,
   shareReplay,
+  tap,
 } from 'rxjs';
 
 import { FIREBASE_APP } from '../injections/firebase-app';
@@ -75,20 +77,15 @@ export class FireAuthDao {
     );
 
     this.loggedInAgent$ = this.currentUser$.pipe(
-      filter(Boolean),
-      mergeMap((user: User) => {
-        const qp: QueryParam[] = [];
-
-        if (!!user) {
-          qp.push(new QueryParam(AgentKeys.uid, WhereFilterOperandKeys.equal, user.uid));
-        }
-        return this.agentService.getList(qp);
+      tap((currentUser) => {
+        console.log('loggedInAgent currentUser', currentUser);
       }),
-      map((agents) => {
-        if (!Array.isArray(agents) || agents?.length !== 1) {
-          throw new Error('More than 1 agent found with this email address');
-        }
-        return agents[0];
+      filter(Boolean),
+      mergeMap((user: User) => user.getIdTokenResult()),
+      mergeMap((idTokenResult: IdTokenResult) => {
+        const claims = idTokenResult?.claims;
+        debugger;
+        return this.agentService.getById(claims?.agentId);
       }),
       shareReplay(1),
     );

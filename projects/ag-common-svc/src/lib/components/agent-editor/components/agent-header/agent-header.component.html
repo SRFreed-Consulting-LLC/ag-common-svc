@@ -155,7 +155,7 @@
       [dataField]="AgentHeaderKeys.primaryPhoneNumber"
       [editorOptions]="{
         items: agentHeaderFormDetails.phone_numbers,
-        displayExpr: phoneNumberMaskPipe.transform,
+        displayExpr: phoneNumberDisplayExpr,
         searchEnabled: true,
         placeholder: ''
       }"

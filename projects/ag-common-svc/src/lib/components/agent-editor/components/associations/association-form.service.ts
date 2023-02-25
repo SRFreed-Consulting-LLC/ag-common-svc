@@ -71,7 +71,6 @@ export class AssociationFormService {
     this.formData = new Proxy(initialTaskTemplate, {
       set: (target, prop, value, receiver) => {
         const prevValue = target[prop];
-        debugger;
         const comparator = this.getComparator(prop);
         const isEqualToPrev = comparator ? comparator(value, prevValue) : false;
 

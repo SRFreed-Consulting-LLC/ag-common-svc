@@ -17,6 +17,7 @@ export class GenderSelectBoxComponent {
   @Input() labelMode: 'static' | 'floating' | 'hidden' = 'floating';
   @Input() value: any;
   @Output() valueChange = new EventEmitter();
+  @Output() selectedItemChange = new EventEmitter();
 
   public gendersLookup$: Observable<ActiveLookup[]>;
 

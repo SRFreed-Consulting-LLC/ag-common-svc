@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@angular/core';
 import { Association, LookupKeys } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
-import { updateDoc } from 'firebase/firestore';
+import { Timestamp, updateDoc } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
 import { CommonFireStoreDao } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
+import { dateFromTimestamp } from '../utils/date-from-timestamp';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,7 @@ export class AgentAssociationsService {
   private readonly associationCollectionPath = 'associations';
 
   constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp, private toastrService: ToastrService) {
-    this.fsDao = new CommonFireStoreDao<Association>(fireBaseApp, null, null);
+    this.fsDao = new CommonFireStoreDao<Association>(fireBaseApp, AgentAssociationsService.fromFirestore, null);
   }
 
   public getList(agentId: string) {
@@ -42,7 +43,7 @@ export class AgentAssociationsService {
       })
 
       .catch((e) => {
-        console.log('e', e);
+        console.log('e', e, agentId, data);
       });
   }
 
@@ -80,4 +81,10 @@ export class AgentAssociationsService {
   private getCollectionPath(agentId: string) {
     return [this.agentCollectionPath, agentId, this.associationCollectionPath].join('/');
   }
+
+  static readonly fromFirestore = (data): Association => {
+    return Object.assign({}, data, {
+      dob: dateFromTimestamp(data?.dob as Timestamp)
+    });
+  };
 }

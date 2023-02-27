@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, ViewChild } from '@angular/core';
-import { ActiveLookup, Association, BaseModelKeys, COUNTRIES, LookupKeys } from 'ag-common-lib/public-api';
+import { ActiveLookup, Association, BaseModelKeys, COUNTRIES, Lookup, LookupKeys } from 'ag-common-lib/public-api';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AgentAssociationsService } from '../../../../services/agent-associations.service';
 import { filter, map, shareReplay, switchMap } from 'rxjs/operators';
@@ -9,12 +9,13 @@ import ArrayStore from 'devextreme/data/array_store';
 import { AssociationFormService } from './association-form.service';
 import { DxFormComponent } from 'devextreme-angular';
 import { LookupsService } from '../../../../services/lookups.service';
+import { PhoneNumberMaskPipe } from '../../../../../shared/pipes/phone-number-mask.pipe';
 
 @Component({
   selector: 'ag-shr-associations',
   templateUrl: './associations.component.html',
   styleUrls: ['./associations.component.scss'],
-  providers: [AssociationFormService]
+  providers: [AssociationFormService, PhoneNumberMaskPipe]
 })
 export class AssociationsComponent {
   @HostBinding('class') className = 'associations';
@@ -26,22 +27,32 @@ export class AssociationsComponent {
   @ViewChild('editAssociationModalRef', { static: true }) editAssociationModalComponent: ModalWindowComponent;
 
   public inProgress$: Observable<boolean>;
+  public validationGroup = 'associationsValidationGroup';
   public BaseModelKeys = BaseModelKeys;
   public LookupKeys = LookupKeys;
   public countries = COUNTRIES;
   public associations$: Observable<DataSource>;
   public associationFormData: Association;
   public relationshipTypeLookup$: Observable<ActiveLookup[]>;
+  public selectedGender$: BehaviorSubject<Lookup>;
+  public selectedTShortSize$: BehaviorSubject<Lookup>;
+  public selectedUnisexTShortSize$: BehaviorSubject<Lookup>;
+  public selectedDietaryConsiderationType$: BehaviorSubject<Lookup>;
 
   private readonly agentId$ = new BehaviorSubject<string>(undefined);
 
   constructor(
+    private readonly phoneNumberMaskPipe: PhoneNumberMaskPipe,
     private readonly lookupsService: LookupsService,
     private readonly associationFormService: AssociationFormService,
     private readonly agentAssociationsService: AgentAssociationsService
   ) {
     this.relationshipTypeLookup$ = this.lookupsService.associationTypeLookup$;
     this.inProgress$ = this.associationFormService.inProgress$;
+    this.selectedGender$ = associationFormService.selectedGender$;
+    this.selectedTShortSize$ = associationFormService.selectedTShortSize$;
+    this.selectedUnisexTShortSize$ = associationFormService.selectedUnisexTShortSize$;
+    this.selectedDietaryConsiderationType$ = associationFormService.selectedDietaryConsiderationType$;
     this.associations$ = this.agentId$.pipe(
       filter(Boolean),
       switchMap((agentId: string) => this.agentAssociationsService.getList(agentId)),
@@ -92,5 +103,34 @@ export class AssociationsComponent {
 
   public setState = (state) => {
     Object.assign(this.associationFormData.address, { state });
+  };
+
+  public calculateContactNumberDisplayValue = (association: Association) => {
+    return this.phoneNumberMaskPipe.matcher(association?.contact_number);
+  };
+
+  public handleGenderSelect = (item) => {
+    this.selectedGender$.next(item);
+  };
+
+  public handleTShortSizeSelect = (item) => {
+    this.selectedTShortSize$.next(item);
+  };
+
+  public handleUnisexTShortSizeSelect = (item) => {
+    this.selectedUnisexTShortSize$.next(item);
+  };
+
+  public handleDietaryConsiderationTypeSelect = (item) => {
+    this.selectedDietaryConsiderationType$.next(item);
+  };
+
+  public calculateNameDisplayValue = (association: Association) => {
+    return [association?.first_name, association?.last_name].filter(Boolean).join(' ');
+  };
+  public calculateNickNameDisplayValue = (association: Association) => {
+    const nick = [association?.p_nick_first_name, association?.p_nick_last_name].filter(Boolean).join(' ');
+
+    return nick ? `"${nick}"` : '';
   };
 }

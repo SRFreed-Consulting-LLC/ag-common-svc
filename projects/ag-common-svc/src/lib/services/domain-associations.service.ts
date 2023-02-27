@@ -25,6 +25,9 @@ import { LookupsService } from './lookups.service';
 })
 export class DomainAssociationsService {
   private associationTypeLookup$: Observable<ActiveLookup[]>;
+
+  lookupsMap: Map<string, ActiveLookup[]>;
+
   constructor(
     private lookupsService: LookupsService,
     private agentAssociationsService: AgentAssociationsService,
@@ -33,9 +36,221 @@ export class DomainAssociationsService {
     this.associationTypeLookup$ = this.lookupsService.associationTypeLookup$;
   }
 
-  async extractAssociations(invals: Map<string, string>, key: string): Promise<Association[]> {
+  async updateAssociations(
+    agent_or_invitees: Map<string, string>, // full invitee map
+    agent: Agent,
+    selectedRuleSet: ImportRuleSet,
+    messages: string[], 
+    key: string,
+    lookupsMap: Map<string, ActiveLookup[]>
+  ) {
+    this.lookupsMap = lookupsMap;
+
+    
+    let associations_map: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
+    
+    //filter all associations from agent_or_invitees map
+    agent_or_invitees.forEach((v, k) => {
+      let key_split: string[] = k.split('.');
+
+      let association_vals: Map<string, string>;
+
+      if (associations_map.has(key_split[0] + '.' + key_split[1])) {
+        association_vals = associations_map.get(key_split[0] + '.' + key_split[1]);
+      } else {
+        association_vals = new Map<string, string>();
+      }
+
+      if (k.startsWith(key_split[0] + '.' + key_split[1])) {
+        if (key_split.length == 4) {
+          association_vals.set(key_split[key_split.length - 2] + '.' + key_split[key_split.length - 1], v);
+        } else {
+          association_vals.set(key_split[key_split.length - 1], v);
+        }
+
+        associations_map.set(key_split[0] + '.' + key_split[1], association_vals);
+      }
+    });
+
+    const incomingAssociations: Association[] = [];
+
+    //iterate through assocations_map and create incoming association for each
+    associations_map.forEach((v,k) => {
+      if(k.startsWith(key)){
+        let association_map: Map<string, string> = v;
+
+        let association: Association = { ... new Association() };
+
+        selectedRuleSet.import_mappings.forEach(async (mapping) => {
+          let registrant_field = mapping.field_name_registrant;
+
+          let agent_field = mapping.field_name_agent;
+          if(agent_field.startsWith('association')){
+            agent_field = agent_field;
+          }
+
+          if ((association_map.has(registrant_field) && association_map.get(registrant_field) != '')) {
+            if (mapping.data_type == 'string' || mapping.data_type == 'select') {
+              association[registrant_field] = association_map.get(registrant_field);
+            }
+  
+            if (mapping.data_type == 'yes-no') {
+              association[registrant_field] = this.domainUtilService.getYesNoValue(
+                association_map.get(registrant_field).trim()
+              );
+            }
+  
+            if (mapping.data_type == 'date') {
+              association[registrant_field] = new Date(association_map.get(registrant_field));
+            }
+  
+            if (mapping.data_type == 'lookup') {
+              association[registrant_field] = await this.getLookupValue(
+                mapping.values,
+                association_map.get(registrant_field)
+              );
+            }
+  
+            if (mapping.data_type == 'boolean') {
+              association[registrant_field] = this.domainUtilService.getBoolean(
+                association_map.get(registrant_field)
+              );
+            }
+  
+            if (mapping.data_type == 'currency') {
+              association[registrant_field] = association_map.get(registrant_field);
+            }
+          }
+        });
+
+        incomingAssociations.push(association);
+      }
+    })
+
+    const promises: Promise<any>[] = [];
+    const existingAssociations: Association[] = await this.agentAssociationsService.getAll(agent[BaseModelKeys.dbId]);
+
+    //iterate through incoming association and check to see if one already exists in agent profile
+    for (const incomingAssociation of incomingAssociations) {
+      const matchingAssociation: Association = existingAssociations.find(
+        (association) =>
+          association.first_name == incomingAssociation.first_name &&
+          association.last_name == incomingAssociation.last_name
+      );
+
+      if (!matchingAssociation) {
+        promises.push(
+          this.agentAssociationsService.create(agent[BaseModelKeys.dbId], incomingAssociation).then((association) => {
+            if (association) {
+              messages.push(
+                'Associate created (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
+              );
+            }
+          })
+        );
+      }
+
+      if (matchingAssociation) {
+        selectedRuleSet.import_mappings.forEach(async (mapping) => {
+          if (incomingAssociation[mapping.field_name_registrant]) {
+            if (mapping.data_type == 'string' || mapping.data_type == 'select') {
+              this.domainUtilService.updateField(
+                selectedRuleSet[mapping.field_name_registrant],
+                matchingAssociation,
+                mapping.field_name_agent,
+                incomingAssociation[mapping.field_name_registrant]
+              );
+            }
+    
+            if (mapping.data_type == 'yes-no') {
+              this.domainUtilService.updateField(
+                selectedRuleSet[mapping.field_name_registrant],
+                matchingAssociation,
+                mapping.field_name_agent,
+                this.domainUtilService.getYesNoValue(incomingAssociation[mapping.field_name_registrant].trim())
+              );
+            }
+    
+            if (mapping.data_type == 'date') {
+              this.domainUtilService.updateField(
+                selectedRuleSet[mapping.field_name_agent],
+                matchingAssociation,
+                mapping.field_name_agent,
+                new Date(incomingAssociation[mapping.field_name_registrant].trim())
+              );
+            }
+    
+            if (mapping.data_type == 'lookup') {          
+              let lookupval: string = this.getLookupValue(mapping.values, incomingAssociation[mapping.field_name_registrant]);
+    
+              this.domainUtilService.updateField(
+                selectedRuleSet[mapping.field_name_registrant],
+                matchingAssociation,
+                mapping.field_name_agent,
+                lookupval.trim()
+              );
+            }
+    
+            if (mapping.data_type == 'boolean') {
+              this.domainUtilService.updateField(
+                selectedRuleSet[mapping.field_name_registrant],
+                matchingAssociation,
+                mapping.field_name_agent,
+                this.domainUtilService.getBoolean(incomingAssociation[mapping.field_name_registrant].trim())
+              );
+            }
+          }
+        });
+
+        promises.push(
+          this.agentAssociationsService
+            .update(agent[BaseModelKeys.dbId], matchingAssociation[BaseModelKeys.dbId], matchingAssociation)
+            .then((association) => {
+              if (association) {
+                messages.push(
+                  'Associate updated (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
+                );
+              }
+            })
+        );
+      }
+    }
+
+    Promise.all(promises);
+
+    return true;
+  }
+
+  private async extractAssociations(invals: Map<string, string>, key: string): Promise<Association[]> {
     const associations: Association[] = [];
     const incomingAssociationsMap: Map<string, string> = this.domainUtilService.getCount(invals, key);
+
+    //split up into different guests
+    // let guests: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
+
+    // guest_map.forEach((v, k) => {
+    //   let key_split: string[] = k.split('.');
+
+    //   let guest_vals: Map<string, string>;
+
+    //   if (guests.has(key_split[0] + '.' + key_split[1])) {
+    //     guest_vals = guests.get(key_split[0] + '.' + key_split[1]);
+    //   } else {
+    //     guest_vals = new Map<string, string>();
+    //   }
+
+    //   if (k.startsWith(key_split[0] + '.' + key_split[1])) {
+    //     if (key_split.length == 4) {
+    //       guest_vals.set(key_split[key_split.length - 2] + '.' + key_split[key_split.length - 1], v);
+    //     } else {
+    //       guest_vals.set(key_split[key_split.length - 1], v);
+    //     }
+
+    //     guests.set(key_split[0] + '.' + key_split[1], guest_vals);
+    //   }
+    // });
+
+
 
     for (const iterator of incomingAssociationsMap) {
       const association: Association = await this.createAssociation(invals, iterator[1], key);
@@ -47,7 +262,7 @@ export class DomainAssociationsService {
     return associations;
   }
 
-  async createAssociation(invals: Map<string, string>, iteration: string, key: string): Promise<Association> {
+  private async createAssociation(invals: Map<string, string>, iteration: string, key: string): Promise<Association> {
     const association: Association = { ...new Association() };
 
     if (invals.has(key + '.' + iteration + '.first_name')) {
@@ -65,12 +280,19 @@ export class DomainAssociationsService {
     if (invals.has(key + '.' + iteration + '.contact_number')) {
       association.contact_number = invals
         .get(key + '.' + iteration + '.contact_number')
-        .replace('(', '')
-        .replace(')', '')
-        .replace(' ', '')
-        .replace(' ', '')
+        .replace('+', '')
+        .replace('.', '')
+        .replace('.', '')
         .replace('-', '')
-        .replace('-', '');
+        .replace('-', '')
+        .replace(' ', '')
+        .replace(' ', '')
+        .replace('(', '')
+        .replace(')', '');
+
+        if(association.contact_number.startsWith('1')){
+          association.contact_number = association.contact_number.substring(1);
+        }
     }
 
     if (invals.has(key + '.' + iteration + '.association_type')) {
@@ -138,8 +360,8 @@ export class DomainAssociationsService {
       association.dietary_consideration_type = invals.get(key + '.' + iteration + '.dietary_consideration_type');
     }
 
-    if (invals.has(key + '.' + iteration + '.p_nick_name')) {
-      association.p_nick_first_name = invals.get(key + '.' + iteration + '.p_nick_name');
+    if (invals.has(key + '.' + iteration + '.p_nick_first_name')) {
+      association.p_nick_first_name = invals.get(key + '.' + iteration + '.p_nick_first_name');
     }
 
     if (invals.has(key + '.' + iteration + '.p_nick_last_name')) {
@@ -153,174 +375,30 @@ export class DomainAssociationsService {
     if (invals.has(key + '.' + iteration + '.unisex_tshirt_size_other')) {
       association.unisex_tshirt_size_other = invals.get(key + '.' + iteration + '.unisex_tshirt_size_other');
     }
+
+    if (invals.has(key + '.' + iteration + '.gender')) {
+      association.gender = invals.get(key + '.' + iteration + '.gender');
+    }
+
+    if (invals.has(key + '.' + iteration + '.dob')) {
+      association.dob = new Date(invals.get(key + '.' + iteration + '.dob'));
+    }
     return association;
   }
 
-  async updateAssociations(
-    data: Map<string, string>,
-    agent: Agent,
-    selectedRuleSet: ImportRuleSet,
-    messages: string[], 
-    key: string
-  ) {
-    const promises: Promise<any>[] = [];
-    const existingAssociations: Association[] = await this.agentAssociationsService.getAll(agent[BaseModelKeys.dbId]);
-    const incomingAssociations: Association[] = await this.extractAssociations(data, key);
-
-    for (const incomingAssociation of incomingAssociations) {
-      const matchingAssociation: Association = existingAssociations.find(
-        (association) =>
-          association.first_name == incomingAssociation.first_name &&
-          association.last_name == incomingAssociation.last_name
-      );
-
-      if (!matchingAssociation) {
-        promises.push(
-          this.agentAssociationsService.create(agent[BaseModelKeys.dbId], incomingAssociation).then((association) => {
-            if (association) {
-              // messages.push(
-              //   'Associate created (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
-              // );
-            }
-          })
-        );
-      }
-
-      if (matchingAssociation) {
-        if (incomingAssociation.email_address) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.email_address_address],
-            matchingAssociation,
-            'email_address',
-            incomingAssociation.email_address
-          );
-        }
-        if (incomingAssociation.contact_number) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_contact_number],
-            matchingAssociation,
-            'contact_number',
-            incomingAssociation.contact_number
-          );
-        }
-        if (incomingAssociation.is_emergency_contact) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_is_emergency_contact],
-            matchingAssociation,
-            'is_emergency_contact',
-            incomingAssociation.is_emergency_contact
-          );
-        }
-
-        if (incomingAssociation.dietary_or_personal_considerations) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_dietary_or_personal_considerations],
-            matchingAssociation,
-            'dietary_or_personal_considerations',
-            this.domainUtilService.getYesNoValue(incomingAssociation.dietary_or_personal_considerations.trim())
-          );
-        }
-        if (incomingAssociation.dietary_consideration) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_dietary_consideration],
-            matchingAssociation,
-            'dietary_consideration',
-            incomingAssociation.dietary_consideration
-          );
-        }
-        if (incomingAssociation.dietary_consideration_type) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_dietary_consideration_type],
-            matchingAssociation,
-            'dietary_consideration_type',
-            incomingAssociation.dietary_consideration_type
-          );
-        }
-        if (!matchingAssociation.address) {
-          matchingAssociation.address = { ...new Address() };
-        }
-        if (incomingAssociation.address.address1) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_address_address1],
-            matchingAssociation.address,
-            'address1',
-            incomingAssociation.address.address1
-          );
-        }
-        if (incomingAssociation.address.address2) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_address_address2],
-            matchingAssociation.address,
-            'address2',
-            incomingAssociation.address.address2
-          );
-        }
-        if (incomingAssociation.address.city) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_address_city],
-            matchingAssociation.address,
-            'city',
-            incomingAssociation.address.city
-          );
-        }
-        if (incomingAssociation.address.state) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_address_state],
-            matchingAssociation.address,
-            'state',
-            incomingAssociation.address.state
-          );
-        }
-        if (incomingAssociation.address.zip) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_address_zip],
-            matchingAssociation.address,
-            'zip',
-            incomingAssociation.address.zip
-          );
-        }
-        if (incomingAssociation.address.county) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_address_county],
-            matchingAssociation.address,
-            'county',
-            incomingAssociation.address.county
-          );
-        }
-        if (incomingAssociation.address.country) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_address_country],
-            matchingAssociation.address,
-            'country',
-            incomingAssociation.address.country
-          );
-        }
-
-        if (incomingAssociation[AssociationKeys.associationTypeRef]) {
-          this.domainUtilService.updateField(
-            selectedRuleSet[ImportRuleSetKeys.association_association_type],
-            matchingAssociation,
-            AssociationKeys.associationTypeRef,
-            incomingAssociation[AssociationKeys.associationTypeRef]
-          );
-        }
-
-        promises.push(
-          this.agentAssociationsService
-            .update(agent[BaseModelKeys.dbId], matchingAssociation[BaseModelKeys.dbId], matchingAssociation)
-            .then((association) => {
-              if (association) {
-                // messages.push(
-                //   'Associate updated (' + association.first_name + ' ' + association.last_name + ') to ' + agent.p_email
-                // );
-              }
-            })
-        );
-      }
+  getLookupValue(lookupName: string, matchVal: string):string {
+    if (!this.lookupsMap.has(lookupName)) {
+      console.log("Couldn't find lookups for ", lookupName);
+      return '';
     }
 
-    Promise.all(promises);
+    let lookup: ActiveLookup = this.lookupsMap.get(lookupName).find((val) => val.value.toLowerCase() == matchVal.toLowerCase());
 
-    return true;
-  }
+    if (lookup) {
+      return lookup.dbId;
+    } else {
+      console.log("Couldn't find lookup value for ", lookupName, matchVal);
+      return '';
+    }
+  };
 }

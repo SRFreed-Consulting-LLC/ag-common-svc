@@ -16,7 +16,7 @@ export class LookupDescriptionPipe implements PipeTransform {
           return data?.description;
         }
         return '';
-      }),
+      })
     );
   }
 }

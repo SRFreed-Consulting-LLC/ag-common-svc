@@ -1,6 +1,7 @@
 import { Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
 import { DxTextAreaComponent, DxValidatorComponent } from 'devextreme-angular';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { ModalWindowComponent } from '../modal-window/modal-window.component';
 
 @Component({
@@ -13,28 +14,33 @@ export class DropZoneComponent {
   @ViewChild('imageCropModalRef', { static: true }) imageCropModalModalComponent: ModalWindowComponent;
   @ViewChild('fileInput', { static: false }) fileInputComponent: ElementRef<HTMLInputElement>;
   @Input() set profilePictureUrl(data: string) {
+    this._isImageValid$.next(true);
     this.imagePreviewUrl = data;
   }
   @Output() profilePictureUrlChange = new EventEmitter<ImageCroppedEvent | null>();
 
-  public isImageValid = true;
   public imagePreviewUrl: string;
   public imageChangedEvent: any = '';
   public imageCroppedEvent: ImageCroppedEvent;
 
-  constructor() {}
+  public isImageValid$: Observable<boolean>;
+  private _isImageValid$ = new BehaviorSubject(true);
+
+  constructor() {
+    this.isImageValid$ = this._isImageValid$.asObservable();
+  }
 
   public customValidationCallback = () => {
     return false;
   };
 
   public onImgError = () => {
-    this.isImageValid = false;
+    this._isImageValid$.next(false);
     this.urlTextBoxComponent.instance.option('isValid', false);
   };
 
   public onImgLoaded = () => {
-    this.isImageValid = true;
+    this._isImageValid$.next(true);
     this.urlTextBoxComponent.instance.option('isValid', true);
   };
 

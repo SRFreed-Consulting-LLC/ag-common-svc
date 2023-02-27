@@ -37,32 +37,6 @@ export class ImportService {
     });
   }
 
-  public createAgentMap(csvText): Map<string, string>[] {
-    let retval: Map<string, string>[] = [];
-    let lines: string[] = csvText.split('\n');
-    let headers: string[] = lines[0].split(',');
-
-    for (var i = 1; i < lines.length - 1; i++) {
-      let data: Map<string, string> = new Map<string, string>();
-
-      for (var j = 0; j < headers.length; j++) {
-        let line: string = lines[i];
-
-        let val = line.split(',')[j];
-
-        if (val && val != '') {
-          let mapped_header: string = headers[j];
-
-          data.set(mapped_header, val);
-        }
-      }
-
-      retval.push(data);
-    }
-
-    return retval;
-  }
-
     //iterate through each incoming data map
     //  iterate through each mapped field
     //    check to see if incoming data map has field that matches the mapped_to field
@@ -129,36 +103,7 @@ export class ImportService {
     return retval;
   }
 
-  public createAssociationsMap(agent_map: Map<string, string>, identity_key: string): Map<string, string> {
-    let retval: Map<string, string>  = new Map<string, string>();
-
-    agent_map.forEach((value , key) => {
-      if(key.startsWith("association")){
-        retval.set(key, value);
-      }
-    })
-
-    retval.set(identity_key, agent_map.get(identity_key))
-
-    return retval;
-  }
-
-  public createGuestMap(invitee_map: Map<string, string>, identity_key: string): Map<string, string> {
-    let retval: Map<string, string> = new Map<string, string>();
-
-    invitee_map.forEach((value , key) => {
-      if(key.startsWith("guest")){
-        retval.set(key, value);
-      }
-    })
-
-    retval.set(identity_key, invitee_map.get(identity_key))
-    retval.set('invitee_guest', 'Guest')
-
-    return retval;
-  }
-
-  validateFile(csvText, messages: String[], import_type: string): Promise<boolean>{
+  validateFile(csvText, messages: String[], import_type: string, import_mappings: ImportMapping[]): Promise<boolean>{
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
 
@@ -172,44 +117,62 @@ export class ImportService {
       }
     }
 
-    // if(import_type == "registration"){
-    //   let invitee_email_exist = headers.filter(h => h == 'invitee_email').length > 0;
+    if(import_type == "registration"){
+      let email_mapping: ImportMapping = import_mappings.find(mapping => mapping.field_name_registrant == 'invitee_email');
+
+      if(email_mapping){
+        let invitee_email_exist = headers.filter(h => h == email_mapping.mapped_to).length > 0;
       
-    //   if(!invitee_email_exist){
-    //     messages.push("The 'Registration' import must contain a field called 'invitee_email'")
-    //   }
+        if(!invitee_email_exist){
+          messages.unshift("The 'Registration' import must contain a field mapped to 'invitee_email'")
+        }
+      }
 
-    //   let invitee_guest_exist = headers.filter((h) => h == 'invitee_guest').length > 0;
+      // let is_login_mapping: ImportMapping = import_mappings.find(mapping => mapping.field_name_registrant == 'invitee_email_is_login');
 
-    //   if (!invitee_guest_exist) {
-    //     messages.push("The 'Registration' import must contain a field called 'invitee_guest'");
-    //   }
-    // } else {
-    //   let email_address = headers.filter((h) => h == this.PRIMARY_EMAIL_IDENTIFIER).length > 0;
+      // if(is_login_mapping){
+      //   let invitee_is_login_exist = headers.filter(h => h == is_login_mapping.mapped_to).length > 0;
 
-    //   if (!email_address) {
-    //     messages.push("The import must contain a field called '" + this.PRIMARY_EMAIL_IDENTIFIER + "'");
-    //   }
-    // }
+      //   if(!invitee_is_login_exist){
+      //     messages.unshift("The 'Registration' import must contain a field mapped to 'invitee_email_is_login'")
+      //   }
+      // }
+
+    } else {
+      let email_mapping: ImportMapping = import_mappings.find(mapping => mapping.field_name_agent == this.PRIMARY_EMAIL_IDENTIFIER);
+
+      if(email_mapping){
+        let email_address = headers.filter((h) => h == email_mapping.mapped_to).length > 0;
+
+        if (!email_address) {
+          messages.unshift("The import must contain a field called '" + this.PRIMARY_EMAIL_IDENTIFIER + "'");
+        }      
+      }
+
+      let is_login_mapping: ImportMapping = import_mappings.find(mapping => mapping.field_name_agent == 'email_addresses.1.is_login');
+
+      // if(is_login_mapping){
+      //   let invitee_is_login_exist = headers.filter(h => h == is_login_mapping.mapped_to).length > 0;
+
+      //   if(!invitee_is_login_exist){
+      //     messages.unshift("The 'Agent' import must contain a field mapped to 'email_addresses.1.is_login'")
+      //   }
+      // }
+    }
 
     if (messages.length == 0) {
-      messages.push('The file format appears to be valid!.');
+      messages.unshift('The file format appears to be valid!.');
       return Promise.resolve(true);
     } else {
-      messages.push('Please fix the file format and reimport it!.');
+      messages.unshift('Please fix the file format and reimport it!.');
       return Promise.resolve(false);
     }
   }
 
-  validateInvitee2(invitee: Map<string, any>, messages: String[]) {
+  validateInvitee(invitee: Map<string, any>, messages: String[]) {
     let isValid = true;
 
     let agent_name = invitee.get('p_agent_first_name') + ' ' + invitee.get('p_agent_last_name') + '(' + invitee.get(this.PRIMARY_EMAIL_IDENTIFIER) + ')'
-
-    if(invitee.has(AgentKeys.campaigns_user_name) && !this.isDate(invitee.get(AgentKeys.campaigns_user_since))){
-      messages.push('ERROR: Invitee ' + agent_name + " has an invalid date in " + AgentKeys.campaigns_user_name);
-      isValid = false;
-    }
 
     if(invitee.has('email_addresses.1.address')){
       if(invitee.get('email_addresses.1.address').trim() != invitee.get('invitee_email').trim()){

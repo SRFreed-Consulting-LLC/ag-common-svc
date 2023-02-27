@@ -22,6 +22,7 @@ import { PrimaryShippingAddressPipe } from './primary-shipping-address.pipe';
 import { PrimaryBillingAddressPipe } from './primary-billing-address.pipe';
 import { AgencyPipe } from './agent.pipe';
 import { LookupDescriptionPipe } from './lookup-description.pipe';
+import { OtherSizePipe } from './other-sizes.pipe';
 
 @NgModule({
   declarations: [
@@ -48,6 +49,7 @@ import { LookupDescriptionPipe } from './lookup-description.pipe';
     PrimaryBillingAddressPipe,
     AgencyPipe,
     LookupDescriptionPipe,
+    OtherSizePipe
   ],
   exports: [
     SafeHTMLPipe,
@@ -73,6 +75,7 @@ import { LookupDescriptionPipe } from './lookup-description.pipe';
     PrimaryBillingAddressPipe,
     AgencyPipe,
     LookupDescriptionPipe,
-  ],
+    OtherSizePipe
+  ]
 })
 export class PipesModule {}

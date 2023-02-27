@@ -290,13 +290,15 @@ export class DomainService implements OnInit {
     updatedBy: string
   ): Promise<Agent> {
     selectedRuleSet.import_mappings.forEach(async (mapping) => {
+      let incoming_value = line_data.get(mapping.field_name_agent);
+
       if (line_data.has(mapping.field_name_agent)) {
         if (mapping.data_type == 'string' || mapping.data_type == 'select') {
           this.domainUtilService.updateField(
             selectedRuleSet[mapping.field_name_agent],
             agent,
             mapping.field_name_agent,
-            line_data.get(mapping.field_name_agent)
+            incoming_value.trim()
           );
         }
 
@@ -305,7 +307,7 @@ export class DomainService implements OnInit {
             selectedRuleSet[mapping.field_name_agent],
             agent,
             mapping.field_name_agent,
-            this.domainUtilService.getYesNoValue(line_data.get(mapping.field_name_agent).trim())
+            this.domainUtilService.getYesNoValue(incoming_value.trim())
           );
         }
 
@@ -314,12 +316,12 @@ export class DomainService implements OnInit {
             selectedRuleSet[mapping.field_name_agent],
             agent,
             mapping.field_name_agent,
-            new Date(line_data.get(mapping.field_name_agent).trim())
+            new Date(incoming_value.trim())
           );
         }
 
         if (mapping.data_type == 'lookup') {          
-          let lookupval: string = this.getLookupValue(mapping.values, line_data.get(mapping.field_name_agent));
+          let lookupval: string = this.getLookupValue(mapping.values, incoming_value.trim());
 
           this.domainUtilService.updateField(
             selectedRuleSet[mapping.field_name_agent],
@@ -334,7 +336,7 @@ export class DomainService implements OnInit {
             selectedRuleSet[mapping.field_name_agent],
             agent,
             mapping.field_name_agent,
-            this.domainUtilService.getBoolean(line_data.get(mapping.field_name_agent).trim())
+            this.domainUtilService.getBoolean(incoming_value.trim())
           );
         }
       }
@@ -424,7 +426,7 @@ export class DomainService implements OnInit {
     const shouldContinue = [
       this.validateAgency(agent, agencies),
       this.domainAddressService.updateAddresses(line_data, agent, selectedRuleSet, this.messages),
-      this.domainEmailService.updateEmailAddresses(line_data, agent, selectedRuleSet, this.messages),
+      this.domainEmailService.updateEmailAddresses(line_data, agent, selectedRuleSet, this.messages, this.lookupsMap.get('emailTypeLookup')),
       this.domainPhoneNumberService.updatePhoneNumbers(line_data, agent, selectedRuleSet, this.messages),
       this.domainSocialsService.updateSocials(line_data, agent, selectedRuleSet, this.messages),
       this.domainWebsiteService.updateWebsites(line_data, agent, selectedRuleSet, this.messages)
@@ -501,6 +503,10 @@ export class DomainService implements OnInit {
               invitee[mapping.field_name_registrant] = agent[mapping.field_name_agent];
             }
           })
+
+          this.getInviteeAddressesFromProfile(invitee, agent);
+          this.getInviteeEmailsFromProfile(invitee, agent);
+          this.getInviteePhoneNumbersFromProfile(invitee, agent);
         } else if (invitees.length == 1) {
           invitee = invitees[0];
         } else {
@@ -523,6 +529,10 @@ export class DomainService implements OnInit {
         invitee.invitee_email = invitee_email;
         invitee.last_eval_date = new Date();
         invitee.event_id = selectedConference.event_id;
+
+        this.getInviteeAddressesFromFile(invitee_map, invitee, agent);
+        this.getInviteeEmailsFromFile(invitee_map, invitee, agent);
+        this.getInviteePhoneNumbersFromFile(invitee_map, invitee, agent);
 
         //if invitess status exists evaluate approval
         if (invitee_map.has('invitee_status')) {
@@ -572,10 +582,6 @@ export class DomainService implements OnInit {
             }
           }
         });
-
-        this.setInviteeAddresses(invitee_map, invitee, agent)
-        this.setInviteeEmails(invitee_map, invitee, agent)
-        this.setInviteePhoneNumbers(invitee_map, invitee, agent)
 
         //get custom fields
         selectedConference.registrantFields.forEach((field) => {
@@ -638,7 +644,7 @@ export class DomainService implements OnInit {
     let promises: Promise<Registrant>[] = [];
 
     invitees_map.forEach((invitee_map) => {
-      let guest_map: Map<string, string> = new Map<string, string>();
+      let all_guests_map: Map<string, string> = new Map<string, string>();
 
       let invitee_email = invitee_map.get('invitee_email').toLowerCase();
       let invitee_guest = 'Guest';
@@ -646,37 +652,33 @@ export class DomainService implements OnInit {
       //filter invitee map to create map with only guest fields
       invitee_map.forEach((value, key) => {
         if (key.startsWith('guest')) {
-          guest_map.set(key, value);
+          all_guests_map.set(key, value);
         }
       });
 
       //split up into different guests
-      let guests: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
+      let individual_guest_maps: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
 
-      guest_map.forEach((v, k) => {
+      all_guests_map.forEach((v, k) => {
         let key_split: string[] = k.split('.');
 
         let guest_vals: Map<string, string>;
 
-        if (guests.has(key_split[0] + '.' + key_split[1])) {
-          guest_vals = guests.get(key_split[0] + '.' + key_split[1]);
+        if (individual_guest_maps.has(key_split[0] + '.' + key_split[1])) {
+          guest_vals = individual_guest_maps.get(key_split[0] + '.' + key_split[1]);
         } else {
           guest_vals = new Map<string, string>();
         }
 
         if (k.startsWith(key_split[0] + '.' + key_split[1])) {
-          if (key_split.length == 4) {
-            guest_vals.set(key_split[key_split.length - 2] + '.' + key_split[key_split.length - 1], v);
-          } else {
-            guest_vals.set(key_split[key_split.length - 1], v);
-          }
-
-          guests.set(key_split[0] + '.' + key_split[1], guest_vals);
+          guest_vals.set(key_split[key_split.length - 1], v);
+          
+          individual_guest_maps.set(key_split[0] + '.' + key_split[1], guest_vals);
         }
       });
 
-      //create registrant for each guest
-      guests.forEach(async (guest_map) => {
+      //create registrant for each guest map
+      individual_guest_maps.forEach(async (guest_map) => {
         if (guest_map.has('first_name') && guest_map.has('last_name')) {
           //create unique id for quest for future searches
           let unique_id =
@@ -873,7 +875,21 @@ export class DomainService implements OnInit {
     return retval;
   }
 
-  setInviteePhoneNumbers(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent){
+  private getInviteePhoneNumbersFromProfile(invitee: Registrant, agent: Agent){
+    let agent_mobile_number: PhoneNumber = agent.phone_numbers.find((phone) => phone.phone_type == PhoneNumberType.Mobile);
+
+    if (agent_mobile_number) {
+      invitee.mobile_phone = { ...agent_mobile_number };
+    }
+
+    let agent_secondary_phone_number: PhoneNumber[] = agent.phone_numbers.filter((phone) => phone.phone_type != PhoneNumberType.Mobile);
+
+    if (agent_secondary_phone_number.length > 0) {
+      invitee.secondary_phone = agent_secondary_phone_number[0];
+    } 
+  }
+
+  private getInviteePhoneNumbersFromFile(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent){
     let incoming_phone_numbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(invitee_map);
         
     let incoming_mobile_number: PhoneNumber = incoming_phone_numbers.find((phone) => phone.phone_type == PhoneNumberType.Mobile);
@@ -901,7 +917,7 @@ export class DomainService implements OnInit {
     }
   }
 
-  setInviteeEmails(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent){
+  private getInviteeEmailsFromFile(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent){
     let incoming_emails: EmailAddress[] = this.domainEmailService.extractEmailAddresses(invitee_map);
 
     let incoming_login_email: EmailAddress = incoming_emails.find((email) => email.is_login == true);
@@ -929,35 +945,47 @@ export class DomainService implements OnInit {
     }
   }
 
-  setInviteeAddresses(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent){
+  private getInviteeEmailsFromProfile(invitee: Registrant, agent: Agent){
+    let agent_primary_email: EmailAddress = agent.email_addresses.find((email) => email.is_login == true);
+
+    if (agent_primary_email) {
+      invitee.primary_email_address = { ...agent_primary_email };
+    }
+    
+    let agent_secondary_email: EmailAddress[] = agent.email_addresses.filter((email) => email.is_login == false);
+
+    if (agent_secondary_email.length > 0) {
+      invitee.secondary_email_address = agent_secondary_email[0];
+    }
+  }
+
+  private getInviteeAddressesFromFile(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent){
     let incoming_addresses: Address[] = this.domainAddressService.extractAddresses(invitee_map);
 
     let incoming_primary_billing_address: Address = incoming_addresses.find((address) => address.is_primary_billing == true);
 
     if (incoming_primary_billing_address) {
       invitee.primary_billing_address = { ...incoming_primary_billing_address };
-    } else {
-      let agent_billing_address: Address = agent.addresses.find((address) => address.is_primary_billing == true);
-
-      if (agent_billing_address) {
-        invitee.primary_billing_address = { ...agent_billing_address };
-      } else {
-        invitee.primary_billing_address = { ...incoming_addresses[0] };
-      }
-    }
+    } 
 
     let incoming_primary_shipping_address: Address = incoming_addresses.find((address) => address.is_primary_shipping == true);
 
     if (incoming_primary_shipping_address) {
       invitee.primary_shipping_address = { ...incoming_primary_shipping_address };
-    } else {
-      let agent_shippinging_address: Address = agent.addresses.find((address) => address.is_primary_shipping == true);
+    } 
+  }
 
-      if (agent_shippinging_address) {
-        invitee.primary_shipping_address = { ...agent_shippinging_address };
-      } else if(incoming_addresses.length > 1){
-        invitee.primary_shipping_address = { ...incoming_addresses[1] };
-      }
+  private getInviteeAddressesFromProfile(invitee: Registrant, agent: Agent){
+    let agent_billing_address: Address = agent.addresses.find((address) => address.is_primary_billing == true);
+
+    if (agent_billing_address) {
+      invitee.primary_billing_address = { ...agent_billing_address };
+    }
+  
+    let agent_shippinging_address: Address = agent.addresses.find((address) => address.is_primary_shipping == true);
+
+    if (agent_shippinging_address) {
+      invitee.primary_shipping_address = { ...agent_shippinging_address };
     }
   }
 

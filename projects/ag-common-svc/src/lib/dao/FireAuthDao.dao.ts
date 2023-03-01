@@ -82,12 +82,24 @@ export class FireAuthDao {
       }),
       filter(Boolean),
       mergeMap((user: User) => user.getIdTokenResult()),
-      mergeMap((idTokenResult: IdTokenResult) => {
+      map((idTokenResult: IdTokenResult) => {
         const claims = idTokenResult?.claims;
-        debugger;
-        return this.agentService.getById(claims?.agentId);
+
+        return claims?.agentId;
       }),
-      shareReplay(1),
+      tap((agentId) => {
+        if (!agentId) {
+          this.signOut;
+        }
+      }),
+      filter(Boolean),
+      mergeMap((agentId: string) => {
+        debugger;
+        return this.agentService.getById(agentId);
+      }),
+      tap((agentId) => {
+        debugger;
+      }),
     );
 
     this.loggedInAgent$

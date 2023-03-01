@@ -1,0 +1,91 @@
+<ag-shr-modal-window
+  #setPrimaryEmailModalRef
+  [title]="'Set Primary Email'"
+  [width]="'500px'"
+  [height]="'400px'"
+  [actionTitle]="'Set'"
+  [inProgress]="isValidating || (inProgress$ | async)"
+  (onSaveClick)="handleSetEmailLogin($event)"
+>
+  <dx-form
+    *ngIf="setPrimaryEmailModalRef?.popupComponent?.visible"
+    #setPrimaryEmailFormRef
+    labelMode="floating"
+    [formData]="formData"
+  >
+    <dxi-item
+      [dataField]="'emailAddress'"
+      [label]="{ text: 'Email Address' }"
+      editorType="dxSelectBox"
+      [editorOptions]="{
+        items: emailAddressesLookup$ | async,
+        displayExpr: 'description',
+        placeholder: ''
+      }"
+    >
+      <dxi-validation-rule type="required" message="Email Address is required"> </dxi-validation-rule>
+
+      <dxi-validation-rule
+        type="async"
+        message="Email Address is already used"
+        [validationCallback]="emailAddressAsyncValidation"
+      >
+      </dxi-validation-rule>
+    </dxi-item>
+
+    <dxi-item
+      [dataField]="'otp'"
+      [label]="{ text: 'One Time Code' }"
+      [editorOptions]="{
+        mask: '0 0 0 0 0 0',
+        placeholder: '',
+        disabled: !isEmailValid,
+        buttons: [
+          {
+            name: 'sendOTP',
+            location: 'after',
+            options: {
+              template: 'sendOTPButtonTemplate',
+              elementAttr: {
+                class: 'inline-editor-control'
+              },
+              type: 'default',
+              stylingMode: 'text',
+              disabled: !isEmailValid,
+              onClick: sendOtp
+            }
+          }
+        ]
+      }"
+    >
+      <dxi-validation-rule type="required" message="One Time Code is required"> </dxi-validation-rule>
+
+      <dxi-validation-rule
+        type="stringLength"
+        [min]="6"
+        [max]="6"
+        message="One Time Code must equal 6 digits"
+      ></dxi-validation-rule>
+
+      <dxi-validation-rule type="async" message="One Time Code is Invalid" [validationCallback]="otpAsyncValidation">
+      </dxi-validation-rule>
+    </dxi-item>
+
+    <div *dxTemplate="let item of 'sendOTPButtonTemplate'" class="editor-progress-indicator">
+      <ng-container *ngIf="isSendOTPInProgress$ | async; then loadIndicatorTmp; else saveIconTmp"></ng-container>
+    </div>
+  </dx-form>
+</ag-shr-modal-window>
+
+<ng-template #saveIconTmp>
+  <i class="fa-solid fa-envelope-circle-check"></i>
+</ng-template>
+
+<ng-template #loadIndicatorTmp>
+  <dx-load-indicator
+    class="editor-progress-indicator__indicator"
+    [visible]="true"
+    height="18"
+    width="18"
+  ></dx-load-indicator>
+</ng-template>

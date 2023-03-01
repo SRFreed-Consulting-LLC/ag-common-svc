@@ -48,6 +48,8 @@
   </ng-container>
 </div>
 
+<ag-shr-set-login-email-modal></ag-shr-set-login-email-modal>
+
 <ag-shr-modal-window
   #emailAddressesEditorModalRef
   [title]="'Add / Edit Email Addresses'"
@@ -78,6 +80,18 @@
           </div>
         </div>
       </dxi-item>
+
+      <dxi-item
+        location="after"
+        widget="dxButton"
+        locateInMenu="auto"
+        cssClass="task-list-manager__toolbar-control"
+        [options]="{
+          hint: 'CHANGE LOGIN EMAIL',
+          icon: 'fa-solid fa-user-gear',
+          onClick: showSetLoginEmailModal
+        }"
+      ></dxi-item>
 
       <dxi-item name="addRowButton"></dxi-item>
     </dxo-toolbar>
@@ -112,12 +126,6 @@
     <dxi-column type="buttons">
       <dxi-button name="edit"></dxi-button>
       <dxi-button name="delete" [visible]="canDeleteEmailAddress"></dxi-button>
-      <dxi-button
-        [icon]="'user'"
-        [visible]="checkIsSetAsLoginVisible"
-        [hint]="'Set this Email as Login'"
-        [onClick]="setLoginEmail"
-      ></dxi-button>
     </dxi-column>
   </dx-data-grid>
 </ag-shr-modal-window>

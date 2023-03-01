@@ -78,7 +78,7 @@ export class AgentEmailAddressesService {
     });
   }
 
-  public findSameUserEmails(email): Promise<Array<{ data: EmailAddress; parentDbId: string }>> {
+  public findSameUserEmails = (email): Promise<Array<{ data: EmailAddress; parentDbId: string }>> => {
     const queries: QueryParam[] = [];
 
     const emailAddressQuery = new QueryParam('address', WhereFilterOperandKeys.equal, email);
@@ -110,7 +110,7 @@ export class AgentEmailAddressesService {
 
       return items;
     });
-  }
+  };
 
   private getCollectionPath(agentId: string) {
     return [this.agentCollectionPath, agentId, this.emailAddressCollectionPath].join('/');

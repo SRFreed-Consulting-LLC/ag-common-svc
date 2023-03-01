@@ -45,9 +45,9 @@ export class AuthService {
 
     try {
       const userCredentials = await this.authDao.signIn(email, password);
-
+      debugger;
       const agent = await lastValueFrom(this.authDao.currentAgent$.pipe(take(1)));
-
+      debugger;
       if (!agent) {
         this.logMessage('LOGIN', userCredentials.user.email, 'Could not find agent record for user').then((ec) => {
           this.toster.error(
@@ -71,6 +71,7 @@ export class AuthService {
             { disableTimeOut: true },
           );
         });
+        return;
       }
 
       await this.logUserIntoPortal(userCredentials, agent);

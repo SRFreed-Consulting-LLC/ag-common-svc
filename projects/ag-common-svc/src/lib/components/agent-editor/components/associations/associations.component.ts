@@ -1,5 +1,12 @@
 import { Component, HostBinding, Input, ViewChild } from '@angular/core';
-import { ActiveLookup, Association, BaseModelKeys, COUNTRIES, LookupKeys } from 'ag-common-lib/public-api';
+import {
+  ActiveLookup,
+  Association,
+  AssociationKeys,
+  BaseModelKeys,
+  COUNTRIES,
+  LookupKeys
+} from 'ag-common-lib/public-api';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AgentAssociationsService } from '../../../../services/agent-associations.service';
 import { filter, map, shareReplay, switchMap } from 'rxjs/operators';
@@ -31,7 +38,9 @@ export class AssociationsComponent {
   public countries = COUNTRIES;
   public associations$: Observable<DataSource>;
   public associationFormData: Association;
+  public AssociationKeys = AssociationKeys;
   public relationshipTypeLookup$: Observable<ActiveLookup[]>;
+  public selectedRelationshipType$: BehaviorSubject<ActiveLookup>;
 
   private readonly agentId$ = new BehaviorSubject<string>(undefined);
 
@@ -40,6 +49,7 @@ export class AssociationsComponent {
     private readonly associationFormService: AssociationFormService,
     private readonly agentAssociationsService: AgentAssociationsService
   ) {
+    this.selectedRelationshipType$ = associationFormService.selectedRelationshipType$;
     this.relationshipTypeLookup$ = this.lookupsService.associationTypeLookup$;
     this.inProgress$ = this.associationFormService.inProgress$;
     this.associations$ = this.agentId$.pipe(
@@ -75,8 +85,8 @@ export class AssociationsComponent {
     e.cancel = this.agentAssociationsService.delete(this.agentId$.value, e.data[BaseModelKeys.dbId]);
   };
 
-  public onRelationshipTypeSelectionChanged = ({ selectedItem }) => {
-    Object.assign(this.associationFormData, { associationTypeRef: selectedItem?.reference ?? null });
+  public onRelationshipTypeSelectionChanged = (item) => {
+    this.selectedRelationshipType$.next(item);
   };
 
   public handleSaveAssociation = (e) => {

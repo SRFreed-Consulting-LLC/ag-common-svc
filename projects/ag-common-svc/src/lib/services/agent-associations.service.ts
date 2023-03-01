@@ -37,7 +37,7 @@ export class AgentAssociationsService {
       .create(data, table)
       .then((response) => {
         //this.toastrService.success('Agent Association Successfully Created!');
-        this.lockLookup(data);
+
         return response;
       })
 
@@ -53,7 +53,7 @@ export class AgentAssociationsService {
       .updateFields(updates, documentId, table)
       .then((response) => {
         //this.toastrService.success('Agent Association Successfully Updated!');
-        this.lockLookup(updates);
+
         return response;
       })
 
@@ -61,12 +61,6 @@ export class AgentAssociationsService {
         console.log('e', e);
       });
   }
-
-  public lockLookup = (data: Partial<Association>) => {
-    if (data?.associationTypeRef) {
-      updateDoc(data?.associationTypeRef, { [LookupKeys.isAssigned]: true });
-    }
-  };
 
   public delete(agentId: string, documentId: any) {
     const table = this.getCollectionPath(agentId);

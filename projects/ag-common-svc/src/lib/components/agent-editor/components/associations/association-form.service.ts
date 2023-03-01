@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Association, BaseModelKeys } from 'ag-common-lib/public-api';
+import { ActiveLookup, Association, BaseModelKeys } from 'ag-common-lib/public-api';
 import { map } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
@@ -11,6 +11,8 @@ export class AssociationFormService {
   public formData: Association;
   public hasFormChanges$: Observable<boolean>;
   public readonly formChangesDetector: FormChangesDetector = new FormChangesDetector();
+
+  public selectedRelationshipType$: BehaviorSubject<ActiveLookup> = new BehaviorSubject(null);
 
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);

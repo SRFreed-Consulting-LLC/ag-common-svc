@@ -9,7 +9,13 @@
   (onSaveClick)="handleSaveAssociation($event)"
   (onPopupClose)="handleAssociationFormPopupClose($event)"
 >
-  <dx-form #associationFormRef [formData]="associationFormData" [colCount]="12" labelMode="floating">
+  <dx-form
+    #associationFormRef
+    *ngIf="!!associationFormData"
+    [formData]="associationFormData"
+    [colCount]="12"
+    labelMode="floating"
+  >
     <dxi-item dataField="first_name" [label]="{ text: 'First Name' }" [colSpan]="6"></dxi-item>
     <dxi-item dataField="last_name" [label]="{ text: 'Last Name' }" [colSpan]="6"></dxi-item>
     <dxi-item dataField="email_address" [label]="{ text: 'Email Address' }" [colSpan]="6"></dxi-item>
@@ -64,19 +70,10 @@
     ></dxi-item>
     <dxi-item [colSpan]="4">
       <div *dxTemplate>
-        <dx-select-box
-          [label]="'Relationship Type'"
-          [labelMode]="'floating'"
-          [value]="associationFormData?.associationTypeRef?.id"
-          (onSelectionChanged)="onRelationshipTypeSelectionChanged($event)"
-          [dataSource]="relationshipTypeLookup$ | async"
-          [valueExpr]="BaseModelKeys.dbId"
-          [displayExpr]="LookupKeys.description"
-          [searchEnabled]="true"
-          [placeholder]="''"
-        >
-          <dxi-button name="dropDown"></dxi-button>
-        </dx-select-box>
+        <ag-shr-relationship-type-select-box
+          [(value)]="associationFormData[AssociationKeys.associationType]"
+          (selectedItemChange)="onRelationshipTypeSelectionChanged($event)"
+        ></ag-shr-relationship-type-select-box>
       </div>
     </dxi-item>
   </dx-form>
@@ -137,7 +134,7 @@
       {{ data.displayValue | phoneNumberMask }}
     </div>
 
-    <dxi-column dataField="associationTypeRef.id" caption="Relationship">
+    <dxi-column dataField="association_type" caption="Relationship">
       <dxo-lookup
         [dataSource]="relationshipTypeLookup$ | async"
         [valueExpr]="BaseModelKeys.dbId"

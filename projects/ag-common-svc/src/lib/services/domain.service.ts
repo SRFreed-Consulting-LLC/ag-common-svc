@@ -370,8 +370,6 @@ export class DomainService implements OnInit {
         AgentKeys.agent_type,
         AGENT_TYPE[line_data.get(AgentKeys.agent_type).trim().toUpperCase()]
       );
-    } else {
-      agent.agent_type = AGENT_TYPE.GENERAL_AGENT;
     }
 
     if (line_data.has(AgentKeys.agent_status)) {

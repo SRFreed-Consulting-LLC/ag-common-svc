@@ -1,21 +1,22 @@
-import { Inject, Optional, Pipe, PipeTransform } from '@angular/core';
-import { AGENT_STATUS, ApproveDenyReason, BaseModelKeys } from 'ag-common-lib/public-api';
+import { Pipe, PipeTransform } from '@angular/core';
+import { ApproveDenyReason, BaseModelKeys } from 'ag-common-lib/public-api';
+import { AuthService } from '../../../../services/auth.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LOGGED_IN_USER_EMAIL } from '../../agent-editor.model';
 
 @Pipe({ name: 'approveDenyReasonsPermissions' })
 export class ApproveDenyReasonsPermissionsPipe implements PipeTransform {
-  constructor(@Optional() @Inject(LOGGED_IN_USER_EMAIL) private loggedInUserEmail$: Observable<string>) {}
+  constructor(private authService: AuthService) {}
   transform(approveDenyReason: ApproveDenyReason): Observable<boolean> {
-    return this.loggedInUserEmail$?.pipe(
+    return this.authService.currentUser$.pipe(
+      map((user) => user?.email),
       map((loggedInUserEmail) => {
         if (!approveDenyReason || !approveDenyReason[BaseModelKeys.dbId]) {
           return true;
         }
 
         return approveDenyReason.created_by === loggedInUserEmail;
-      })
+      }),
     );
   }
 }

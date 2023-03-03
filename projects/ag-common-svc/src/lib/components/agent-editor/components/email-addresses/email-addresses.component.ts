@@ -23,9 +23,8 @@ export class EmailAddressesComponent {
     this.agentId$.next(value);
   }
   @Input() agentUID: string;
-  @Input() agentEmail: string;
   @Input() isSetAsLoginVisible: boolean = false;
-  @Input() emailAddresses: EmailAddress[] = [];
+
   @Output() emailAddressesChange = new EventEmitter();
 
   @ViewChild('emailAddressesEditorModalRef', { static: true }) emailAddressesEditorModalComponent: ModalWindowComponent;
@@ -90,7 +89,7 @@ export class EmailAddressesComponent {
   };
 
   public onInitNewRow = (e) => {
-    e.data.is_primary = !this.emailAddresses?.length;
+    e.data.is_primary = false; // TODO check on empty
     e.data.is_login = false;
     e.data.email_type = this.defaultEmailTypeLookup?.dbId;
   };
@@ -118,7 +117,7 @@ export class EmailAddressesComponent {
   };
 
   public showSetLoginEmailModal = () => {
-    this.setLoginEmailModalComponent?.showModal(this.agentId$.value);
+    this.setLoginEmailModalComponent?.showModal(this.agentId$.value, this.agentUID);
   };
 
   public asyncUniqEmailValidation = async ({ data, value }) => {

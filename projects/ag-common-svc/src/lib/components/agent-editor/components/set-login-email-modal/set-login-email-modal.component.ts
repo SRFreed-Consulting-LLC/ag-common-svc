@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { ActiveLookup } from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
+import { AuthService } from '../../../../services/auth.service';
 import { Observable } from 'rxjs';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
 import { SetLoginEmailModalService } from './set-login-email-modal.service';
@@ -16,32 +17,31 @@ export class SetLoginEmailModalComponent {
   @ViewChild('setPrimaryEmailFormRef', { static: false }) setPrimaryEmailFormComponent: DxFormComponent;
 
   public formData;
-  public isEmailValid = false;
+  public hasSameEmailOnOtherAgent = false;
   public emailAddressesLookup$: Observable<ActiveLookup[]>;
   public isValidating = false;
   public inProgress$: Observable<boolean>;
   public isSendOTPInProgress$: Observable<boolean>;
+  public isOTPSended$: Observable<boolean>;
+  public isEmailValid$: Observable<boolean>;
+  public isEmailExistOnOtherRecord$: Observable<boolean>;
 
-  constructor(private setLoginEmailModalService: SetLoginEmailModalService) {
+  constructor(private setLoginEmailModalService: SetLoginEmailModalService, private authService: AuthService) {
     this.isSendOTPInProgress$ = this.setLoginEmailModalService.isSendOTPInProgress$;
+    this.isOTPSended$ = this.setLoginEmailModalService.isOTPSended$;
+    this.isEmailValid$ = this.setLoginEmailModalService.isEmailValid$;
+    this.isEmailExistOnOtherRecord$ = this.setLoginEmailModalService.isEmailExistOnOtherRecord$;
   }
 
-  public showModal = async (agentId: string) => {
-    this.setLoginEmailModalService.init(agentId);
+  public showModal = async (agentId: string, agentUID: string) => {
+    this.setLoginEmailModalService.init(agentId, agentUID);
     this.formData = this.setLoginEmailModalService.formData;
     this.emailAddressesLookup$ = this.setLoginEmailModalService.emailAddressesLookup$;
     this.setPrimaryEmailModalComponent?.showModal();
   };
 
   public emailAddressAsyncValidation = (item) => {
-    this.isEmailValid = false;
-
-    return this.setLoginEmailModalService
-      .emailAddressAsyncValidation(item?.value as ActiveLookup)
-      .then((isEmailValid) => {
-        this.isEmailValid = isEmailValid;
-        return isEmailValid;
-      });
+    return this.setLoginEmailModalService.emailAddressAsyncValidation(item?.value as ActiveLookup);
   };
 
   public otpAsyncValidation = (item) => this.setLoginEmailModalService.otpAsyncValidation(item?.value);
@@ -50,18 +50,20 @@ export class SetLoginEmailModalComponent {
 
   public handleSetEmailLogin = async (e) => {
     this.isValidating = true;
+    debugger;
     const validationResults = this.setPrimaryEmailFormComponent.instance.validate();
-
     if (validationResults?.complete) {
+      debugger;
       await validationResults?.complete;
     }
 
     this.isValidating = false;
     if (validationResults.isValid) {
       debugger;
-      // this.approveDenyReasonModalService.saveApproveDenyReason(this.agentId).then(() => {
-      //   e.component.instance.hide();
-      // });
+
+      await this.setLoginEmailModalService.setLoginEmail();
+      e.component.instance.hide();
+      await this.authService.logOut();
     }
   };
 }

@@ -28,7 +28,7 @@ export class OtpService {
   public validateOTP = (otp, email) => {
     return this.fsDao.getById(this.collection, otp).then((item) => {
       const isValid = item?.email === email && isFuture(item?.expirationDate);
-      debugger;
+
       return isValid;
     });
   };

@@ -5,7 +5,6 @@
 export * from './lib/config/firebase-config.model';
 
 export * from './lib/dao/CommonFireStoreDao.dao';
-export * from './lib/dao/FireAuthDao.dao';
 
 export * from './lib/services/agent.service';
 export * from './lib/services/agent-external-persons.service';

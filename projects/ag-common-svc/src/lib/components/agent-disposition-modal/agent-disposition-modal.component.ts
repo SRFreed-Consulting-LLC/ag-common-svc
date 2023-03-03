@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Inject, Input, Optional, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
 import {
   Agent,
   AgentKeys,
@@ -6,23 +6,21 @@ import {
   ApproveDenyReason,
   ApproveDenyReasonKeys,
   ApproveDenyReasonVisibilityLevel,
-  BaseModelKeys
+  BaseModelKeys,
 } from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { take } from 'rxjs/operators';
 import { ModalWindowComponent } from '../modal-window/modal-window.component';
 import { AgentDispositionModalService, ChangeAgentStatusConfig } from './agent-disposition-modal.service';
 import { AgentService } from '../../services/agent.service';
 import { AgentApproveDenyReasonsService } from '../../services/agent-approve-deny-reason.service';
 import { ToastrService } from 'ngx-toastr';
-import { LOGGED_IN_USER_EMAIL } from '../agent-editor/agent-editor.model';
 
 @Component({
   selector: 'ag-shr-agent-disposition-modal',
   templateUrl: './agent-disposition-modal.component.html',
   styleUrls: ['./agent-disposition-modal.component.scss'],
-  providers: [AgentDispositionModalService]
+  providers: [AgentDispositionModalService],
 })
 export class AgentDispositionModalComponent {
   @HostBinding('class') className = 'agent-disposition-modal';
@@ -50,7 +48,6 @@ export class AgentDispositionModalComponent {
     private agentService: AgentService,
     private agentDispositionModalService: AgentDispositionModalService,
     private agentApproveDenyReasonsService: AgentApproveDenyReasonsService,
-    @Optional() @Inject(LOGGED_IN_USER_EMAIL) private loggedInUserEmail$: Observable<string>
   ) {}
 
   public showPopup = async (agent: Agent) => {
@@ -66,16 +63,13 @@ export class AgentDispositionModalComponent {
     const validationResults = this.updateAgentStatusFormComponent.instance.validate();
 
     if (validationResults.isValid) {
-      const loggedInUserEmail = await this.loggedInUserEmail$.pipe(take(1)).toPromise();
       const formData = this.updateAgentStatusFormComponent.formData;
       const approveDenyReason = Object.assign(
         {
-          [BaseModelKeys.createdDate]: new Date(),
-          [BaseModelKeys.createdBy]: loggedInUserEmail,
           [ApproveDenyReasonKeys.activity]: formData?.reason ?? null,
-          [ApproveDenyReasonKeys.visibilityLevel]: this.changeAgentStatusConfig.approveDenyReasonVisibilityLevel
+          [ApproveDenyReasonKeys.visibilityLevel]: this.changeAgentStatusConfig.approveDenyReasonVisibilityLevel,
         },
-        new ApproveDenyReason()
+        new ApproveDenyReason(),
       );
       const agentId = this.agentDispositionFormData[BaseModelKeys.dbId];
       const agentStatus = this.changeAgentStatusConfig.agentStatus;
@@ -84,9 +78,9 @@ export class AgentDispositionModalComponent {
 
       Promise.all([
         this.agentService.updateFields(agentId, {
-          [AgentKeys.agent_status]: agentStatus
+          [AgentKeys.agent_status]: agentStatus,
         }),
-        formData?.reason && this.agentApproveDenyReasonsService.create(agentId, approveDenyReason, true)
+        formData?.reason && this.agentApproveDenyReasonsService.create(agentId, approveDenyReason, true),
       ])
         .then(() => {
           this.toster.success('Agent Status Successfully set to ' + agentStatus);

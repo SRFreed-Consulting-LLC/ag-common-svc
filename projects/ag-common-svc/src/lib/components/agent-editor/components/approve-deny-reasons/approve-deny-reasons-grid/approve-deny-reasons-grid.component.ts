@@ -16,10 +16,10 @@ import { AgentApproveDenyReasonsService } from '../../../../../services/agent-ap
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { AgentService } from '../../../../../services/agent.service';
 import { ApproveDenyReasonsModalComponent } from '../approve-deny-reasons-modal/approve-deny-reasons-modal.component';
-import { LOGGED_IN_USER_EMAIL } from '../../../agent-editor.model';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { QueryParam, WhereFilterOperandKeys } from '../../../../../dao/CommonFireStoreDao.dao';
 import { ApproveDenyReasonEditorConfig } from './approve-deny-reasons-grid.model';
+import { AuthService } from '../../../../../services/auth.service';
 
 @UntilDestroy()
 @Component({
@@ -50,18 +50,23 @@ export class ApproveDenyReasonsGridComponent {
   public approveDenyReasonVisibilityLevelLookup = APPROVE_DENY_REASON_VISIBILITY_LEVEL_LOOKUP;
   public approveDenyReasons$: Observable<DataSource>;
 
+  private loggedInUserEmail: string;
   private readonly agentId$ = new BehaviorSubject<string>(undefined);
-  private loggedInUserEmail = undefined;
   private allowedVisibilityLevels$ = new BehaviorSubject<ApproveDenyReasonVisibilityLevel[]>([]);
 
   constructor(
     private agentService: AgentService,
     private agentApproveDenyReasonsService: AgentApproveDenyReasonsService,
-    @Optional() @Inject(LOGGED_IN_USER_EMAIL) private loggedInUserEmail$: Observable<string>,
+    private authService: AuthService,
   ) {
-    this.loggedInUserEmail$?.pipe(untilDestroyed(this)).subscribe((loggedInUserEmail) => {
-      this.loggedInUserEmail = loggedInUserEmail;
-    });
+    this.authService.currentUser$
+      ?.pipe(
+        untilDestroyed(this),
+        map((user) => user?.email),
+      )
+      .subscribe((loggedInUserEmail) => {
+        this.loggedInUserEmail = loggedInUserEmail;
+      });
     this.approveDenyReasons$ = combineLatest([this.agentId$, this.allowedVisibilityLevels$]).pipe(
       filter(([agentId]) => !!agentId),
       switchMap(([agentId, allowedVisibilityLevels]) => {

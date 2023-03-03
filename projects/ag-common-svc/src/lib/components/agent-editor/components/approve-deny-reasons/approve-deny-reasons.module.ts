@@ -13,8 +13,8 @@ import { ApproveDenyReasonsComponent } from './approve-deny-reasons.component';
     ApproveDenyReasonsComponent,
     ApproveDenyReasonsGridComponent,
     ApproveDenyReasonsModalComponent,
-    ApproveDenyReasonsPermissionsPipe
+    ApproveDenyReasonsPermissionsPipe,
   ],
-  exports: [ApproveDenyReasonsComponent, ApproveDenyReasonsGridComponent, ApproveDenyReasonsModalComponent]
+  exports: [ApproveDenyReasonsComponent, ApproveDenyReasonsGridComponent, ApproveDenyReasonsModalComponent],
 })
 export class ApproveDenyReasonsModule {}

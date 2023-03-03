@@ -16,7 +16,6 @@ import {
 import { UserCredential } from '@firebase/auth';
 import { Role } from 'ag-common-lib/public-api';
 import { AuthService } from './auth.service';
-import { FireAuthDao } from '../dao/FireAuthDao.dao';
 import { AgentService } from './agent.service';
 import { LoggerService } from './logger.service';
 
@@ -27,7 +26,6 @@ export class RegisterService {
   public showLoader = false;
 
   constructor(
-    private authDao: FireAuthDao,
     private authService: AuthService,
     public router: Router,
     public ngZone: NgZone,
@@ -38,9 +36,9 @@ export class RegisterService {
 
   public async registerWithForm(userData) {
     debugger;
-    const firebaseUser = await this.authDao
-      .register(userData)
-      .catch(this.handleFirebaseErrors.bind(this, userData?.email));
+    // const firebaseUser = await this.authService
+    //   .register(userData)
+    //   .catch(this.handleFirebaseErrors.bind(this, userData?.email));
     return true;
 
     // return this.authDao
@@ -160,7 +158,7 @@ export class RegisterService {
   }
 
   public changeAgentEmail(registrationForm: UntypedFormGroup) {
-    let agent: Agent = this.authService.authDao.currentAgent$.getValue();
+    let agent: Agent = this.authService.currentAgent$.value;
 
     let currentEmailAddress = agent.p_email.trim();
 
@@ -178,45 +176,45 @@ export class RegisterService {
       agent.email_addresses.push(newEmailAddress);
     }
 
-    this.authDao.register(registrationForm).then(
-      (userCredential) => {
-        // agent.registrationDate = new Date();
-        // agent.uid = userCredential.user.uid;
-        // agent.emailVerified = false;
-        // agent.p_email = userCredential.user.email.toLowerCase();
-        // //set correct 'is_login'
-        // agent.email_addresses.forEach((email) => {
-        //   email.is_login = false;
-        //   if (email.address == agent.p_email) {
-        //     email.is_login = true;
-        //   }
-        // });
-        // this.toster.success('You are about to be logged out now...');
-        // let url = environment.user_admin_url + '/' + agent.dbId + '/' + currentEmailAddress;
-        // this.http.get(url).subscribe((response) => {
-        //   this.agentService.update(agent).then(() => {
-        //     this.logMessage('ACCOUNT-DELETE', currentEmailAddress, 'Auth Account Deleted', [
-        //       { ...agent },
-        //       { ...response },
-        //     ]);
-        //     this.authService.logOut();
-        //   });
-        // });
-      },
-      (err) => {
-        this.logMessage('REGISTRATION', agent.p_email, 'There was an error Updating your agent record. ', [
-          { ...err },
-          { ...agent },
-        ]).then((ec) => {
-          this.toster.error(
-            'There was an error Updating your agent record with the new Email Address. Please contact Alliance Group for assistance with this code: ' +
-              ec,
-            'Registration Error',
-            { disableTimeOut: true },
-          );
-        });
-      },
-    );
+    // this.authDao.register(registrationForm).then(
+    //   (userCredential) => {
+    //     // agent.registrationDate = new Date();
+    //     // agent.uid = userCredential.user.uid;
+    //     // agent.emailVerified = false;
+    //     // agent.p_email = userCredential.user.email.toLowerCase();
+    //     // //set correct 'is_login'
+    //     // agent.email_addresses.forEach((email) => {
+    //     //   email.is_login = false;
+    //     //   if (email.address == agent.p_email) {
+    //     //     email.is_login = true;
+    //     //   }
+    //     // });
+    //     // this.toster.success('You are about to be logged out now...');
+    //     // let url = environment.user_admin_url + '/' + agent.dbId + '/' + currentEmailAddress;
+    //     // this.http.get(url).subscribe((response) => {
+    //     //   this.agentService.update(agent).then(() => {
+    //     //     this.logMessage('ACCOUNT-DELETE', currentEmailAddress, 'Auth Account Deleted', [
+    //     //       { ...agent },
+    //     //       { ...response },
+    //     //     ]);
+    //     //     this.authService.logOut();
+    //     //   });
+    //     // });
+    //   },
+    //   (err) => {
+    //     this.logMessage('REGISTRATION', agent.p_email, 'There was an error Updating your agent record. ', [
+    //       { ...err },
+    //       { ...agent },
+    //     ]).then((ec) => {
+    //       this.toster.error(
+    //         'There was an error Updating your agent record with the new Email Address. Please contact Alliance Group for assistance with this code: ' +
+    //           ec,
+    //         'Registration Error',
+    //         { disableTimeOut: true },
+    //       );
+    //     });
+    //   },
+    // );
   }
 
   private createAgentFromUserandAgentRecord(result: UserCredential, agent: Agent, registrationForm: UntypedFormGroup) {

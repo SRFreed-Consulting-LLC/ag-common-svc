@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
 import { AgentEmailAddressesService } from '../../../../services/agent-email-addresses.service';
-import { ActiveLookup, Lookup } from 'ag-common-lib/public-api';
+import { ActiveLookup } from 'ag-common-lib/public-api';
 import { CloudFunctionsService } from '../../../../services/cloud-functions.service';
 import { OtpService } from '../../../../services/otp.service';
 
@@ -22,7 +22,17 @@ export class SetLoginEmailModalService {
   public isSendOTPInProgress$: Observable<boolean>;
   private readonly _isSendOTPInProgress$ = new BehaviorSubject<boolean>(false);
 
+  public isOTPSended$: Observable<boolean>;
+  private readonly _isOTPSended$ = new BehaviorSubject<boolean>(false);
+
+  public isEmailValid$: Observable<boolean>;
+  private readonly _isEmailValid$ = new BehaviorSubject<boolean>(false);
+
+  public isEmailExistOnOtherRecord$: Observable<boolean>;
+  private readonly _isEmailExistOnOtherRecord$ = new BehaviorSubject<boolean>(false);
+
   private _agentId: string;
+  private _agentUID: string;
 
   constructor(
     private agentEmailAddressesService: AgentEmailAddressesService,
@@ -31,14 +41,15 @@ export class SetLoginEmailModalService {
   ) {
     this.inProgress$ = this._inProgress$.asObservable();
     this.isSendOTPInProgress$ = this._isSendOTPInProgress$.asObservable();
+    this.isOTPSended$ = this._isOTPSended$.asObservable();
+    this.isEmailValid$ = this._isEmailValid$.asObservable();
+    this.isEmailExistOnOtherRecord$ = this._isEmailExistOnOtherRecord$.asObservable();
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
         return this.formChangesDetector.hasChanges;
       }),
     );
   }
-
-  public setLoginEmail = (agentId) => {};
 
   public onCancelEditApproveDenyReason = ({ event, component }) => {
     if (!this.formChangesDetector?.hasChanges) {
@@ -56,8 +67,9 @@ export class SetLoginEmailModalService {
     });
   };
 
-  public init = (agentId) => {
+  public init = (agentId, agentUID) => {
     this._agentId = agentId;
+    this._agentUID = agentUID;
     this.formData = new Proxy(
       {
         emailAddress: null,
@@ -102,15 +114,20 @@ export class SetLoginEmailModalService {
   };
 
   public emailAddressAsyncValidation = async (emailLookup: ActiveLookup) => {
-    const items = await this.agentEmailAddressesService.findSameUserEmails(emailLookup?.description);
+    const isEmailValid = await this.agentEmailAddressesService
+      .findSameUserEmails(emailLookup?.description)
+      .then((items) => {
+        const sameEmailOnOtherAgent = items.filter((item) => item.parentDbId !== this._agentId);
+        const isEmailExistOnOtherRecord = !!sameEmailOnOtherAgent?.length;
+        const isEmailValid = sameEmailOnOtherAgent?.every((item) => !item?.data?.is_login);
 
-    const sameEmailOnOtherAgent = items.filter((item) => item.parentDbId !== this._agentId);
+        this._isEmailExistOnOtherRecord$.next(isEmailExistOnOtherRecord);
+        this._isEmailValid$.next(isEmailValid);
 
-    if (!sameEmailOnOtherAgent?.length) {
-      return true;
-    }
+        return isEmailValid;
+      });
 
-    return sameEmailOnOtherAgent?.some((item) => item?.data?.is_login);
+    return isEmailValid;
   };
 
   public otpAsyncValidation = async (otp: string) => {
@@ -126,11 +143,12 @@ export class SetLoginEmailModalService {
     try {
       const email = this.formData?.emailAddress?.description;
 
+      this._isOTPSended$.next(false);
       this._isSendOTPInProgress$.next(true);
       this.cloudFunctionsService
         .sendOTP({ email })
         .then((data) => {
-          debugger;
+          this._isOTPSended$.next(true);
         })
         .catch((e) => {
           debugger;
@@ -141,19 +159,23 @@ export class SetLoginEmailModalService {
     } catch (error) {
       debugger;
     }
-    // try {
-    //   await this.authService.changeUserEmail(emailAddress.address);
-    //   const emailAddresses = await firstValueFrom(this.emailAddresses$);
-    //   const loginEmailAddress = emailAddresses.find((item) => item?.is_login);
-    //   await Promise.all([
-    //     this.agentEmailAddressesService.update(this.agentId$.value, emailAddress.dbId, { is_login: true }),
-    //     this.agentEmailAddressesService.update(this.agentId$.value, loginEmailAddress.dbId, { is_login: false }),
-    //   ]).then(() => false);
-    //   this.toastrService.success(
-    //     'Your email is being changed and you will be logged out of the portal\n Please login with your new Email Address.',
-    //   );
-    // } catch (error) {
-    //   debugger;
-    // }
+  };
+
+  public setLoginEmail = async () => {
+    try {
+      const agentDbId = this._agentId;
+      const otp = this.formData?.otp;
+      const emailAddressDbId = this.formData?.emailAddress?.dbId;
+      debugger;
+      await this.cloudFunctionsService.updateUserLoginEmail({
+        uid: this._agentUID,
+        otp,
+        agentDbId,
+        emailAddressDbId,
+      });
+      debugger;
+    } catch (error) {
+      debugger;
+    }
   };
 }

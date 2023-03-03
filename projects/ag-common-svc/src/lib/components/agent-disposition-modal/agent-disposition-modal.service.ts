@@ -1,18 +1,9 @@
-import { Inject, Injectable, Optional } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import {
-  Agent,
-  AgentKeys,
-  AGENT_STATUS,
-  ApproveDenyReasonVisibilityLevel,
-  BaseModelKeys
-} from 'ag-common-lib/public-api';
+import { Agent, AGENT_STATUS, ApproveDenyReasonVisibilityLevel } from 'ag-common-lib/public-api';
 import { map } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
-import { ApproveDenyReason, ApproveDenyReasonKeys } from 'ag-common-lib/lib/models/utils/approve-deny-reason.model';
-import { AgentApproveDenyReasonsService } from '../../services/agent-approve-deny-reason.service';
-import { LOGGED_IN_USER_EMAIL } from '../agent-editor/agent-editor.model';
 
 export interface ChangeAgentStatusConfig {
   reasonRequired: boolean;
@@ -31,15 +22,12 @@ export class AgentDispositionModalService {
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);
 
-  constructor(
-    @Optional() @Inject(LOGGED_IN_USER_EMAIL) private loggedInUserEmail$: Observable<string>,
-    private agentApproveDenyReasonsService: AgentApproveDenyReasonsService
-  ) {
+  constructor() {
     this.inProgress$ = this._inProgress$.asObservable();
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
         return this.formChangesDetector.hasChanges;
-      })
+      }),
     );
   }
 
@@ -73,7 +61,7 @@ export class AgentDispositionModalService {
         Reflect.set(target, prop, value, receiver);
 
         return true;
-      }
+      },
     });
 
     return this.formData;

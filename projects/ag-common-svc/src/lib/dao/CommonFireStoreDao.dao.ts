@@ -20,10 +20,13 @@ import {
   SnapshotOptions,
   Timestamp,
   orderBy,
+  QuerySnapshot,
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
-import { fromEventPattern, Observable, Subject } from 'rxjs';
+import { firstValueFrom, fromEventPattern, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { inject, Injector } from '@angular/core';
+import { AuthService } from '../services/auth.service';
 
 const localeCompareOptions = {
   numeric: true,
@@ -34,6 +37,7 @@ export class CommonFireStoreDao<T> {
   readonly db: Firestore;
   private fromFirestore: (documentData: DocumentData) => T = null;
   private toFirestore: (item: T) => T = null;
+  private injector = inject(Injector);
 
   constructor(
     fireBaseApp: FirebaseApp,
@@ -91,7 +95,7 @@ export class CommonFireStoreDao<T> {
     return this.getById(table, snap.id);
   }
 
-  public getList(table, queries: QueryParam[] = [], includeRef: boolean = false, sortField?: string): Observable<T[]> {
+  public getSnapshotList(table, queries: QueryParam[] = []): Observable<QuerySnapshot<T[]>> {
     const queryConstraints: QueryConstraint[] = queries.map((query) =>
       where(query.field, query.operation, query.value),
     );
@@ -106,7 +110,11 @@ export class CommonFireStoreDao<T> {
       (handler, unsubscribe) => {
         unsubscribe();
       },
-    ).pipe(
+    );
+  }
+
+  public getList(table, queries: QueryParam[] = [], includeRef: boolean = false, sortField?: string): Observable<T[]> {
+    return this.getSnapshotList(table, queries).pipe(
       map((collectionSnapshot: any) => {
         const items = collectionSnapshot.docs.map((document) => {
           if (!document.exists()) {
@@ -119,6 +127,12 @@ export class CommonFireStoreDao<T> {
 
           return data;
         });
+
+        if (sortField) {
+          items.sort((left, right) =>
+            String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions),
+          );
+        }
 
         return items;
       }),
@@ -402,6 +416,13 @@ export class CommonFireStoreDao<T> {
     }
 
     return isValid(normalizedDate) ? normalizedDate : null;
+  };
+
+  private getCurrentUserData = async () => {
+    const currentUser$ = this.injector.get(AuthService)?.currentUser$;
+    const currentUser = await firstValueFrom(currentUser$);
+
+    return { email: currentUser?.email, uid: currentUser?.uid };
   };
 }
 

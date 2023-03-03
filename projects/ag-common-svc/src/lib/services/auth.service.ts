@@ -1,21 +1,38 @@
 import { Inject, Injectable, InjectionToken, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { CookieService } from 'ngx-cookie-service';
-import { Agent, AgentKeys, AGENT_STATUS, LogMessage } from 'ag-common-lib/public-api';
+import { Agent, AgentKeys, BaseModelKeys, LogMessage, UserPermission } from 'ag-common-lib/public-api';
 import {
-  EmailAuthProvider,
-  getAuth,
-  reauthenticateWithPopup,
-  updateEmail,
-  UserCredential,
-  verifyBeforeUpdateEmail,
-} from 'firebase/auth';
-import { lastValueFrom, mergeMap, take } from 'rxjs';
-import { addMinutes } from 'date-fns';
-import { FireAuthDao, ID_TOKEN_COOKIE_NAME } from '../dao/FireAuthDao.dao';
-import { LoggerService } from './logger.service';
+  BehaviorSubject,
+  filter,
+  firstValueFrom,
+  fromEventPattern,
+  map,
+  mergeMap,
+  Observable,
+  shareReplay,
+  tap,
+  throwError,
+} from 'rxjs';
 import { AgentService } from './agent.service';
+import { FIREBASE_APP } from '../injections/firebase-app';
+import { FirebaseApp } from 'firebase/app';
+import {
+  Auth,
+  browserSessionPersistence,
+  checkActionCode,
+  getAuth,
+  IdTokenResult,
+  sendPasswordResetEmail,
+  setPersistence,
+  signInWithEmailAndPassword,
+  signOut,
+  User,
+  UserCredential,
+  verifyPasswordResetCode,
+} from 'firebase/auth';
+import { UserPermissionService } from './user-permissions.service';
+import { LoggerService } from './logger.service';
 
 export const DOMAIN = new InjectionToken<string>('DOMAIN');
 export const SESSION_EXPIRATION = new InjectionToken<number>('SESSION_EXPIRATION');
@@ -24,57 +41,90 @@ export const SESSION_EXPIRATION = new InjectionToken<number>('SESSION_EXPIRATION
   providedIn: 'root',
 })
 export class AuthService {
-  public showPWReset = false;
+  private auth: Auth;
+
+  public readonly currentUser$: Observable<User>;
+  public readonly loggedInAgent$: Observable<Agent>;
+  public readonly userPermissions$: Observable<UserPermission[]>;
+
+  /**
+   * @deprecated Use loggedInAgent$ observable instead
+   */
+  public currentAgent$: BehaviorSubject<Agent> = new BehaviorSubject(undefined);
 
   constructor(
-    @Inject(ID_TOKEN_COOKIE_NAME) private idTokenCookieName: string,
-    @Inject(DOMAIN) private domain: string,
+    @Inject(FIREBASE_APP) fireBaseApp: FirebaseApp,
     @Inject(SESSION_EXPIRATION) private sessionExpiration: number,
     public router: Router,
     public ngZone: NgZone,
     public toster: ToastrService,
-    public authDao: FireAuthDao,
-    private cookieService: CookieService,
     private route: ActivatedRoute,
-    private loggerService: LoggerService,
     private agentService: AgentService,
-  ) {}
+    private loggerService: LoggerService,
+    private userPermissionService: UserPermissionService,
+  ) {
+    this.auth = getAuth(fireBaseApp);
+
+    this.currentUser$ = fromEventPattern(
+      (handler) => this.auth.onAuthStateChanged(handler),
+      (_handler, unsubscribe) => {
+        unsubscribe();
+      },
+    );
+
+    this.loggedInAgent$ = this.currentUser$.pipe(
+      tap((currentUser) => {
+        console.log('loggedInAgent currentUser', currentUser);
+      }),
+      filter(Boolean),
+      mergeMap((user: User) => user.getIdTokenResult()),
+      map((idTokenResult: IdTokenResult) => {
+        console.log('loggedInAgent idTokenResult', idTokenResult);
+        const claims = idTokenResult?.claims;
+
+        return claims?.agentId;
+      }),
+      mergeMap((agentId: string) => {
+        if (!agentId) {
+          this.logOut();
+          return throwError(() => new Error('No Agent Id'));
+        }
+
+        return this.agentService.getById(agentId);
+      }),
+      tap((agent) => {
+        // TODO temp solution
+        this.currentAgent$.next(agent);
+        console.log('loggedInAgent idTokenResult', agent);
+        if (!agent) {
+          throw new Error('Could not find agent record for user');
+          // this.logMessage('LOGIN', userCredentials.user.email, 'Could not find agent record for user').then((ec) => {
+          //   this.toster.error(
+          //     'An Agent record matching that Email Address could not be found. Please contact Alliance Group for Assistance with this code:' +
+          //       ec,
+          //     'Login Error',
+          //     { disableTimeOut: true },
+          //   );
+          // });
+          // return;
+        }
+      }),
+      shareReplay(1),
+    );
+
+    this.userPermissions$ = this.loggedInAgent$.pipe(
+      mergeMap((agent) => {
+        return this.userPermissionService.getList(agent[BaseModelKeys.dbId]);
+      }),
+    );
+  }
 
   public async signInWithEmailAndPassword(email: string, password: string) {
-    this.cookieService.delete(this.idTokenCookieName);
-
     try {
-      const userCredentials = await this.authDao.signIn(email, password);
+      await this.signIn(email, password);
+      const agent = await firstValueFrom(this.loggedInAgent$);
       debugger;
-      const agent = await lastValueFrom(this.authDao.currentAgent$.pipe(take(1)));
-      debugger;
-      if (!agent) {
-        this.logMessage('LOGIN', userCredentials.user.email, 'Could not find agent record for user').then((ec) => {
-          this.toster.error(
-            'An Agent record matching that Email Address could not be found. Please contact Alliance Group for Assistance with this code:' +
-              ec,
-            'Login Error',
-            { disableTimeOut: true },
-          );
-        });
-        return;
-      }
-
-      if (agent.agent_status !== AGENT_STATUS.APPROVED) {
-        this.logMessage('LOGIN', userCredentials.user.email, 'User exists but not green lighted. ', [
-          { ...agent[0] },
-        ]).then((ec) => {
-          this.toster.error(
-            'Your portal access status is under review. Please try again in 24-48 hours. If you believe you have reached this message in error, please contact Alliance Group for Assistance with this code:' +
-              ec,
-            'Login Error',
-            { disableTimeOut: true },
-          );
-        });
-        return;
-      }
-
-      await this.logUserIntoPortal(userCredentials, agent);
+      this.logUserIntoPortal(agent);
     } catch (error) {
       switch (error.code) {
         case 'auth/wrong-password':
@@ -137,12 +187,23 @@ export class AuthService {
     }
   }
 
-  private async logUserIntoPortal(authResult: UserCredential, agent: Agent) {
+  public verifyPasswordResetCode = (actionCode: string) => {
+    return verifyPasswordResetCode(this.auth, actionCode);
+  };
+
+  public checkActionCode = (actionCode: string) => {
+    return checkActionCode(this.auth, actionCode);
+  };
+
+  private logUserIntoPortal(agent: Agent) {
+    if (!agent) {
+      return;
+    }
     const updates = {
       [AgentKeys.login_count]: Number.isInteger(agent?.login_count) ? agent?.login_count + 1 : 1,
       [AgentKeys.last_login_date]: new Date(),
     };
-    //if the user has never logged in before
+
     if (!agent.logged_in) {
       Object.assign(updates, {
         [AgentKeys.logged_in]: true,
@@ -150,26 +211,7 @@ export class AuthService {
       });
     }
 
-    //if(user has been verified, but not set in db)
-    if (authResult.user.emailVerified && !agent.emailVerified) {
-      agent.emailVerified = true;
-      Object.assign(updates, {
-        [AgentKeys.emailVerified]: true,
-      });
-    }
-
-    await this.agentService.updateFields(agent?.dbId, updates);
-
-    agent.showSplashScreen = true;
-
-    if (!authResult.user.emailVerified && !agent.emailVerified) {
-      this.ngZone.run(() => {
-        this.router.navigate(['auth', 'register-landing']);
-      });
-      return;
-    }
-
-    await this.setAuthExpirationTime();
+    this.agentService.updateFields(agent?.dbId, updates);
 
     let destination: string = 'dashboard';
     if (this.route.snapshot.queryParamMap.has('returnUrl')) {
@@ -181,26 +223,20 @@ export class AuthService {
     });
   }
 
-  public logOut() {
-    this.cookieService.delete(this.idTokenCookieName, '/', this.domain);
-
+  public async logOut() {
     this.router.routeReuseStrategy.shouldReuseRoute = () => {
       return false;
     };
-
-    return this.authDao
-      .signOut()
-      .then(() => {
-        this.router.navigate(['auth', 'login']);
-      })
-      .catch((error) => {
-        console.error('Error in Auth Service.', error);
-      });
+    try {
+      await this.router.navigate(['auth', 'login']);
+      await signOut(this.auth);
+    } catch (error) {
+      console.error('Error in Auth Service.', error);
+    }
   }
 
   public forgotPassword(email: string) {
-    return this.authDao
-      .forgotPassword(email)
+    return sendPasswordResetEmail(this.auth, email)
       .then(() => {
         this.toster.info('Password reset email sent, check your inbox.');
       })
@@ -218,39 +254,15 @@ export class AuthService {
       dateNow.setMinutes(dateNow.getMinutes() + this.sessionExpiration);
     }
 
-    if (this.authDao.auth.currentUser) {
-      return this.authDao.auth.currentUser.getIdToken(true).then((t) => {
-        this.cookieService.set(this.idTokenCookieName, t, dateNow, '/', this.domain, false, 'Lax');
-      });
-    }
+    // TODO
 
     return Promise.reject();
   }
 
-  async changeUserEmail(email: string) {
-    debugger;
-    let auth = getAuth();
-    const currentUser = auth.currentUser;
-    const provider = new EmailAuthProvider();
-    const userCredantials = await reauthenticateWithPopup(currentUser, provider);
-    return updateEmail(auth.currentUser, email);
-
-    // return this.authDao.currentUser$.pipe(
-    //   mergeMap((user) => {
-    //     return user.getIdToken();
-    //   }),
-    //   mergeMap((token) => {
-    //     this.cookieService.set(
-    //       this.idTokenCookieName,
-    //       token,
-    //       addMinutes(new Date(), this.sessionExpiration),
-    //       '/',
-    //       this.domain,
-    //       false,
-    //       'Lax',
-    //     );
-    //   }),
-    // );
+  private signIn(email, password): Promise<UserCredential> {
+    return setPersistence(this.auth, browserSessionPersistence).then(() => {
+      return signInWithEmailAndPassword(this.auth, email, password);
+    });
   }
 
   private logMessage(type: string, created_by: string, message: string, data?: any) {

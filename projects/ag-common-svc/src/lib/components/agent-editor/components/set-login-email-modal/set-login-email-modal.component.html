@@ -2,7 +2,7 @@
   #setPrimaryEmailModalRef
   [title]="'Set Primary Email'"
   [width]="'500px'"
-  [height]="'400px'"
+  [height]="'auto'"
   [actionTitle]="'Set'"
   [inProgress]="isValidating || (inProgress$ | async)"
   (onSaveClick)="handleSetEmailLogin($event)"
@@ -13,6 +13,12 @@
     labelMode="floating"
     [formData]="formData"
   >
+    <dxi-item>
+      <div *dxTemplate>
+        <ng-container> Select an Email Address to assign as <b>Login Email Address</b>.</ng-container>
+      </div>
+    </dxi-item>
+
     <dxi-item
       [dataField]="'emailAddress'"
       [label]="{ text: 'Email Address' }"
@@ -39,7 +45,7 @@
       [editorOptions]="{
         mask: '0 0 0 0 0 0',
         placeholder: '',
-        disabled: !isEmailValid,
+        disabled: !(isEmailValid$ | async),
         buttons: [
           {
             name: 'sendOTP',
@@ -51,7 +57,8 @@
               },
               type: 'default',
               stylingMode: 'text',
-              disabled: !isEmailValid,
+              hint: 'Send Confirmation Code',
+              disabled: !(isEmailValid$ | async),
               onClick: sendOtp
             }
           }
@@ -69,6 +76,22 @@
 
       <dxi-validation-rule type="async" message="One Time Code is Invalid" [validationCallback]="otpAsyncValidation">
       </dxi-validation-rule>
+    </dxi-item>
+
+    <dxi-item>
+      <div *dxTemplate>
+        <p *ngIf="(isEmailExistOnOtherRecord$ | async) && (isEmailValid$ | async)">
+          <b>Warning:</b> The same Email Address exist on the other Agent record.
+        </p>
+
+        <p *ngIf="isOTPSended$ | async">
+          A confirmation code has been sent to
+          <b>{{ formData?.emailAddress?.description }}</b>
+          .
+          <br />
+          Enter the code to confirm the new Email Address.
+        </p>
+      </div>
     </dxi-item>
 
     <div *dxTemplate="let item of 'sendOTPButtonTemplate'" class="editor-progress-indicator">

@@ -15,7 +15,7 @@
       </dx-toolbar>
     </div>
   </div>
-  <div class="row my-2 px-3" *ngIf="emailAddresses.length > 0">
+  <div class="row my-2 px-3" *ngIf="(emailAddresses$ | async)?.length > 0">
     <div class="col-6 text-start"></div>
     <div class="col-2 text-center"></div>
     <div class="col-2 text-center">
@@ -25,7 +25,7 @@
       <span style="font-weight: bold">Login</span>
     </div>
   </div>
-  <div class="row my-2 px-3 text-center" *ngIf="emailAddresses.length == 0">
+  <div class="row my-2 px-3 text-center" *ngIf="(emailAddresses$ | async)?.length == 0">
     <div class="col-12" style="text-align: center">
       <span>No Email Addresses Currently Exist</span>
     </div>

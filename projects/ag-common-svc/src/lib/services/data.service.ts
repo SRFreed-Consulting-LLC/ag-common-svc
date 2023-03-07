@@ -49,6 +49,13 @@ export class DataService<T extends BaseModel> {
     return this.fsDao.createWithId(value, value.dbId, this.collection);
   }
 
+  /**
+   * @deprecated Use updateFields instead // TODO rename to set
+   */
+  public update(value: T) {
+    return this.fsDao.update(value, value.dbId, this.collection);
+  }
+
   public updateFields(documentId: string, data: Partial<T>) {
     return this.fsDao.updateFields(data, documentId, this.collection);
   }

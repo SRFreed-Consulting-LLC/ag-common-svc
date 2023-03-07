@@ -36,9 +36,9 @@ export class RegisterService {
 
   public async registerWithForm(userData) {
     debugger;
-    // const firebaseUser = await this.authService
-    //   .register(userData)
-    //   .catch(this.handleFirebaseErrors.bind(this, userData?.email));
+    const firebaseUser = await this.authService
+      .registerUser(userData?.email, userData?.password)
+      .catch(this.handleFirebaseErrors.bind(this, userData?.email));
     return true;
 
     // return this.authDao

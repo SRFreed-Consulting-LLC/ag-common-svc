@@ -21,6 +21,7 @@ import {
   Auth,
   browserSessionPersistence,
   checkActionCode,
+  createUserWithEmailAndPassword,
   getAuth,
   IdTokenResult,
   sendPasswordResetEmail,
@@ -73,13 +74,9 @@ export class AuthService {
     );
 
     this.loggedInAgent$ = this.currentUser$.pipe(
-      tap((currentUser) => {
-        console.log('loggedInAgent currentUser', currentUser);
-      }),
       filter(Boolean),
       mergeMap((user: User) => user.getIdTokenResult()),
       map((idTokenResult: IdTokenResult) => {
-        console.log('loggedInAgent idTokenResult', idTokenResult);
         const claims = idTokenResult?.claims;
 
         return claims?.agentId;
@@ -95,7 +92,7 @@ export class AuthService {
       tap((agent) => {
         // TODO temp solution
         this.currentAgent$.next(agent);
-        console.log('loggedInAgent idTokenResult', agent);
+
         if (!agent) {
           throw new Error('Could not find agent record for user');
           // this.logMessage('LOGIN', userCredentials.user.email, 'Could not find agent record for user').then((ec) => {
@@ -123,7 +120,7 @@ export class AuthService {
     try {
       await this.signIn(email, password);
       const agent = await firstValueFrom(this.loggedInAgent$);
-      debugger;
+
       this.logUserIntoPortal(agent);
     } catch (error) {
       switch (error.code) {
@@ -258,6 +255,10 @@ export class AuthService {
 
     return Promise.reject();
   }
+
+  public registerUser = (email, password): Promise<UserCredential> => {
+    return createUserWithEmailAndPassword(this.auth, email, password);
+  };
 
   private signIn(email, password): Promise<UserCredential> {
     return setPersistence(this.auth, browserSessionPersistence).then(() => {

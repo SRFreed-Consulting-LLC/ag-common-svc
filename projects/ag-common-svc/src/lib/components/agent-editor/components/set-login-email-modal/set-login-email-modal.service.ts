@@ -1,16 +1,22 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
 import { AgentEmailAddressesService } from '../../../../services/agent-email-addresses.service';
 import { ActiveLookup } from 'ag-common-lib/public-api';
 import { CloudFunctionsService } from '../../../../services/cloud-functions.service';
 import { OtpService } from '../../../../services/otp.service';
+import { SetLoginEmailForm, SetLoginEmailModalSteps } from './set-login-email-modal.model';
+import { DxFormComponent, DxPopupComponent } from 'devextreme-angular';
+import Validator from 'devextreme/ui/validator';
+import { differenceInSeconds } from 'date-fns';
+import { AuthService } from '../../../../services/auth.service';
 
 @Injectable()
 export class SetLoginEmailModalService {
-  public formData: any;
+  private readonly RESENT_TIMEOUT = 45;
+  public formData: SetLoginEmailForm;
   public hasFormChanges$: Observable<boolean>;
   public readonly formChangesDetector: FormChangesDetector = new FormChangesDetector();
 
@@ -19,30 +25,27 @@ export class SetLoginEmailModalService {
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);
 
-  public isSendOTPInProgress$: Observable<boolean>;
-  private readonly _isSendOTPInProgress$ = new BehaviorSubject<boolean>(false);
-
-  public isOTPSended$: Observable<boolean>;
-  private readonly _isOTPSended$ = new BehaviorSubject<boolean>(false);
-
   public isEmailValid$: Observable<boolean>;
   private readonly _isEmailValid$ = new BehaviorSubject<boolean>(false);
 
   public isEmailExistOnOtherRecord$: Observable<boolean>;
   private readonly _isEmailExistOnOtherRecord$ = new BehaviorSubject<boolean>(false);
 
+  public selectedStep$: Observable<SetLoginEmailModalSteps>;
+  private readonly _selectedStep$ = new BehaviorSubject<SetLoginEmailModalSteps>(SetLoginEmailModalSteps.selectEmail);
+
   private _agentId: string;
   private _agentUID: string;
 
   constructor(
+    private authService: AuthService,
     private agentEmailAddressesService: AgentEmailAddressesService,
     private cloudFunctionsService: CloudFunctionsService,
     private otpService: OtpService,
   ) {
     this.inProgress$ = this._inProgress$.asObservable();
-    this.isSendOTPInProgress$ = this._isSendOTPInProgress$.asObservable();
-    this.isOTPSended$ = this._isOTPSended$.asObservable();
     this.isEmailValid$ = this._isEmailValid$.asObservable();
+    this.selectedStep$ = this._selectedStep$.asObservable();
     this.isEmailExistOnOtherRecord$ = this._isEmailExistOnOtherRecord$.asObservable();
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
@@ -70,6 +73,7 @@ export class SetLoginEmailModalService {
   public init = (agentId, agentUID) => {
     this._agentId = agentId;
     this._agentUID = agentUID;
+    this._selectedStep$.next(SetLoginEmailModalSteps.selectEmail);
     this.formData = new Proxy(
       {
         emailAddress: null,
@@ -139,43 +143,77 @@ export class SetLoginEmailModalService {
     return this.otpService.validateOTP(otp, email);
   };
 
-  public sendOtp = () => {
-    try {
-      const email = this.formData?.emailAddress?.description;
-
-      this._isOTPSended$.next(false);
-      this._isSendOTPInProgress$.next(true);
-      this.cloudFunctionsService
-        .sendOTP({ email })
-        .then((data) => {
-          this._isOTPSended$.next(true);
-        })
-        .catch((e) => {
-          debugger;
-        })
-        .finally(() => {
-          this._isSendOTPInProgress$.next(false);
-        });
-    } catch (error) {
-      debugger;
-    }
-  };
-
   public setLoginEmail = async () => {
     try {
       const agentDbId = this._agentId;
       const otp = this.formData?.otp;
       const emailAddressDbId = this.formData?.emailAddress?.dbId;
-      debugger;
+
       await this.cloudFunctionsService.updateUserLoginEmail({
         uid: this._agentUID,
         otp,
         agentDbId,
         emailAddressDbId,
       });
-      debugger;
     } catch (error) {
       debugger;
     }
+  };
+
+  public handleNextStepClick = async (formComponent: DxFormComponent, popupComponent: DxPopupComponent) => {
+    const selectedStep = this._selectedStep$.value;
+
+    if (selectedStep === SetLoginEmailModalSteps.selectEmail) {
+      await this.handleSelectEmailStep(formComponent);
+    }
+
+    if (selectedStep === SetLoginEmailModalSteps.confirmEmail) {
+      await this.handleConfirmEmailStep(formComponent, popupComponent);
+    }
+  };
+
+  public backToEmailList = () => {
+    this._selectedStep$.next(SetLoginEmailModalSteps.selectEmail);
+  };
+
+  private handleSelectEmailStep = async (formComponent: DxFormComponent) => {
+    this._inProgress$.next(true);
+    const isValid = await this.validateOneField('emailAddress', formComponent);
+
+    if (isValid) {
+      await this.otpService.sendOtp(this.formData?.emailAddress?.description);
+      // TODO check possible errors
+      this._selectedStep$.next(SetLoginEmailModalSteps.confirmEmail);
+    }
+
+    this._inProgress$.next(false);
+  };
+
+  private handleConfirmEmailStep = async (formComponent: DxFormComponent, popupComponent: DxPopupComponent) => {
+    this._inProgress$.next(true);
+    const isValid = await this.validateOneField('otp', formComponent);
+
+    if (isValid) {
+      await this.setLoginEmail();
+      popupComponent.instance.hide();
+      await this.authService.logOut();
+      return;
+    }
+
+    this._inProgress$.next(false);
+  };
+
+  private validateOneField = async (field: string, formComponent: DxFormComponent) => {
+    const editor = formComponent.instance.getEditor(field).element();
+    const editorValidator = Validator.getInstance(editor) as Validator;
+    const validationResults = editorValidator.validate();
+    let asyncValidatorValid = !validationResults?.complete;
+
+    if (validationResults?.complete) {
+      const asyncValidationResults = await validationResults?.complete;
+      asyncValidatorValid = asyncValidationResults?.isValid;
+    }
+
+    return validationResults.isValid && asyncValidatorValid;
   };
 }

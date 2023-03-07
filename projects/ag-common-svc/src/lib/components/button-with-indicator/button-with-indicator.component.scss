@@ -1,5 +1,6 @@
 ::ng-deep .button-with-indicator {
-  width: 150px;
+  min-width: 150px;
+  padding: 0 8px;
 
   &__content.dx-button-content {
     display: flex;

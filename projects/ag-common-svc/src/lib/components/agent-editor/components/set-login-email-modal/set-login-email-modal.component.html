@@ -1,11 +1,23 @@
 <ag-shr-modal-window
   #setPrimaryEmailModalRef
-  [title]="'Set Primary Email'"
-  [width]="'500px'"
+  [title]="'Set Login Email'"
+  [width]="'600px'"
   [height]="'auto'"
-  [actionTitle]="'Set'"
-  [inProgress]="isValidating || (inProgress$ | async)"
-  (onSaveClick)="handleSetEmailLogin($event)"
+  [actionTitle]="selectedStep$ | async | setLoginEmailModalActionTitle"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="handleNextStepClick($event)"
+  [extraToolbarItems]="[
+    {
+      widget: 'dxButton',
+      location: 'before',
+      toolbar: 'bottom',
+      visible: SetLoginEmailModalSteps.confirmEmail === (selectedStep$ | async),
+      options: {
+        text: 'BACK TO EMAIL LIST',
+        onClick: backToEmailList
+      }
+    }
+  ]"
 >
   <dx-form
     *ngIf="setPrimaryEmailModalRef?.popupComponent?.visible"
@@ -13,9 +25,17 @@
     labelMode="floating"
     [formData]="formData"
   >
-    <dxi-item>
+    <dxi-item [visible]="SetLoginEmailModalSteps.selectEmail === (selectedStep$ | async)">
       <div *dxTemplate>
         <ng-container> Select an Email Address to assign as <b>Login Email Address</b>.</ng-container>
+      </div>
+    </dxi-item>
+
+    <dxi-item [visible]="SetLoginEmailModalSteps.confirmEmail === (selectedStep$ | async)">
+      <div *dxTemplate>
+        A confirmation code has been sent to
+        <b>{{ formData?.emailAddress?.description }}</b>
+        .
       </div>
     </dxi-item>
 
@@ -23,6 +43,7 @@
       [dataField]="'emailAddress'"
       [label]="{ text: 'Email Address' }"
       editorType="dxSelectBox"
+      [visible]="SetLoginEmailModalSteps.selectEmail === (selectedStep$ | async)"
       [editorOptions]="{
         items: emailAddressesLookup$ | async,
         displayExpr: 'description',
@@ -39,13 +60,23 @@
       </dxi-validation-rule>
     </dxi-item>
 
+    <dxi-item [visible]="SetLoginEmailModalSteps.selectEmail === (selectedStep$ | async)">
+      <div *dxTemplate>
+        <p *ngIf="(isEmailExistOnOtherRecord$ | async) && (isEmailValid$ | async)">
+          <b>Warning:</b> The same Email Address exist on the other Agent record.
+        </p>
+
+        <ng-container> We will send a one-tme confirmation code to the selected address.</ng-container>
+      </div>
+    </dxi-item>
+
     <dxi-item
       [dataField]="'otp'"
       [label]="{ text: 'One Time Code' }"
+      [visible]="SetLoginEmailModalSteps.confirmEmail === (selectedStep$ | async)"
       [editorOptions]="{
         mask: '0 0 0 0 0 0',
         placeholder: '',
-        disabled: !(isEmailValid$ | async),
         buttons: [
           {
             name: 'sendOTP',
@@ -57,8 +88,9 @@
               },
               type: 'default',
               stylingMode: 'text',
-              hint: 'Send Confirmation Code',
-              disabled: !(isEmailValid$ | async),
+
+              hint: 'Resend Confirmation Code',
+              disabled: !(isResendAvailable$ | async),
               onClick: sendOtp
             }
           }
@@ -78,20 +110,8 @@
       </dxi-validation-rule>
     </dxi-item>
 
-    <dxi-item>
-      <div *dxTemplate>
-        <p *ngIf="(isEmailExistOnOtherRecord$ | async) && (isEmailValid$ | async)">
-          <b>Warning:</b> The same Email Address exist on the other Agent record.
-        </p>
-
-        <p *ngIf="isOTPSended$ | async">
-          A confirmation code has been sent to
-          <b>{{ formData?.emailAddress?.description }}</b>
-          .
-          <br />
-          Enter the code to confirm the new Email Address.
-        </p>
-      </div>
+    <dxi-item [visible]="SetLoginEmailModalSteps.confirmEmail === (selectedStep$ | async)">
+      <div *dxTemplate>Enter the confirmation code and press button below to set the new Login Email Address.</div>
     </dxi-item>
 
     <div *dxTemplate="let item of 'sendOTPButtonTemplate'" class="editor-progress-indicator">
@@ -101,7 +121,10 @@
 </ag-shr-modal-window>
 
 <ng-template #saveIconTmp>
-  <i class="fa-solid fa-envelope-circle-check"></i>
+  <ng-container *ngIf="!(isResendAvailable$ | async)">
+    {{ resendTimeout$ | async }}
+  </ng-container>
+  Resend <i class="fa-solid fa-arrow-rotate-right"></i>
 </ng-template>
 
 <ng-template #loadIndicatorTmp>

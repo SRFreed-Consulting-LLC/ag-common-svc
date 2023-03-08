@@ -75,7 +75,6 @@ export class DomainAssociationsService {
         let association: Association = { ... new Association() };
 
         selectedRuleSet.import_mappings.forEach(async (mapping) => {
-          
           if ((association_map.has(mapping.field_name_agent) && association_map.get(mapping.field_name_agent) != '')) {
             let modified_field_name = mapping.field_name_agent.split(".")[mapping.field_name_agent.split(".").length-1];
             let incoming_value = association_map.get(mapping.field_name_agent);
@@ -149,9 +148,7 @@ export class DomainAssociationsService {
             }
           })
         );
-      }
-
-      if (matchingAssociation) {
+      } else {
         selectedRuleSet.import_mappings.forEach(async (mapping) => {
           if (incomingAssociation[mapping.field_name_registrant]) {
             if (mapping.data_type == 'string' || mapping.data_type == 'select') {
@@ -181,14 +178,12 @@ export class DomainAssociationsService {
               );
             }
     
-            if (mapping.data_type == 'lookup') {          
-              let lookupval: string = this.getLookupValue(mapping.values, incomingAssociation[mapping.field_name_registrant]);
-    
+            if (mapping.data_type == 'lookup') {              
               this.domainUtilService.updateField(
                 selectedRuleSet[mapping.field_name_registrant],
                 matchingAssociation,
                 mapping.field_name_agent,
-                lookupval.trim()
+                incomingAssociation[mapping.field_name_registrant].trim()
               );
             }
     
@@ -221,130 +216,6 @@ export class DomainAssociationsService {
 
     return true;
   }
-
-  // private async createAssociation(invals: Map<string, string>, iteration: string, key: string): Promise<Association> {
-  //   const association: Association = { ...new Association() };
-
-  //   if (invals.has(key + '.' + iteration + '.first_name')) {
-  //     association.first_name = invals.get(key + '.' + iteration + '.first_name');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.last_name')) {
-  //     association.last_name = invals.get(key + '.' + iteration + '.last_name');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.email_address')) {
-  //     association.email_address = invals.get(key + '.' + iteration + '.email_address');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.contact_number')) {
-  //     association.contact_number = invals
-  //       .get(key + '.' + iteration + '.contact_number')
-  //       .replace('+', '')
-  //       .replace('.', '')
-  //       .replace('.', '')
-  //       .replace('-', '')
-  //       .replace('-', '')
-  //       .replace(' ', '')
-  //       .replace(' ', '')
-  //       .replace('(', '')
-  //       .replace(')', '');
-
-  //       if(association.contact_number.startsWith('1')){
-  //         association.contact_number = association.contact_number.substring(1);
-  //       }
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.association_type')) {
-  //     const associations = await this.associationTypeLookup$.pipe(take(1)).toPromise();
-  //     const associationType = invals.get(key + '.' + iteration + '.association_type');
-  //     const lookupValue = associations.find((lookup) => {
-  //       return `${associationType}`
-  //         .replace(/\W|_/g, '')
-  //         .toLocaleLowerCase()
-  //         .match(lookup[LookupKeys.value].replace(/\W|_/g, '').toLocaleLowerCase());
-  //     });
-
-  //     association[AssociationKeys.associationTypeRef] = lookupValue[LookupKeys.reference];
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.is_emergency_contact')) {
-  //     if (invals.get(key + '.' + iteration + '.is_emergency_contact').toUpperCase() == 'TRUE') {
-  //       association.is_emergency_contact = true;
-  //     } else {
-  //       association.is_emergency_contact = false;
-  //     }
-  //   }
-
-  //   association.address = { ...new Address() };
-
-  //   if (invals.has(key + '.' + iteration + '.address.address1')) {
-  //     association.address.address1 = invals.get(key + '.' + iteration + '.address.address1');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.address.address2')) {
-  //     association.address.address2 = invals.get(key + '.' + iteration + '.address.address2');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.address.city')) {
-  //     association.address.city = invals.get(key + '.' + iteration + '.address.city');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.address.state')) {
-  //     association.address.state = invals.get(key + '.' + iteration + '.address.state');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.address.zip')) {
-  //     association.address.zip = invals.get(key + '.' + iteration + '.address.zip');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.address.county')) {
-  //     association.address.county = invals.get(key + '.' + iteration + '.address.county');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.address.country')) {
-  //     association.address.country = invals.get(key + '.' + iteration + '.address.country');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.dietary_or_personal_considerations')) {
-  //     association.dietary_or_personal_considerations = this.domainUtilService.getYesNoValue(
-  //       invals.get(key + '.' + iteration + '.dietary_or_personal_considerations').trim()
-  //     );
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.dietary_consideration')) {
-  //     association.dietary_consideration = invals.get(key + '.' + iteration + '.dietary_consideration');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.dietary_consideration_type')) {
-  //     association.dietary_consideration_type = invals.get(key + '.' + iteration + '.dietary_consideration_type');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.p_nick_first_name')) {
-  //     association.p_nick_first_name = invals.get(key + '.' + iteration + '.p_nick_first_name');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.p_nick_last_name')) {
-  //     association.p_nick_last_name = invals.get(key + '.' + iteration + '.p_nick_last_name');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.unisex_tshirt_size')) {
-  //     association.unisex_tshirt_size = invals.get(key + '.' + iteration + '.unisex_tshirt_size');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.unisex_tshirt_size_other')) {
-  //     association.unisex_tshirt_size_other = invals.get(key + '.' + iteration + '.unisex_tshirt_size_other');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.gender')) {
-  //     association.gender = invals.get(key + '.' + iteration + '.gender');
-  //   }
-
-  //   if (invals.has(key + '.' + iteration + '.dob')) {
-  //     association.dob = new Date(invals.get(key + '.' + iteration + '.dob'));
-  //   }
-  //   return association;
-  // }
 
   getLookupValue(lookupName: string, matchVal: string):string {
     if (!this.lookupsMap.has(lookupName)) {

@@ -150,51 +150,64 @@ export class DomainAssociationsService {
         );
       } else {
         selectedRuleSet.import_mappings.forEach(async (mapping) => {
-          if (incomingAssociation[mapping.field_name_registrant]) {
-            if (mapping.data_type == 'string' || mapping.data_type == 'select') {
-              this.domainUtilService.updateField(
-                selectedRuleSet[mapping.field_name_registrant],
-                matchingAssociation,
-                mapping.field_name_agent,
-                incomingAssociation[mapping.field_name_registrant]
-              );
+          if (mapping.field_name_agent && mapping.field_name_agent != '') {
+            let modified_field_name = mapping.field_name_agent.split(".")[mapping.field_name_agent.split(".").length-1];
+            let incoming_value = incomingAssociation[modified_field_name];
+            
+            //try to trim value if allowed
+            try{
+              incoming_value = incomingAssociation[modified_field_name].trim();
+            } catch(err){
+
             }
-    
-            if (mapping.data_type == 'yes-no') {
-              this.domainUtilService.updateField(
-                selectedRuleSet[mapping.field_name_registrant],
-                matchingAssociation,
-                mapping.field_name_agent,
-                this.domainUtilService.getYesNoValue(incomingAssociation[mapping.field_name_registrant].trim())
-              );
-            }
-    
-            if (mapping.data_type == 'date') {
-              this.domainUtilService.updateField(
-                selectedRuleSet[mapping.field_name_agent],
-                matchingAssociation,
-                mapping.field_name_agent,
-                new Date(incomingAssociation[mapping.field_name_registrant])
-              );
-            }
-    
-            if (mapping.data_type == 'lookup') {              
-              this.domainUtilService.updateField(
-                selectedRuleSet[mapping.field_name_registrant],
-                matchingAssociation,
-                mapping.field_name_agent,
-                incomingAssociation[mapping.field_name_registrant].trim()
-              );
-            }
-    
-            if (mapping.data_type == 'boolean') {
-              this.domainUtilService.updateField(
-                selectedRuleSet[mapping.field_name_registrant],
-                matchingAssociation,
-                mapping.field_name_agent,
-                this.domainUtilService.getBoolean(incomingAssociation[mapping.field_name_registrant].trim())
-              );
-            }
+            
+            //added 'association_' +  as a temp fix to get the correct rule
+            if (incomingAssociation[modified_field_name]) {
+              if (mapping.data_type == 'string' || mapping.data_type == 'select' || mapping.data_type == 'currency') {
+                this.domainUtilService.updateField(
+                  selectedRuleSet['association_' + modified_field_name],
+                  matchingAssociation,
+                  modified_field_name,
+                  incoming_value
+                );
+              }
+      
+              if (mapping.data_type == 'yes-no') {
+                this.domainUtilService.updateField(
+                  selectedRuleSet['association_' + modified_field_name],
+                  matchingAssociation,
+                  modified_field_name,
+                  this.domainUtilService.getYesNoValue(incoming_value)
+                );
+              }
+      
+              if (mapping.data_type == 'date') {
+                this.domainUtilService.updateField(
+                  selectedRuleSet['association_' + modified_field_name],
+                  matchingAssociation,
+                  modified_field_name,
+                  new Date(incoming_value)
+                );
+              }
+      
+              if (mapping.data_type == 'lookup') {              
+                this.domainUtilService.updateField(
+                  selectedRuleSet['association_' + modified_field_name],
+                  matchingAssociation,
+                  modified_field_name,
+                  incoming_value
+                );
+              }
+      
+              if (mapping.data_type == 'boolean') {
+                this.domainUtilService.updateField(
+                  selectedRuleSet['association_' + modified_field_name],
+                  matchingAssociation,
+                  modified_field_name,
+                  this.domainUtilService.getBoolean(incoming_value)
+                );
+              }
+            }          
           }
         });
 

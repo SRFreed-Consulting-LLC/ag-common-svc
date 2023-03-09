@@ -597,7 +597,7 @@ export class DomainService implements OnInit {
           let selected_emergency_contact: Association = emergency_contacts.find(
             (contact) =>
               contact[AssociationKeys.firsName] == invitee_map.get('association.1.first_name') &&
-              contact[AssociationKeys.lastName] == invitee_map.get('association.1.las_name')
+              contact[AssociationKeys.lastName] == invitee_map.get('association.1.last_name')
           );
 
           if (selected_emergency_contact) {

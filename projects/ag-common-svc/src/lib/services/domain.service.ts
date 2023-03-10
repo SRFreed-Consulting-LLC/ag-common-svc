@@ -715,6 +715,18 @@ export class DomainService implements OnInit {
             if (parentInvitee.created_at) {
               guest.created_at = parentInvitee.created_at;
             }
+
+            if (parentInvitee.mga_id) {
+              guest.mga_id = parentInvitee.mga_id;
+            }
+
+            if (parentInvitee.agency_id) {
+              guest.agency_id = parentInvitee.agency_id;
+            }
+
+            if (parentInvitee.upline) {
+              guest.upline = parentInvitee.upline;
+            }
     
             if (parentInvitee.updated_at) {
               guest.updated_at = parentInvitee.updated_at;

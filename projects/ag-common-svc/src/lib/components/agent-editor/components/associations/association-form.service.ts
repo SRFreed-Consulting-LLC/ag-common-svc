@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Association, BaseModelKeys, LookupKeys } from 'ag-common-lib/public-api';
+import { ActiveLookup, Association, BaseModelKeys, LookupKeys } from 'ag-common-lib/public-api';
 import { map } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
@@ -20,6 +20,7 @@ export class AssociationFormService {
   public selectedTShortSize$ = new BehaviorSubject(null);
   public selectedUnisexTShortSize$ = new BehaviorSubject(null);
   public selectedDietaryConsiderationType$ = new BehaviorSubject(null);
+  public selectedRelationshipType$: BehaviorSubject<ActiveLookup> = new BehaviorSubject(null);
 
   constructor(private readonly agentAssociationsService: AgentAssociationsService) {
     this.inProgress$ = this._inProgress$.asObservable();
@@ -138,7 +139,8 @@ export class AssociationFormService {
       this.selectedGender$.value,
       this.selectedTShortSize$.value,
       this.selectedUnisexTShortSize$.value,
-      this.selectedDietaryConsiderationType$?.value
+      this.selectedDietaryConsiderationType$?.value,
+      this.selectedRelationshipType$?.value
     ];
     const promises = assignedLookups
       .filter((lookup) => lookup && !lookup?.isAssigned)

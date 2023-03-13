@@ -19,19 +19,10 @@
     <dxi-item itemType="group" caption="Main Info" [colCount]="12">
       <dxi-item [colSpan]="6">
         <div *dxTemplate>
-          <dx-select-box
-            [label]="'Relationship Type'"
-            [labelMode]="'floating'"
-            [value]="associationFormData?.associationTypeRef?.id"
-            (onSelectionChanged)="onRelationshipTypeSelectionChanged($event)"
-            [dataSource]="relationshipTypeLookup$ | async"
-            [valueExpr]="BaseModelKeys.dbId"
-            [displayExpr]="LookupKeys.description"
-            [searchEnabled]="true"
-            [placeholder]="''"
-          >
-            <dxi-button name="dropDown"></dxi-button>
-          </dx-select-box>
+          <ag-shr-relationship-type-select-box
+            [(value)]="associationFormData[AssociationKeys.associationType]"
+            (selectedItemChange)="onRelationshipTypeSelectionChanged($event)"
+          ></ag-shr-relationship-type-select-box>
         </div>
       </dxi-item>
 
@@ -283,7 +274,7 @@
       [calculateDisplayValue]="calculateContactNumberDisplayValue"
     ></dxi-column>
 
-    <dxi-column dataField="associationTypeRef.id" [allowHiding]="false" [width]="150" caption="Relationship">
+    <dxi-column dataField="association_type" caption="Relationship">
       <dxo-lookup
         [dataSource]="relationshipTypeLookup$ | async"
         [valueExpr]="BaseModelKeys.dbId"

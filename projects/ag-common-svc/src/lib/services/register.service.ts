@@ -18,6 +18,7 @@ import { Role } from 'ag-common-lib/public-api';
 import { AuthService } from './auth.service';
 import { AgentService } from './agent.service';
 import { LoggerService } from './logger.service';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 @Injectable({
   providedIn: 'root',
@@ -39,6 +40,12 @@ export class RegisterService {
     const firebaseUser = await this.authService
       .registerUser(userData?.email, userData?.password)
       .catch(this.handleFirebaseErrors.bind(this, userData?.email));
+
+    const res = await this.agentService.findAgentByLoginEmail(userData?.email).catch((e) => {
+      debugger;
+    });
+    debugger;
+
     return true;
 
     // return this.authDao
@@ -119,30 +126,7 @@ export class RegisterService {
     //     //error registering user
     //     registrationForm.value.password = '****';
 
-    //     if (error.code == 'auth/weak-password') {
-    //       this.logMessage('REGISTRATION', registrationForm.value.email, 'Weak Password. ', [{ ...error }]).then(
-    //         (ec) => {
-    //           this.toster.error(
-    //             'The minimum length of your password must be 6 characters. Please try again with a stronger password.',
-    //             'Registration Error',
-    //             { disableTimeOut: true },
-    //           );
-    //         },
-    //       );
-    //     } else if (error.code == 'auth/email-already-in-use') {
-    //       this.logMessage(
-    //         'REGISTRATION',
-    //         registrationForm.value.email,
-    //         'Registering with an account that is already in use.',
-    //         [{ ...error }],
-    //       ).then((ec) => {
-    //         this.toster.error(
-    //           'That Email Address is already registered with the Portal. Try to login with that email. If you forgot the password, go to the Sign In screen, enter your email, and hit the "Forgot Password" button.',
-    //           'Registration Error',
-    //           { disableTimeOut: true },
-    //         );
-    //       });
-    //     } else {
+    //     if  {
     //       this.logMessage('REGISTRATION', registrationForm.value.email, 'Unknown error - check Data for details', [
     //         { ...error },
     //       ]).then((ec) => {
@@ -171,7 +155,6 @@ export class RegisterService {
       let newEmailAddress: EmailAddress = { ...new EmailAddress() };
       newEmailAddress.address = registrationForm.value.email;
       newEmailAddress.email_type = BUSINESS_PERSONAL_TYPE.BUSINESS;
-      newEmailAddress.id = this.uuidv4();
       newEmailAddress.is_primary = false;
       agent.email_addresses.push(newEmailAddress);
     }
@@ -339,38 +322,37 @@ export class RegisterService {
     });
   }
 
-  public uuidv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  }
-
-  private handleFirebaseErrors = (email, error) => {
+  private handleFirebaseErrors = async (email, error) => {
     switch (error.code) {
       case 'auth/weak-password':
-        this.logMessage('REGISTRATION', email, 'Weak Password. ', [{ ...error }]).then((ec) => {
-          this.toster.error(
-            'The minimum length of your password must be 6 characters. Please try again with a stronger password.',
-            'Registration Error',
-            { disableTimeOut: true },
-          );
-        });
+        await this.logMessage('REGISTRATION', email, 'Weak Password. ', [{ ...error }]).then((ec) => {});
+        this.toster.error(
+          'The minimum length of your password must be 6 characters. Please try again with a stronger password.',
+          'Registration Error',
+          { disableTimeOut: true },
+        );
         break;
       case 'auth/email-already-in-use':
-        this.logMessage('REGISTRATION', email, 'Registering with an account that is already in use.', [
+        await this.logMessage('REGISTRATION', email, 'Registering with an account that is already in use.', [
           { ...error },
-        ]).then((ec) => {
-          this.toster.error(
-            'That Email Address is already registered with the Portal. Try to login with that email. If you forgot the password, go to the Sign In screen, enter your email, and hit the "Forgot Password" button.',
-            'Registration Error',
-            { disableTimeOut: true },
-          );
-        });
+        ]);
+        this.toster.error(
+          'That Email Address is already registered with the Portal. Try to login with that email. If you forgot the password, go to the Sign In screen, enter your email, and hit the "Forgot Password" button.',
+          'Registration Error',
+          { disableTimeOut: true },
+        );
         break;
 
       default:
+        const ec = await this.logMessage('REGISTRATION', email, 'Unknown error - check Data for details', [
+          { ...error },
+        ]);
+        this.toster.error(
+          'There was an error Registering with this Email Address. Please contact Alliance Group for assistance with this code: ' +
+            ec,
+          'Registration Error',
+          { disableTimeOut: true },
+        );
         break;
     }
   };

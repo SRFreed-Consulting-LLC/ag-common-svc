@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { Agent, AgentKeys } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
-import { Timestamp } from 'firebase/firestore';
+import { collectionGroup, getDocs, query, QueryConstraint, QuerySnapshot, Timestamp, where } from 'firebase/firestore';
 import { QueryParam, WhereFilterOperandKeys } from '../../public-api';
 import { FIREBASE_APP } from '../injections/firebase-app';
 import { dateFromTimestamp } from '../utils/date-from-timestamp';
@@ -11,6 +11,8 @@ import { DataService } from './data.service';
   providedIn: 'root',
 })
 export class AgentService extends DataService<Agent> {
+  private readonly emailAddressCollectionPath = 'email-addresses';
+
   constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp) {
     super(fireBaseApp, AgentService.fromFirestore);
     super.collection = 'agents';
@@ -45,6 +47,40 @@ export class AgentService extends DataService<Agent> {
 
     return super.updateFields(documentId, data);
   }
+
+  public findAgentByLoginEmail = async (email) => {
+    const queries: QueryParam[] = [];
+
+    const emailAddressQuery = new QueryParam('address', WhereFilterOperandKeys.equal, email);
+    const isLoginQuery = new QueryParam('is_login', WhereFilterOperandKeys.equal, true);
+
+    queries.push(emailAddressQuery);
+    queries.push(isLoginQuery);
+
+    const queryConstraints: QueryConstraint[] = queries.map((query) =>
+      where(query.field, query.operation, query.value),
+    );
+
+    const collectionGroupRef = collectionGroup(this.fsDao.db, this.emailAddressCollectionPath).withConverter({
+      toFirestore: null,
+      fromFirestore: this.fsDao.convertResponse,
+    });
+
+    const collectionGroupQuery = query(collectionGroupRef, ...queryConstraints);
+    const querySnapshot = await getDocs(collectionGroupQuery);
+
+    if (!querySnapshot.size) {
+      return null;
+    }
+    if (querySnapshot.size > 1) {
+      throw new Error('More That One Agents With same login email was found');
+    }
+
+    const document = querySnapshot.docs[0];
+    const parentDbId = document?.ref?.parent?.parent?.id;
+
+    return this.fsDao.getById(this.collection, parentDbId);
+  };
 
   getAgentByEmail(email: string): Promise<Agent> {
     return this.getAllByValue([new QueryParam('p_email', WhereFilterOperandKeys.equal, email)]).then((agents) => {

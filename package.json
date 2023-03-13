@@ -19,6 +19,7 @@
     "@angular/platform-browser": "~13.2.0",
     "@angular/platform-browser-dynamic": "~13.2.0",
     "@angular/router": "~13.2.0",
+    "@ngneat/until-destroy": "^9.2.2",
     "firebase": "^9.9.0",
     "lodash": "^4.17.21",
     "ngx-image-cropper": "^6.3.2",

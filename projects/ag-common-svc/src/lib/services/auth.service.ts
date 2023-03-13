@@ -1,18 +1,19 @@
 import { Inject, Injectable, InjectionToken, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { Agent, AgentKeys, BaseModelKeys, LogMessage, UserPermission } from 'ag-common-lib/public-api';
+import { Agent, AgentKeys, AGENT_STATUS, BaseModelKeys, LogMessage, UserPermission } from 'ag-common-lib/public-api';
 import {
   BehaviorSubject,
   filter,
   firstValueFrom,
   fromEventPattern,
+  iif,
   map,
   mergeMap,
   Observable,
+  of,
   shareReplay,
   tap,
-  throwError,
 } from 'rxjs';
 import { AgentService } from './agent.service';
 import { FIREBASE_APP } from '../injections/firebase-app';
@@ -74,42 +75,33 @@ export class AuthService {
     );
 
     this.loggedInAgent$ = this.currentUser$.pipe(
-      filter(Boolean),
-      mergeMap((user: User) => user.getIdTokenResult()),
+      mergeMap((user: User) => user?.getIdTokenResult()),
       map((idTokenResult: IdTokenResult) => {
         const claims = idTokenResult?.claims;
 
         return claims?.agentId;
       }),
       mergeMap((agentId: string) => {
-        if (!agentId) {
-          this.logOut();
-          return throwError(() => new Error('No Agent Id'));
-        }
-
-        return this.agentService.getById(agentId);
+        return iif(
+          () => !!agentId,
+          this.agentService.getById(agentId),
+          of(null).pipe(
+            mergeMap(() => {
+              return this.router.navigate(['auth/login']);
+            }),
+            map(() => null),
+          ),
+        );
       }),
       tap((agent) => {
         // TODO temp solution
         this.currentAgent$.next(agent);
-
-        if (!agent) {
-          throw new Error('Could not find agent record for user');
-          // this.logMessage('LOGIN', userCredentials.user.email, 'Could not find agent record for user').then((ec) => {
-          //   this.toster.error(
-          //     'An Agent record matching that Email Address could not be found. Please contact Alliance Group for Assistance with this code:' +
-          //       ec,
-          //     'Login Error',
-          //     { disableTimeOut: true },
-          //   );
-          // });
-          // return;
-        }
       }),
       shareReplay(1),
     );
 
     this.userPermissions$ = this.loggedInAgent$.pipe(
+      filter(Boolean),
       mergeMap((agent) => {
         return this.userPermissionService.getList(agent[BaseModelKeys.dbId]);
       }),
@@ -118,8 +110,39 @@ export class AuthService {
 
   public async signInWithEmailAndPassword(email: string, password: string) {
     try {
-      await this.signIn(email, password);
-      const agent = await firstValueFrom(this.loggedInAgent$);
+      const userData = await this.signIn(email, password);
+      const agent = await firstValueFrom(
+        this.loggedInAgent$.pipe(filter((agent) => agent?.uid === userData?.user?.uid)),
+      );
+
+      if (!agent) {
+        const ec = await this.logMessage('LOGIN', userData?.user?.email, 'Could not find agent record for user');
+
+        this.toster.error(
+          'An Agent record matching that Email Address could not be found. Please contact Alliance Group for Assistance with this code:' +
+            ec,
+          'Login Error',
+          { disableTimeOut: true },
+        );
+        await this.logOut();
+        return;
+      }
+
+      if (agent.agent_status !== AGENT_STATUS.APPROVED) {
+        const ec = await this.logMessage('LOGIN', userData?.user?.email, 'User exists but not green lighted. ', [
+          { ...agent[0] },
+        ]);
+
+        this.toster.error(
+          'Your portal access status is under review. Please try again in 24-48 hours. If you believe you have reached this message in error, please contact Alliance Group for Assistance with this code:' +
+            ec,
+          'Login Error',
+          { disableTimeOut: true },
+        );
+        await this.logOut();
+
+        return;
+      }
 
       this.logUserIntoPortal(agent);
     } catch (error) {

@@ -14,6 +14,13 @@ export class RegistrantsService extends DataService<Registrant> {
     super.collection = 'registrants';
   }
 
+  getRegistrantsByAgentId(agent_id: string, sortField?: string): Promise<Registrant[]>{
+    let qp: QueryParam[] = [];
+    qp.push(new QueryParam('agent_id', WhereFilterOperandKeys.equal, agent_id));
+
+    return this.getAllByValue(qp, sortField)
+  }
+
   getRegistrantsByEventId(event_id: string, sortField: string): Promise<Registrant[]>{
     let qp: QueryParam[] = [];
     qp.push(new QueryParam('event_id', WhereFilterOperandKeys.equal, event_id));

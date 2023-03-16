@@ -2,19 +2,19 @@ import { Component, EventEmitter, HostBinding, Input, Output, ViewChild } from '
 import { Agent, AgentKeys, BaseModelKeys, Lookup } from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
 import { AgentHeaderService } from './agent-header.service';
-import { DropZoneComponent } from '../../../drop-zone/drop-zone.component';
-import { PhoneNumberMaskPipe } from '../../../../../shared/pipes/phone-number-mask.pipe';
-import { FullAddressPipe } from '../../../../../shared/pipes/full-address.pipe';
 import { AgentHeaderKeys } from './agent-header.model';
 import { take } from 'rxjs/operators';
+import { DropZoneComponent } from 'ag-common-svc/lib/components/drop-zone/drop-zone.component';
+import { ModalWindowComponent } from 'ag-common-svc/lib/components/modal-window/modal-window.component';
+import { FullAddressPipe } from 'ag-common-svc/shared/pipes/full-address.pipe';
+import { PhoneNumberMaskPipe } from 'ag-common-svc/shared/pipes/phone-number-mask.pipe';
 
 @Component({
   selector: 'ag-shr-agent-header',
   templateUrl: './agent-header.component.html',
   styleUrls: ['./agent-header.component.scss'],
-  providers: [AgentHeaderService, FullAddressPipe, PhoneNumberMaskPipe]
+  providers: [AgentHeaderService, FullAddressPipe, PhoneNumberMaskPipe],
 })
 export class AgentHeadersComponent {
   @HostBinding('class') className = 'agent-header';
@@ -42,7 +42,7 @@ export class AgentHeadersComponent {
   constructor(
     private agentHeaderService: AgentHeaderService,
     public phoneNumberMaskPipe: PhoneNumberMaskPipe,
-    public fullAddressPipe: FullAddressPipe
+    public fullAddressPipe: FullAddressPipe,
   ) {
     this.inProgress$ = agentHeaderService.inProgress$;
     this.selectedPrefix$ = agentHeaderService.selectedPrefix$;

@@ -1,0 +1,22 @@
+<ag-shr-modal-window
+  #deleteAgentModalRef
+  [title]="'Delete Agent'"
+  [width]="'400px'"
+  [height]="'auto'"
+  [inProgress]="inProgress$ | async"
+  [actionTitle]="'CONFIRM'"
+  (onSaveClick)="handleSave($event)"
+>
+  <div *ngIf="deleteAuthLoginVisible" class="dx-field">
+    <div class="dx-field-label">Delete Auth Login?</div>
+    <div class="dx-field-value">
+      <dx-switch [(value)]="deleteAuthLogin" [switchedOnText]="'Yes'" [switchedOffText]="'No'"></dx-switch>
+    </div>
+  </div>
+  <div class="dx-field">
+    <div class="dx-field-label">Delete Agent Account?</div>
+    <div class="dx-field-value">
+      <dx-switch [(value)]="deleteAgentRecord" [switchedOnText]="'Yes'" [switchedOffText]="'No'"></dx-switch>
+    </div>
+  </div>
+</ag-shr-modal-window>

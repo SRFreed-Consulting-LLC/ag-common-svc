@@ -3,9 +3,9 @@ import { EmailAddress } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
 import { collectionGroup, getDocs, query, QueryConstraint, QuerySnapshot, where } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
-import { Observable } from 'rxjs';
 import { CommonFireStoreDao, QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
+import { AgentService } from './agent.service';
 
 @Injectable({
   providedIn: 'root',
@@ -31,43 +31,28 @@ export class AgentEmailAddressesService {
     return this.fsDao.getAll(table);
   }
 
-  public create(agentId: string, data: EmailAddress) {
+  public async create(agentId: string, data: EmailAddress) {
     const table = this.getCollectionPath(agentId);
+    const emailAddress = await this.fsDao.create(data, table).catch((e) => {
+      console.log('e', e);
+    });
 
-    return this.fsDao
-      .create(data, table)
-      .then((response) => {
-        //this.toastrService.success('Agent Email Address Successfully Created!');
-        // this.lockLookup(data);
-        return response;
-      })
+    this.toastrService.success('Agent Email Address Successfully Created!');
 
-      .catch((e) => {
-        console.log('e', e);
-      });
+    return emailAddress;
   }
 
-  public update(agentId: string, documentId: any, updates: Partial<EmailAddress>) {
+  public async update(agentId: string, documentId: any, updates: Partial<EmailAddress>) {
     const table = this.getCollectionPath(agentId);
 
-    return this.fsDao
-      .updateFields(updates, documentId, table)
-      .then((response) => {
-        //this.toastrService.success('Agent Email Address Successfully Updated!');
-        // this.lockLookup(updates);
-        return response;
-      })
+    const emailAddress = await this.fsDao.updateFields(updates, documentId, table).catch((e) => {
+      console.log('e', e);
+    });
 
-      .catch((e) => {
-        console.log('e', e);
-      });
+    this.toastrService.success('Agent Email Address Successfully Updated!');
+
+    return emailAddress;
   }
-
-  // public lockLookup = (data: Partial<EmailAddress>) => {
-  //   if (data?.associationTypeRef) {
-  //     updateDoc(data?.associationTypeRef, { [LookupKeys.isAssigned]: true });
-  //   }
-  // };
 
   public delete(agentId: string, documentId: any) {
     const table = this.getCollectionPath(agentId);

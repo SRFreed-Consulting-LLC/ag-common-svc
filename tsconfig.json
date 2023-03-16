@@ -21,9 +21,10 @@
       "dom"
     ],
     "paths": {
+      "ag-common-svc/*": ["./projects/ag-common-svc/src/*"],
       "ag-common-lib/*": ["../ag-common-lib/projects/ag-common-lib/src/*"]
       //"@ag-common-svc/*": ["./projects/ag-common-svc/src/*"]
-    },
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

@@ -5,7 +5,10 @@
     "outDir": "../../out-tsc/spec",
     "types": [
       "jasmine"
-    ]
+    ],
+    // "paths": {
+    //   "ag-common-svc/*": ["./lib/*"],
+    // }
   },
   "files": [
     "src/test.ts"

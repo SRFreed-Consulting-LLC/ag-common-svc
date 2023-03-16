@@ -2,7 +2,10 @@
 {
   "extends": "./tsconfig.lib.json",
   "compilerOptions": {
-    "declarationMap": false
+    "declarationMap": false,
+    // "paths": {
+    //   "ag-common-svc/*": ["./lib/*"],
+    // }
   },
   "angularCompilerOptions": {
     "compilationMode": "partial"

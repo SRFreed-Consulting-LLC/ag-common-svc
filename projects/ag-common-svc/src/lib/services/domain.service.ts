@@ -209,22 +209,16 @@ export class DomainService implements OnInit {
     }
 
     agent[AgentKeys.personal_goals] = [];
-    let goal1: Goal = { ...new Goal() };
-    goal1.year = new Date().getFullYear();
-    goal1.amount = 90000;
+    let goal1: Goal = { ...new Goal(new Date().getFullYear(), 11500) };
     agent[AgentKeys.personal_goals].push(goal1);
 
     agent[AgentKeys.conference_goals] = [];
-    let goal2: Goal = { ...new Goal() };
-    goal2.year = new Date().getFullYear();
-    goal2.amount = 90000;
+    let goal2: Goal = { ...new Goal(new Date().getFullYear(), 11500) };
     agent[AgentKeys.conference_goals].push(goal2);
 
     if (agent[AgentKeys.is_manager]) {
       agent[AgentKeys.manager_goals] = [];
-      let goal3: Goal = { ...new Goal() };
-      goal3.year = new Date().getFullYear();
-      goal3.amount = 90000;
+      let goal3: Goal = { ...new Goal(new Date().getFullYear(), 75000) };
       agent[AgentKeys.manager_goals].push(goal3);
     }
 

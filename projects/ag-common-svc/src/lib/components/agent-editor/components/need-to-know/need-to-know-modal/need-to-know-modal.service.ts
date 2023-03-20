@@ -5,7 +5,7 @@ import { map, take } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
 import { LOGGED_IN_USER_EMAIL } from '../../../agent-editor.model';
-import { AgentNeedToKnowService } from 'projects/ag-common-svc/src/lib/services/agent-need-to-know.service';
+import { AgentNeedToKnowService } from '../../../../../services/agent-need-to-know.service';
 
 @Injectable()
 export class NeedToKnowModalService {

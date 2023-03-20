@@ -19,7 +19,7 @@ import { LOGGED_IN_USER_EMAIL } from '../../../agent-editor.model';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { QueryParam, WhereFilterOperandKeys } from '../../../../../dao/CommonFireStoreDao.dao';
 import { NeedToKnowConfig } from './need-to-know-grid.model';
-import { AgentNeedToKnowService } from 'projects/ag-common-svc/src/lib/services/agent-need-to-know.service';
+import { AgentNeedToKnowService } from '../../../../../services/agent-need-to-know.service';
 
 @UntilDestroy()
 @Component({

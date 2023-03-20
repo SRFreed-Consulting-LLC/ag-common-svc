@@ -2,11 +2,11 @@ import { Component, HostBinding, Input, ViewChild } from '@angular/core';
 import {
   Agent,
   BaseModelKeys,
-  NEED_TO_KNOW_VISIBILITY_LEVEL_LOOKUP,
   Lookup,
   LookupKeys,
   NeedToKnow,
   NeedToKnowKeys,
+  NEED_TO_KNOW_VISIBILITY_LEVEL_LOOKUP,
 } from 'ag-common-lib/public-api';
 import ArrayStore from 'devextreme/data/array_store';
 import DataSource from 'devextreme/data/data_source';
@@ -15,7 +15,7 @@ import { filter, map, shareReplay, switchMap } from 'rxjs/operators';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
 import { AgentService } from '../../../../services/agent.service';
 import { QueryParam, WhereFilterOperandKeys } from '../../../../dao/CommonFireStoreDao.dao';
-import { AgentNeedToKnowService } from 'projects/ag-common-svc/src/lib/services/agent-need-to-know.service';
+import { AgentNeedToKnowService } from '../../../../services/agent-need-to-know.service';
 import { NeedToKnowVisibilityLevel } from 'ag-common-lib/lib/lists/need-to-know-visibility-level.enum';
 
 @Component({

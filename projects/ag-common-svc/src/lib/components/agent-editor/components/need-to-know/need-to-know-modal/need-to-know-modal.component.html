@@ -1,5 +1,5 @@
 <ag-shr-modal-window
-  #NeedToKnowModalRef
+  #needToKnowModalRef
   [title]="title"
   [width]="500"
   [height]="'auto'"
@@ -9,8 +9,8 @@
   (onPopupClose)="handleNeedToKnowFormPopupClose($event)"
 >
   <dx-form
-    *ngIf="NeedToKnowModalRef?.popupComponent?.visible"
-    #NeedToKnowFormRef
+    *ngIf="needToKnowModalRef?.popupComponent?.visible"
+    #needToKnowFormRef
     [formData]="needToKnowFormData"
     labelMode="floating"
   >
@@ -54,9 +54,9 @@
     ></dxi-item>
 
     <dxi-item
-      [dataField]="NeedToKnowKeys.activity"
+      [dataField]="NeedToKnowKeys.needToKnow"
       [isRequired]="true"
-      [label]="{ text: 'Activity' }"
+      [label]="{ text: 'Need To Know' }"
       [editorType]="'dxTextArea'"
       [editorOptions]="{ readOnly: !(needToKnowFormData | needToKnowPermissions | async), height: 150 }"
     ></dxi-item>

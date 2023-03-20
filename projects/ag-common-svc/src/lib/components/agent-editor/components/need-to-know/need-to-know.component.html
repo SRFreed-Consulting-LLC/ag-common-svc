@@ -1,0 +1,22 @@
+<ag-shr-modal-window #needToKnowModalRef [title]="'Need To Know'" [showSaveButton]="false">
+  <ag-shr-need-to-know-grid [agentId]="agentId$ | async"></ag-shr-need-to-know-grid>
+</ag-shr-modal-window>
+
+<ag-shr-need-to-know-grid
+  class="need-to-know__data-grid"
+  [title]="'Need To Know'"
+  [agentId]="agentId$ | async"
+  [isEditable]="false"
+  [extraToolbarItems]="[
+    {
+      widget: 'dxButton',
+      location: 'after',
+      visible: 'true',
+      options: {
+        icon: 'edit',
+        stylingMode: 'text',
+        onClick: showListPopup
+      }
+    }
+  ]"
+></ag-shr-need-to-know-grid>

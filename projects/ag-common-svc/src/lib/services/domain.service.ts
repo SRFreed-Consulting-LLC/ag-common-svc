@@ -978,7 +978,12 @@ export class DomainService implements OnInit {
       return '';
     }
 
-    let lookup: ActiveLookup = this.lookupsMap.get(lookupName).find((val) => val.value.toLowerCase() == matchVal.toLowerCase());
+    if(!matchVal){
+      console.log("Requested MatchVal for lookup was blank: ", matchVal);
+      return '';
+    }
+
+    let lookup: ActiveLookup = this.lookupsMap.get(lookupName).find((val) => val.value?.toLowerCase() == matchVal?.toLowerCase());
 
     if (lookup) {
       return lookup.dbId;

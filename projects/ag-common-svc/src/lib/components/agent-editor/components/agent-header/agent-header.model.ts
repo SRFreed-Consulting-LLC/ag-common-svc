@@ -1,6 +1,6 @@
 export enum AgentHeaderKeys {
-  primaryEmailAddress = 'primaryEmailAddress',
+  // primaryEmailAddress = 'primaryEmailAddress',
   primaryPhoneNumber = 'primaryPhoneNumber',
   primaryShippingAddress = 'primaryShippingAddress',
-  primaryBillingAddress = 'primaryBillingAddress'
+  primaryBillingAddress = 'primaryBillingAddress',
 }

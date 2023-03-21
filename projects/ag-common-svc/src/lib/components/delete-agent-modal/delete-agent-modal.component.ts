@@ -2,6 +2,7 @@ import { Component, EventEmitter, HostBinding, Output, ViewChild } from '@angula
 import { Agent } from 'ag-common-lib/public-api';
 import { Observable } from 'rxjs';
 import { ModalWindowComponent } from '../modal-window/modal-window.component';
+import { DeleteAgentModalFormData } from './delete-agent-modal.model';
 import { DeleteAgentModalService } from './delete-agent-modal.service';
 
 @Component({
@@ -14,12 +15,10 @@ export class DeleteAgentModalComponent {
   @HostBinding('class') className = 'delete-agent-modal';
   @ViewChild('deleteAgentModalRef', { static: true }) deleteAgentModalComponent: ModalWindowComponent;
 
-  @Output() agentDeleted = new EventEmitter();
+  @Output() onAgentDeleted = new EventEmitter();
 
   public inProgress$: Observable<boolean>;
-  public deleteAuthLoginVisible: boolean = true;
-  public deleteAuthLogin: boolean = true;
-  public deleteAgentRecord: boolean = true;
+  public formData: DeleteAgentModalFormData;
 
   private agent: Agent;
 
@@ -29,14 +28,23 @@ export class DeleteAgentModalComponent {
 
   public showPopup = async (agent: Agent) => {
     this.agent = agent;
-    this.deleteAuthLogin = !!agent?.uid;
-    this.deleteAgentRecord = true;
+    this.formData = {
+      deleteAuthLogin: !!agent?.uid,
+      deleteAgentRecord: true,
+    };
+
     this.deleteAgentModalComponent.showModal();
   };
 
   public handleSave = (e) => {
-    this.deleteAgentModalService.save(this.agent, this.deleteAuthLogin, this.deleteAgentRecord).then(() => {
-      this.agentDeleted.emit(this.agent);
+    const hasFieldsToDelete = Object.values(this.formData).some(Boolean);
+    if (!hasFieldsToDelete) {
+      return;
+    }
+    this.deleteAgentModalService.save(this.agent, this.formData).then(() => {
+      if (this.formData?.deleteAgentRecord) {
+        this.onAgentDeleted.emit(this.agent);
+      }
       this.deleteAgentModalComponent.hideModal();
     });
   };

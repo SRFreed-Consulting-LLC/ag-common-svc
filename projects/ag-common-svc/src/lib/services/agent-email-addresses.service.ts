@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { EmailAddress } from 'ag-common-lib/public-api';
+import { EmailAddress, RelatedEmailAddress } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
 import { collectionGroup, getDocs, query, QueryConstraint, QuerySnapshot, where } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
@@ -63,10 +63,14 @@ export class AgentEmailAddressesService {
     });
   }
 
-  public findSameUserEmails = (email): Promise<Array<{ data: EmailAddress; parentDbId: string }>> => {
+  public findSameUserEmails = (email): Promise<RelatedEmailAddress[]> => {
     const queries: QueryParam[] = [];
 
-    const emailAddressQuery = new QueryParam('address', WhereFilterOperandKeys.equal, email);
+    const emailAddressQuery = new QueryParam(
+      'address',
+      WhereFilterOperandKeys.equal,
+      email?.toLocaleLowerCase()?.trim(),
+    );
     const isLoginQuery = new QueryParam('is_login', WhereFilterOperandKeys.equal, true);
 
     queries.push(emailAddressQuery);
@@ -88,9 +92,12 @@ export class AgentEmailAddressesService {
           return null;
         }
         const data = document.data();
+        const parentAgent = document?.ref?.parent?.parent;
+        const parentDbId = parentAgent?.id;
 
-        const parentDbId = document?.ref?.parent?.parent?.id;
-        return { data, parentDbId };
+        const result = { data, parentDbId };
+
+        return result;
       });
 
       return items;

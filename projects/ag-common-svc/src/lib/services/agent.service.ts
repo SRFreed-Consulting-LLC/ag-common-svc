@@ -33,6 +33,11 @@ export class AgentService extends DataService<Agent> {
       [AgentKeys.prospect_status_update_date]: dateFromTimestamp(data?.prospect_status_update_date as Timestamp),
       [AgentKeys.campaigns_user_since]: dateFromTimestamp(data?.campaigns_user_since as Timestamp),
       [AgentKeys.dob]: dateFromTimestamp(data?.dob as Timestamp),
+      [AgentKeys.first_login_date]: dateFromTimestamp(data?.first_login_date as Timestamp),
+      [AgentKeys.last_login_date]: dateFromTimestamp(data?.last_login_date as Timestamp),
+      [AgentKeys.registrationDate]: dateFromTimestamp(data?.registrationDate as Timestamp),
+      [AgentKeys.personal_goals]: Array.isArray(data?.personal_goals) ? data?.personal_goals : [],
+      [AgentKeys.conference_goals]: Array.isArray(data?.conference_goals) ? data?.conference_goals : [],
     });
   };
 

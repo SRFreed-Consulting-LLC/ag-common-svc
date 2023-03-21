@@ -51,13 +51,13 @@ export class OtpService {
     });
   };
 
-  public sendOtp = async (email) => {
+  public sendOtp = async (email, duration: 5 | 120 = 5) => {
     try {
       this._isOTPSended$.next(false);
       this._isSendOTPInProgress$.next(true);
       this._isResendAvailable$.next(false);
       await this.cloudFunctionsService
-        .sendOTP({ email })
+        .sendOTP({ email, duration })
         .then((data) => {
           this.startCountdown();
           this._isOTPSended$.next(true);

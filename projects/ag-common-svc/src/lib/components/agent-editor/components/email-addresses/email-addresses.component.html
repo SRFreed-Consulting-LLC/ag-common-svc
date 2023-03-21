@@ -17,10 +17,7 @@
   </div>
   <div class="row my-2 px-3" *ngIf="(emailAddresses$ | async)?.length > 0">
     <div class="col-6 text-start"></div>
-    <div class="col-2 text-center"></div>
-    <div class="col-2 text-center">
-      <span style="font-weight: bold">Primary</span>
-    </div>
+    <div class="col-4 text-center"></div>
     <div class="col-2 text-center">
       <span style="font-weight: bold">Login</span>
     </div>
@@ -35,11 +32,8 @@
       <div class="col-6 text-start">
         {{ address.address }}
       </div>
-      <div class="col-2 text-center">
+      <div class="col-4 text-center">
         {{ address.email_type | lookupDescription : Lookups.EmailTypes | async }}
-      </div>
-      <div class="col-2 text-center">
-        <i *ngIf="address.is_primary" class="dx-icon-check"></i>
       </div>
       <div class="col-2 text-center">
         <i *ngIf="address.is_login" class="dx-icon-check"></i>
@@ -120,7 +114,6 @@
       ></dxo-lookup>
       <dxi-validation-rule type="required"></dxi-validation-rule>
     </dxi-column>
-    <dxi-column dataField="is_primary" caption="Primary" dataType="boolean"></dxi-column>
     <dxi-column dataField="is_login" caption="Login" dataType="boolean"></dxi-column>
 
     <dxi-column type="buttons">

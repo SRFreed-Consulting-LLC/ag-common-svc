@@ -43,7 +43,7 @@ export class RegisterService {
 
   public async registerWithForm(userData: RegisterUser) {
     try {
-      const agentId = await this.cloudFunctionsService.findAgentDbIdByLoginEmail({ email: userData?.email });
+      const agentDbId = await this.cloudFunctionsService.findAgentDbIdByLoginEmail({ email: userData?.email });
 
       const firebaseUser = await this.authService
         .registerUser(userData?.email, userData?.password)
@@ -52,14 +52,13 @@ export class RegisterService {
       if (!firebaseUser) {
         return;
       }
-      console.log('agentId', agentId);
 
-      if (!agentId) {
-        await this.createAgentForUser(userData, firebaseUser.user);
-        return;
-      }
+      const agent = await (agentDbId
+        ? this.bindExistingAgentToUser(userData, firebaseUser.user, agentDbId)
+        : this.createAgentForUser(userData, firebaseUser.user));
 
-      await this.bindExistingAgentToUser(userData, firebaseUser.user, agentId);
+      await this.cloudFunctionsService.bindUserToAgent(firebaseUser.user.uid, agent?.dbId);
+
       return;
     } catch (error) {
       debugger;
@@ -67,7 +66,7 @@ export class RegisterService {
     }
   }
 
-  private createAgentForUser = async (registerUser: RegisterUser, user: User) => {
+  private createAgentForUser = async (registerUser: RegisterUser, user: User): Promise<Agent> => {
     console.log('createAgentForUser');
 
     const agentPhoneNumber: PhoneNumber = Object.assign({}, new PhoneNumber(), {
@@ -98,7 +97,7 @@ export class RegisterService {
     const agent = await this.agentService.create(agentData);
 
     if (!agent) {
-      return;
+      throw new Error("Can't create Agent Record");
     }
 
     const defaultEmailType = await firstValueFrom(
@@ -112,12 +111,13 @@ export class RegisterService {
     });
 
     await this.agentEmailAddressesService.create(agent?.dbId, loginEmail);
+
+    return agent;
   };
 
-  private bindExistingAgentToUser = async (registerUser: RegisterUser, user: User, agentId: string) => {
+  private bindExistingAgentToUser = async (registerUser: RegisterUser, user: User, agentId: string): Promise<Agent> => {
     console.log('bindExistingAgentToUser');
-    const agent = await this.agentService.getById(agentId);
-    console.log('agent', agent);
+    const agent = (await this.agentService.getById(agentId)) ?? new Agent();
 
     const agentStatus = agent[AgentKeys.agent_status] ?? AGENT_STATUS.NEW_AGENT;
     const agentRoles = agent[AgentKeys.role] ?? [Role.AGENT];
@@ -165,7 +165,7 @@ export class RegisterService {
       });
     }
 
-    await this.agentService.updateFields(agentId, agentData);
+    return await this.agentService.updateFields(agentId, agentData);
   };
 
   private async logMessage(type: string, createdBy: string, message: string, data: any) {

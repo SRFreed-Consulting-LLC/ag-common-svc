@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import {
+  BindUserToAgent,
+  ConfirmEmail,
   DeleteAgent,
   DeleteFirebaseUser,
   FunctionsNames,
@@ -21,6 +23,16 @@ export class CloudFunctionsService {
   }
 
   public sendOTP = (payload: SendOTP): Promise<any> => httpsCallable(this.functions, FunctionsNames.sendOTP)(payload);
+
+  public bindUserToAgent = (uid: string, agentDbId: string): Promise<any> => {
+    const payload: BindUserToAgent = { uid, agentDbId };
+
+    return httpsCallable(this.functions, FunctionsNames.bindUserToAgent)(payload);
+  };
+
+  public confirmEmail = (payload: ConfirmEmail): Promise<any> => {
+    return httpsCallable(this.functions, FunctionsNames.confirmEmail)(payload);
+  };
 
   public deleteAgent = (agentDbId: string): Promise<any> => {
     const payload: DeleteAgent = { agentDbId };

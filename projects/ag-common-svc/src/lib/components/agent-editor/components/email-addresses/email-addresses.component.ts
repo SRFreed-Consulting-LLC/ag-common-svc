@@ -79,17 +79,12 @@ export class EmailAddressesComponent {
       return;
     }
 
-    if (e.dataField === 'is_primary') {
-      e.editorOptions.disabled = e.row.data.is_primary;
-    }
-
     if (e.dataField === 'is_login') {
       e.editorOptions.disabled = e.row.data.is_login;
     }
   };
 
   public onInitNewRow = (e) => {
-    e.data.is_primary = false; // TODO check on empty
     e.data.is_login = false;
     e.data.email_type = this.defaultEmailTypeLookup?.dbId;
   };
@@ -109,7 +104,7 @@ export class EmailAddressesComponent {
   };
 
   public canDeleteEmailAddress = (e) => {
-    return !e.row.data.is_primary && !e.row.data.is_login;
+    return !e.row.data.is_login;
   };
 
   public checkIsSetAsLoginVisible = (e) => {
@@ -127,41 +122,12 @@ export class EmailAddressesComponent {
   };
 
   private addEmailAddress = async (emailAddress: EmailAddress) => {
-    const promises = [this.agentEmailAddressesService.create(this.agentId$.value, emailAddress)];
-
-    if (emailAddress?.is_primary) {
-      const previousPrimaryEmailAddress = await this.getPrimaryEmailAddress();
-      previousPrimaryEmailAddress &&
-        promises.push(
-          this.agentEmailAddressesService.update(this.agentId$.value, previousPrimaryEmailAddress?.dbId, {
-            is_primary: false,
-          }),
-        );
-    }
-
-    return Promise.all(promises).then(() => false);
+    return this.agentEmailAddressesService.create(this.agentId$.value, emailAddress).then(() => false);
   };
 
   private updateEmailAddress = async (documentId: string, emailAddressUpdates: Partial<EmailAddress>) => {
-    const promises = [this.agentEmailAddressesService.update(this.agentId$.value, documentId, emailAddressUpdates)];
-
-    if (emailAddressUpdates?.is_primary) {
-      const previousPrimaryEmailAddress = await this.getPrimaryEmailAddress();
-      previousPrimaryEmailAddress &&
-        promises.push(
-          this.agentEmailAddressesService.update(this.agentId$.value, previousPrimaryEmailAddress?.dbId, {
-            is_primary: false,
-          }),
-        );
-    }
-
-    return Promise.all(promises).then(() => false);
-  };
-
-  private getPrimaryEmailAddress = async (): Promise<EmailAddress> => {
-    const emailAddresses = await firstValueFrom(this.emailAddresses$);
-    const emailAddress = emailAddresses.find((item) => item?.is_primary);
-
-    return emailAddress;
+    return this.agentEmailAddressesService
+      .update(this.agentId$.value, documentId, emailAddressUpdates)
+      .then(() => false);
   };
 }

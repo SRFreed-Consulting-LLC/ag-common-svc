@@ -3,20 +3,24 @@
   [title]="'Delete Agent'"
   [width]="'400px'"
   [height]="'auto'"
+  [saveButtonDisabled]="!formData?.deleteAgentRecord && !formData?.deleteAuthLogin"
   [inProgress]="inProgress$ | async"
   [actionTitle]="'CONFIRM'"
   (onSaveClick)="handleSave($event)"
 >
-  <div *ngIf="deleteAuthLoginVisible" class="dx-field">
-    <div class="dx-field-label">Delete Auth Login?</div>
-    <div class="dx-field-value">
-      <dx-switch [(value)]="deleteAuthLogin" [switchedOnText]="'Yes'" [switchedOffText]="'No'"></dx-switch>
-    </div>
-  </div>
-  <div class="dx-field">
-    <div class="dx-field-label">Delete Agent Account?</div>
-    <div class="dx-field-value">
-      <dx-switch [(value)]="deleteAgentRecord" [switchedOnText]="'Yes'" [switchedOffText]="'No'"></dx-switch>
-    </div>
-  </div>
+  <dx-form [formData]="formData" labelMode="floating">
+    <dxi-item
+      dataField="deleteAuthLogin"
+      editorType="dxSwitch"
+      cssClass="delete-agent-modal__switch"
+      [label]="{ text: 'Delete Auth Login?' }"
+    ></dxi-item>
+
+    <dxi-item
+      dataField="deleteAgentRecord"
+      editorType="dxSwitch"
+      cssClass="delete-agent-modal__switch"
+      [label]="{ text: 'Delete Agent Account?' }"
+    ></dxi-item>
+  </dx-form>
 </ag-shr-modal-window>

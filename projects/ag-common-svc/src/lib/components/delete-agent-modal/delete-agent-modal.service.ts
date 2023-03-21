@@ -3,6 +3,7 @@ import { ToastrService } from 'ngx-toastr';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CloudFunctionsService } from '../../services/cloud-functions.service';
 import { LoggerService } from '../../services/logger.service';
+import { DeleteAgentModalFormData } from './delete-agent-modal.model';
 
 @Injectable()
 export class DeleteAgentModalService {
@@ -17,14 +18,14 @@ export class DeleteAgentModalService {
     this.inProgress$ = this._inProgress$.asObservable();
   }
 
-  public save = (agent, deleteAuthLogin, deleteAgentRecord) => {
+  public save = (agent, formData: DeleteAgentModalFormData) => {
     const promisees = [];
 
-    if (deleteAuthLogin) {
+    if (formData?.deleteAuthLogin) {
       promisees.push(this.deleteAuthLogin(agent));
     }
 
-    if (deleteAgentRecord) {
+    if (formData?.deleteAgentRecord) {
       promisees.push(this.deleteAgentAccount(agent));
     }
 

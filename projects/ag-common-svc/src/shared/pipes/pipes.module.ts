@@ -20,9 +20,10 @@ import { TShortSizePipe } from './t-short-size.pipe';
 import { PrimaryEmailAddressPipe } from './primary-email-address.pipe';
 import { PrimaryShippingAddressPipe } from './primary-shipping-address.pipe';
 import { PrimaryBillingAddressPipe } from './primary-billing-address.pipe';
-import { AgencyPipe } from './agent.pipe';
+import { AgencyPipe } from './agency.pipe';
 import { LookupDescriptionPipe } from './lookup-description.pipe';
 import { OtherSizePipe } from './other-sizes.pipe';
+import { AgentNameByDbIdePipe } from './agent.pipe';
 
 @NgModule({
   declarations: [
@@ -49,7 +50,8 @@ import { OtherSizePipe } from './other-sizes.pipe';
     PrimaryBillingAddressPipe,
     AgencyPipe,
     LookupDescriptionPipe,
-    OtherSizePipe
+    OtherSizePipe,
+    AgentNameByDbIdePipe,
   ],
   exports: [
     SafeHTMLPipe,
@@ -75,7 +77,8 @@ import { OtherSizePipe } from './other-sizes.pipe';
     PrimaryBillingAddressPipe,
     AgencyPipe,
     LookupDescriptionPipe,
-    OtherSizePipe
-  ]
+    OtherSizePipe,
+    AgentNameByDbIdePipe,
+  ],
 })
 export class PipesModule {}

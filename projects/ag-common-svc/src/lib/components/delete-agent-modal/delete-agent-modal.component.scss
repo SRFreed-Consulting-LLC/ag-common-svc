@@ -1,2 +1,10 @@
 ::ng-deep .delete-agent-modal {
+  &__switch {
+    &.dx-field-item.dx-flex-layout {
+      .dx-field-item-content {
+        display: flex;
+        justify-content: flex-end;
+      }
+    }
+  }
 }

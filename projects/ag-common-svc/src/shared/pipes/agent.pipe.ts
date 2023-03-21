@@ -1,23 +1,22 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { Agency } from 'ag-common-lib/public-api';
-import { where } from 'firebase/firestore';
+import { AgentService } from 'ag-common-svc/public-api';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AgencyService, QueryParam, WhereFilterOperandKeys } from '../../public-api';
 
-@Pipe({ name: 'agency' })
-export class AgencyPipe implements PipeTransform {
-  constructor(private agencyService: AgencyService) {}
+@Pipe({ name: 'agentNameByDbId' })
+export class AgentNameByDbIdePipe implements PipeTransform {
+  constructor(private agentService: AgentService) {}
 
-  transform(agencyId: string, converter?: (agency: Agency) => string): Observable<string> {
-    const qp = [new QueryParam('agency_id', WhereFilterOperandKeys.equal, agencyId)];
-    return this.agencyService.getList(qp).pipe(
-      map(([agency]) => {
-        if (converter) {
-          return converter(agency);
+  transform(agentDbId: string, converter?: (agency: Agency) => string): Observable<string> {
+    return this.agentService.getDocument(agentDbId).pipe(
+      map((agentSnapshot) => {
+        if (agentSnapshot.exists()) {
+          const data = agentSnapshot.data();
+          return [data?.p_agent_first_name, data?.p_agent_last_name].filter(Boolean).join(' ');
         }
-        return agency?.name;
-      })
+        return '';
+      }),
     );
   }
 }

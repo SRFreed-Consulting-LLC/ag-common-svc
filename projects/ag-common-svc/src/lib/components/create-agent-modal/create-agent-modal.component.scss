@@ -1,0 +1,17 @@
+::ng-deep .create-agent-modal {
+  &__existing-agents-container {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    line-height: 20px;
+  }
+  &__show-agent-button.dx-widget.dx-button {
+    .dx-button-content {
+      padding: 0 8px;
+    }
+    &.dx-state-hover {
+      background-color: transparent;
+      text-decoration: underline;
+    }
+  }
+}

@@ -27,7 +27,7 @@ export class AgentHeaderService {
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
         return this.formChangesDetector.hasChanges;
-      })
+      }),
     );
   }
 
@@ -38,7 +38,6 @@ export class AgentHeaderService {
     changes.forEach(([key]) => {
       const update = this.formData[key] ?? null;
       const addresses = updates[AgentKeys.addresses] ?? this.formData[AgentKeys.addresses] ?? [];
-      const emailAddresses = updates[AgentKeys.email_addresses] ?? this.formData[AgentKeys.email_addresses] ?? [];
       const phoneNumbers = updates[AgentKeys.phone_numbers] ?? this.formData[AgentKeys.phone_numbers] ?? [];
 
       switch (key) {
@@ -49,7 +48,7 @@ export class AgentHeaderService {
 
               Object.assign(address, { is_primary_billing: isSame });
               return address;
-            })
+            }),
           });
 
           return;
@@ -60,20 +59,11 @@ export class AgentHeaderService {
 
               Object.assign(address, { is_primary_shipping: isSame });
               return address;
-            })
+            }),
           });
 
           return;
-        case AgentHeaderKeys.primaryEmailAddress:
-          Object.assign(updates, {
-            [AgentKeys.email_addresses]: emailAddresses.map((emailAddress) => {
-              const isSame = emailAddress === update;
 
-              Object.assign(emailAddress, { is_primary: isSame });
-              return emailAddress;
-            })
-          });
-          return;
         case AgentHeaderKeys.primaryPhoneNumber:
           Object.assign(updates, {
             [AgentKeys.phone_numbers]: phoneNumbers.map((phoneNumber) => {
@@ -81,7 +71,7 @@ export class AgentHeaderService {
 
               Object.assign(phoneNumber, { is_primary: isSame });
               return phoneNumber;
-            })
+            }),
           });
           return;
 
@@ -98,7 +88,7 @@ export class AgentHeaderService {
       const filename = [
         this.formData[AgentKeys.p_agent_first_name],
         this.formData[AgentKeys.p_agent_middle_name],
-        this.formData[AgentKeys.p_agent_last_name]
+        this.formData[AgentKeys.p_agent_last_name],
       ]
         .filter(Boolean)
         .join('_')
@@ -173,11 +163,11 @@ export class AgentHeaderService {
       AgentKeys.p_suffix,
       AgentKeys.p_headshot_link,
       AgentKeys.title,
+      AgentKeys.p_email,
       AgentKeys.p_mga_id,
       AgentKeys.p_agency_id,
       AgentKeys.addresses,
-      AgentKeys.email_addresses,
-      AgentKeys.phone_numbers
+      AgentKeys.phone_numbers,
     ]);
     let primaryBillingAddress = null;
     let primaryShippingAddress = null;
@@ -192,14 +182,12 @@ export class AgentHeaderService {
       }
     });
 
-    const primaryEmailAddress = agent[AgentKeys.email_addresses]?.find((emailAddresses) => emailAddresses?.is_primary);
     const primaryPhoneNumber = agent[AgentKeys.phone_numbers]?.find((phoneNumber) => phoneNumber?.is_primary);
 
     Object.assign(initialData, {
       [AgentHeaderKeys.primaryShippingAddress]: primaryShippingAddress,
       [AgentHeaderKeys.primaryBillingAddress]: primaryBillingAddress,
-      [AgentHeaderKeys.primaryEmailAddress]: primaryEmailAddress,
-      [AgentHeaderKeys.primaryPhoneNumber]: primaryPhoneNumber
+      [AgentHeaderKeys.primaryPhoneNumber]: primaryPhoneNumber,
     });
 
     this.formData = new Proxy(initialData, {
@@ -209,7 +197,7 @@ export class AgentHeaderService {
         Reflect.set(target, prop, value, receiver);
 
         return true;
-      }
+      },
     });
 
     return this.formData;

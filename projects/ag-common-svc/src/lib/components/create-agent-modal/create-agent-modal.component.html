@@ -1,0 +1,83 @@
+<ag-shr-modal-window
+  #createAgentModalRef
+  [title]="'Create Agent'"
+  [width]="'50vw'"
+  [height]="'280px'"
+  [inProgress]="inProgress$ | async"
+  [actionTitle]="'CREATE AGENT'"
+  (onSaveClick)="handleSaveNewAgent($event)"
+>
+  <dx-form
+    #newAgentFormRef
+    [formData]="formData"
+    [colCount]="2"
+    labelMode="floating"
+    validationGroup="customerData"
+    (onFieldDataChanged)="fieldDataChanged($event)"
+  >
+    <dxi-item dataField="firstName">
+      <dxo-label text="First"></dxo-label>
+      <dxi-validation-rule
+        type="custom"
+        [message]="'At least one of fields are required'"
+        [reevaluate]="true"
+        [validationCallback]="atLeastOneRequired"
+      ></dxi-validation-rule>
+    </dxi-item>
+    <dxi-item dataField="lastName">
+      <dxo-label text="Last"></dxo-label>
+      <dxi-validation-rule
+        type="custom"
+        [message]="'At least one of fields are required'"
+        [reevaluate]="true"
+        [validationCallback]="atLeastOneRequired"
+      ></dxi-validation-rule>
+    </dxi-item>
+
+    <dxi-item dataField="email">
+      <dxo-label text="Email"></dxo-label>
+      <dxi-validation-rule
+        type="custom"
+        [message]="'At least one of fields are required'"
+        [reevaluate]="true"
+        [validationCallback]="atLeastOneRequired"
+      ></dxi-validation-rule>
+
+      <dxi-validation-rule type="email" [reevaluate]="true" message="Email is invalid"></dxi-validation-rule>
+
+      <dxi-validation-rule
+        *ngIf="!!formData?.email"
+        type="async"
+        message="Agent with same Login Email already exist"
+        [validationCallback]="emailAddressAsyncValidation"
+      >
+      </dxi-validation-rule>
+    </dxi-item>
+
+    <dxi-item dataField="phoneNumber" [editorOptions]="{ mask: '(000) 000-0000' }">
+      <dxo-label text="Phone"></dxo-label>
+      <dxi-validation-rule
+        type="custom"
+        [message]="'At least one of fields are required'"
+        [reevaluate]="true"
+        [validationCallback]="atLeastOneRequired"
+      ></dxi-validation-rule>
+    </dxi-item>
+
+    <dxi-item [colSpan]="2">
+      <div *dxTemplate class="create-agent-modal__existing-agents-container">
+        <ng-container *ngIf="(emailsExistOnOtherRecord$ | async)?.length">
+          Detected Agents that has same email address provided:
+
+          <dx-button
+            *ngFor="let item of emailsExistOnOtherRecord$ | async"
+            class="create-agent-modal__show-agent-button"
+            stylingMode="text"
+            [hint]="'SHOW AGENT'"
+            [text]="item?.parentDbId | agentNameByDbId | async"
+          ></dx-button>
+        </ng-container>
+      </div>
+    </dxi-item>
+  </dx-form>
+</ag-shr-modal-window>

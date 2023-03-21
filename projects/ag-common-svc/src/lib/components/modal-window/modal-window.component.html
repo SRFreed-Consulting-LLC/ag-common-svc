@@ -55,6 +55,8 @@
     <div *dxTemplate>
       <shr-button-with-indicator
         [title]="actionTitle"
+        [disabled]="saveButtonDisabled"
+        [cssClass]="'modal-window__toolbar-button'"
         [isInProgress]="inProgress"
         (onClick)="handelSaveClick()"
       ></shr-button-with-indicator>

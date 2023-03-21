@@ -78,15 +78,25 @@ export class AuthService {
       mergeMap((user: User) => user?.getIdTokenResult()),
       map((idTokenResult: IdTokenResult) => {
         const claims = idTokenResult?.claims;
+        console.log('claims', claims);
 
-        return claims?.agentId;
+        return claims?.agentDbId;
       }),
       mergeMap((agentId: string) => {
+        console.log('agentId', agentId);
+
         return iif(
           () => !!agentId,
-          this.agentService.getById(agentId),
+          of(agentId).pipe(
+            mergeMap((id) => {
+              console.log('getById');
+              return this.agentService.getDocument(id).pipe(map((doc) => doc.data()));
+            }),
+          ),
           of(null).pipe(
             mergeMap(() => {
+              console.log('navigate');
+
               return this.router.navigate(['auth/login']);
             }),
             map(() => null),
@@ -111,6 +121,13 @@ export class AuthService {
   public async signInWithEmailAndPassword(email: string, password: string) {
     try {
       const userData = await this.signIn(email, password);
+
+      if (!userData?.user?.emailVerified) {
+        this.ngZone.run(() => {
+          this.router.navigate(['auth', 'register-landing']);
+        });
+        return;
+      }
       const agent = await firstValueFrom(
         this.loggedInAgent$.pipe(filter((agent) => agent?.uid === userData?.user?.uid)),
       );
@@ -132,14 +149,9 @@ export class AuthService {
         const ec = await this.logMessage('LOGIN', userData?.user?.email, 'User exists but not green lighted. ', [
           { ...agent[0] },
         ]);
-
-        this.toster.error(
-          'Your portal access status is under review. Please try again in 24-48 hours. If you believe you have reached this message in error, please contact Alliance Group for Assistance with this code:' +
-            ec,
-          'Login Error',
-          { disableTimeOut: true },
-        );
-        await this.logOut();
+        this.ngZone.run(() => {
+          this.router.navigate(['auth', 'agent-under-review']);
+        });
 
         return;
       }
@@ -243,12 +255,14 @@ export class AuthService {
     });
   }
 
-  public async logOut() {
+  public async logOut(withRedirect = true) {
     this.router.routeReuseStrategy.shouldReuseRoute = () => {
       return false;
     };
     try {
-      await this.router.navigate(['auth', 'login']);
+      if (withRedirect) {
+        await this.router.navigate(['auth', 'login']);
+      }
       await signOut(this.auth);
     } catch (error) {
       console.error('Error in Auth Service.', error);

@@ -30,7 +30,7 @@
     <div class="row pb-1">
       <div class="col-3">
         <div class="pb-1" style="text-decoration: underline">Primary Email Address</div>
-        <div>{{ agentHeaderFormDetails?.email_addresses | primaryEmailAddress }}</div>
+        <div>{{ agentHeaderFormDetails?.p_email }}</div>
       </div>
       <div class="col-3">
         <div class="pb-1" style="text-decoration: underline">MGA</div>
@@ -135,7 +135,7 @@
       <dxo-label [text]="'Middle Name'"></dxo-label>
     </dxi-item>
 
-    <dxi-item
+    <!-- <dxi-item
       [colSpan]="6"
       editorType="dxSelectBox"
       [dataField]="AgentHeaderKeys.primaryEmailAddress"
@@ -147,7 +147,7 @@
       }"
     >
       <dxo-label [text]="'Primary Email Address'"></dxo-label>
-    </dxi-item>
+    </dxi-item> -->
 
     <dxi-item
       [colSpan]="6"

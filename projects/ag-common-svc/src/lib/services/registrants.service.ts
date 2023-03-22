@@ -24,7 +24,7 @@ export class RegistrantsService extends DataService<Registrant> {
   getRegistrantsByInviteeEmail(invitee_email: string, sortField?: string): Promise<Registrant[]>{
     let qp: QueryParam[] = [];
     qp.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, invitee_email));
-
+    qp.push(new QueryParam('invitee_guest', WhereFilterOperandKeys.equal, 'Invitee'));
     return this.getAllByValue(qp, sortField)
   }
 

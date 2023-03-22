@@ -1,0 +1,15 @@
+<dx-select-box
+  [dataSource]="prefixesLookup$ | async"
+  [(value)]="value"
+  (valueChange)="valueChange.emit($event)"
+  (selectedItemChange)="selectedItemChange.emit($event)"
+  [readOnly]="readOnly"
+  [disabled]="disabled"
+  [label]="label"
+  [labelMode]="labelMode"
+  [placeholder]="placeholder"
+  [displayExpr]="LookupKeys.description"
+  [valueExpr]="BaseModelKeys.dbId"
+  [searchEnabled]="true"
+  [showClearButton]="true"
+></dx-select-box>

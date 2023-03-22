@@ -1,0 +1,21 @@
+<dx-select-box
+  [dataSource]="statesLookup$ | async"
+  [(value)]="value"
+  (valueChange)="valueChange.emit($event)"
+  [readOnly]="readOnly"
+  [disabled]="disabled"
+  [label]="label"
+  [labelMode]="labelMode"
+  [displayExpr]="'description'"
+  [valueExpr]="'value'"
+  [searchExpr]="['value', 'description']"
+  [searchEnabled]="true"
+  [dropDownOptions]="{ width: 230 }"
+  fieldTemplate="field"
+>
+  <div *dxTemplate="let data of 'field'">
+    <div>
+      <dx-text-box text="{{ data?.value ?? '' }}"> </dx-text-box>
+    </div>
+  </div>
+</dx-select-box>

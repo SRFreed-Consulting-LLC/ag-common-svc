@@ -80,9 +80,10 @@
           widget="dxButton"
           location="after"
           toolbar="bottom"
+          *ngIf="!!addressesGridREf.instance"
           [options]="{
             text: 'CANCEL',
-            onClick: addressesGridREf.instance.cancelEditData,
+            onClick: onCancel,
             elementAttr: {
               class: 'modal-window__toolbar-button'
             }
@@ -131,8 +132,8 @@
     </dxi-column>
     <dxi-column dataField="address2" [visible]="false"></dxi-column>
     <dxi-column dataField="city" [visible]="false"></dxi-column>
-    <dxi-column dataField="state" [visible]="false">
-      <dxo-lookup [dataSource]="states" [displayExpr]="'name'" [valueExpr]="'abbreviation'"></dxo-lookup>
+    <dxi-column dataField="state" [visible]="false" editCellTemplate="stateEditorTmp">
+      <dxo-lookup [dataSource]="statesLookup$ | async" [displayExpr]="'description'" [valueExpr]="'value'"></dxo-lookup>
     </dxi-column>
     <dxi-column dataField="zip" [visible]="false"></dxi-column>
     <dxi-column dataField="country" [visible]="false">
@@ -148,5 +149,10 @@
       <dxi-button name="edit" style="color: #091d45b5 !important"></dxi-button>
       <dxi-button name="delete" [visible]="canDeleteRow"></dxi-button>
     </dxi-column>
+
+    <!-- Templates -->
+    <div *dxTemplate="let cell of 'stateEditorTmp'">
+      <ag-shr-state-select-box [value]="cell.value" (valueChange)="cell.setValue($event)"> </ag-shr-state-select-box>
+    </div>
   </dx-data-grid>
 </ag-shr-modal-window>

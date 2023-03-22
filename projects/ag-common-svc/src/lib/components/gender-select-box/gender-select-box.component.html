@@ -1,0 +1,14 @@
+<dx-select-box
+  [dataSource]="gendersLookup$ | async"
+  [(value)]="value"
+  (valueChange)="valueChange.emit($event)"
+  (selectedItemChange)="selectedItemChange.emit($event)"
+  [readOnly]="readOnly"
+  [disabled]="disabled"
+  [label]="label"
+  [labelMode]="labelMode"
+  [displayExpr]="'description'"
+  [valueExpr]="'dbId'"
+  [searchEnabled]="true"
+  [showClearButton]="true"
+></dx-select-box>

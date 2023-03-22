@@ -1,0 +1,194 @@
+<div class="agent-header__container">
+  <div class="agent-header__image-container">
+    <img
+      class="agent-header__image"
+      [src]="agentHeaderFormDetails?.p_headshot_link || 'assets/image-placeholder.png'"
+    />
+
+    <dx-button class="mr-2" icon="edit" stylingMode="text" (onClick)="showProfilePictureEditorModal()"></dx-button>
+  </div>
+
+  <div class="col">
+    <div class="row">
+      <div class="col-12" style="font-size: 18px">
+        {{
+          [
+            agentHeaderFormDetails?.p_prefix | prefix | async,
+            agentHeaderFormDetails?.p_agent_first_name,
+            agentHeaderFormDetails?.p_agent_last_name,
+            agentHeaderFormDetails?.p_suffix | suffix | async
+          ] | fullName
+        }}
+        <dx-button class="mr-2" icon="edit" stylingMode="text" (onClick)="showEditorModal()"></dx-button>
+      </div>
+    </div>
+    <div class="row pb-1">
+      <div class="col-4">
+        {{ agentHeaderFormDetails?.title ?? "" }}
+      </div>
+    </div>
+    <div class="row pb-1">
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Email Address</div>
+        <div>{{ agentHeaderFormDetails?.email_addresses | primaryEmailAddress }}</div>
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">MGA</div>
+        <div>{{ agentHeaderFormDetails?.p_mga_id | agency | async }}</div>
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Shipping Address</div>
+        <div>{{ agentHeaderFormDetails?.addresses | primaryShippingAddress | fullAddress }}</div>
+      </div>
+    </div>
+    <div class="row pb-1">
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Phone Number</div>
+        <div>{{ agentHeaderFormDetails?.phone_numbers | primaryPhoneNumber | phoneNumberMask }}</div>
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Agency</div>
+        <div>{{ agentHeaderFormDetails?.p_agency_id | agency | async }}</div>
+      </div>
+      <div class="col-3">
+        <div class="pb-1" style="text-decoration: underline">Primary Billing Address</div>
+        <div>{{ agentHeaderFormDetails?.addresses | primaryBillingAddress | fullAddress }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ag-shr-modal-window
+  [width]="'auto'"
+  [height]="'auto'"
+  #agentProfilePictureModalRef
+  [title]="'Profile Picture'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="saveAgentProfileImagesUpdates()"
+  (onPopupClose)="handleClosePopup($event)"
+>
+  <ag-shr-drop-zone
+    #profilePictureDropZoneRef
+    [(profilePictureUrl)]="agentHeaderFormDetails.p_headshot_link"
+  ></ag-shr-drop-zone>
+</ag-shr-modal-window>
+
+<ag-shr-modal-window
+  [width]="'860px'"
+  [height]="'auto'"
+  #agentHeaderModalRef
+  [title]="'Agent Information'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="saveAgentHeaderInfoUpdates()"
+  (onPopupClose)="handleClosePopup($event)"
+>
+  <dx-form
+    #agentHeaderFormRef
+    class="agent-header__form"
+    [colCount]="12"
+    [formData]="agentHeaderFormDetails"
+    [labelMode]="'floating'"
+    [minColWidth]="100"
+  >
+    <dxi-item [colSpan]="6" caption="MGA" itemType="group">
+      <div *dxTemplate>{{ agentHeaderFormDetails?.p_mga_id | agency | async }}</div>
+    </dxi-item>
+    <dxi-item [colSpan]="6" caption="Agency" itemType="group">
+      <div *dxTemplate>
+        {{ agentHeaderFormDetails?.p_agency_id | agency | async }}
+      </div>
+    </dxi-item>
+
+    <dxi-item [dataField]="AgentKeys.p_prefix" [colSpan]="2">
+      <dxo-label [text]="'Prefix'"></dxo-label>
+      <div *dxTemplate>
+        <ag-shr-prefix-select-box
+          [(value)]="agentHeaderFormDetails.p_prefix"
+          (selectedItemChange)="handlePrefixSelect($event)"
+        ></ag-shr-prefix-select-box>
+      </div>
+    </dxi-item>
+
+    <dxi-item [dataField]="AgentKeys.p_agent_first_name" [colSpan]="4">
+      <dxo-label [text]="'First Name'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item [dataField]="AgentKeys.p_agent_last_name" [colSpan]="4">
+      <dxo-label [text]="'Last Name'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item [dataField]="AgentKeys.p_suffix" [colSpan]="2">
+      <dxo-label [text]="'Suffix'"></dxo-label>
+      <div *dxTemplate>
+        <ag-shr-suffix-select-box
+          [(value)]="agentHeaderFormDetails.p_suffix"
+          (selectedItemChange)="handleSuffixSelect($event)"
+        ></ag-shr-suffix-select-box>
+      </div>
+    </dxi-item>
+
+    <dxi-item [dataField]="AgentKeys.title" [colSpan]="6">
+      <dxo-label [text]="'Title'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item [dataField]="AgentKeys.p_agent_middle_name" [colSpan]="6">
+      <dxo-label [text]="'Middle Name'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item
+      [colSpan]="6"
+      editorType="dxSelectBox"
+      [dataField]="AgentHeaderKeys.primaryEmailAddress"
+      [editorOptions]="{
+        items: agentHeaderFormDetails.email_addresses,
+        displayExpr: 'address',
+        searchEnabled: true,
+        placeholder: ''
+      }"
+    >
+      <dxo-label [text]="'Primary Email Address'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item
+      [colSpan]="6"
+      editorType="dxSelectBox"
+      [dataField]="AgentHeaderKeys.primaryPhoneNumber"
+      [editorOptions]="{
+        items: agentHeaderFormDetails.phone_numbers,
+        displayExpr: phoneNumberDisplayExpr,
+        searchEnabled: true,
+        placeholder: ''
+      }"
+    >
+      <dxo-label [text]="'Primary Phone Number'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item
+      [colSpan]="6"
+      editorType="dxSelectBox"
+      [dataField]="AgentHeaderKeys.primaryBillingAddress"
+      [editorOptions]="{
+        items: agentHeaderFormDetails.addresses,
+        displayExpr: fullAddressPipe.transform,
+        searchEnabled: true,
+        placeholder: ''
+      }"
+    >
+      <dxo-label [text]="'Primary Billing Address'"></dxo-label>
+    </dxi-item>
+
+    <dxi-item
+      [colSpan]="6"
+      editorType="dxSelectBox"
+      [dataField]="AgentHeaderKeys.primaryShippingAddress"
+      [editorOptions]="{
+        items: agentHeaderFormDetails.addresses,
+        displayExpr: fullAddressPipe.transform,
+        searchEnabled: true,
+        placeholder: ''
+      }"
+    >
+      <dxo-label [text]="'Primary Shipping Address'"></dxo-label>
+    </dxi-item>
+  </dx-form>
+</ag-shr-modal-window>

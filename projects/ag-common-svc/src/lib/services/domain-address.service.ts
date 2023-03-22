@@ -6,19 +6,27 @@ import {
   PrimaryFieldRule
 } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {
+  ActiveLookup,
   Address,
   Agent,
   AgentKeys,
   BUSINESS_PERSONAL_TYPE
 } from 'ag-common-lib/public-api';
+import { Observable } from 'rxjs';
 import { DomainUtilService } from './domain-util.service';
+import { LookupsService } from './lookups.service';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class DomainAddressService {
-  constructor(private domainUtilService: DomainUtilService) {}
+
+  private domainObjectType: ActiveLookup[];
+  
+  constructor(private domainUtilService: DomainUtilService, private lookupService: LookupsService) {
+    this.lookupService.emailTypeLookup$.subscribe(lookups => this.domainObjectType = lookups);
+  }
   
   //create address objects from datamap
   //Ensures address has address1, city, state, and zip
@@ -118,9 +126,17 @@ export class DomainAddressService {
 
       //look at each incoming and update if matching or add to list
       incoming_addresses.forEach((incoming_address) => {
-        let matching_address: Address = agent[AgentKeys.addresses].find(address => address.address1.split(' ')[0] == incoming_address.address1.split(' ')[0]);
+        let matching_address: Address = agent[AgentKeys.addresses].find(address => address.address1?.split(' ')[0] == incoming_address.address1?.split(' ')[0]);
 
         if (matching_address) {
+          if (incoming_address.address1) {
+            this.domainUtilService.updateField(
+              selectedRuleSet[ImportRuleSetKeys.address_address1],
+              matching_address,
+              'address1',
+              incoming_address.address1
+            );
+          }
           if (incoming_address.address2) {
             this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.address_address2],
@@ -262,5 +278,16 @@ export class DomainAddressService {
     }
 
     return returnVal;
+  }
+
+  private getLookupValue(lookups: ActiveLookup[],  matchVal: string): string{
+    let lookup: ActiveLookup  = lookups.find(val => val.description == matchVal);
+
+    if(lookup){
+      return lookup.dbId
+    } else {
+      console.log("Couldn't find lookup value for ", matchVal)
+      return matchVal
+    }
   }
 }

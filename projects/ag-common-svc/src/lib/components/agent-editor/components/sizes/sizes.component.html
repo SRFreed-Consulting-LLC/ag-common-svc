@@ -1,0 +1,111 @@
+<div class="mt-2">
+  <div class="row my-2 px-3">
+    <div class="col-12 text-start editToolbar">
+      <dx-toolbar>
+        <dxi-item location="before" widget="dxButton" locateInMenu="never">
+          <div *dxTemplate>
+            <div class="toolbar-label"><b>Sizes for Fun Stuff</b></div>
+          </div>
+        </dxi-item>
+        <dxi-item location="after" locateInMenu="never">
+          <div *dxTemplate>
+            <dx-button [icon]="'edit'" [stylingMode]="'text'" (onClick)="showEditorModal()"></dx-button>
+          </div>
+        </dxi-item>
+      </dx-toolbar>
+    </div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3 text-start"><b>T-Shirt Size:</b></div>
+    <div class="col-3">
+      {{ funStaffFormDetails.p_tshirt_size | tShortSize | async }}
+      <span *ngIf="funStaffFormDetails?.p_tshirt_size_other as tShirtSizeOther">/ {{ tShirtSizeOther }}</span>
+    </div>
+    <div class="col-3 text-start"><b>Hobbies:</b></div>
+    <div class="col-3">{{ funStaffFormDetails.hobbies }}</div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3 text-start"><b>Unisex T-Shirt Size:</b></div>
+    <div class="col-3">
+      {{ funStaffFormDetails.unisex_tshirt_size | tShortSize | async }}
+      <span *ngIf="funStaffFormDetails?.unisex_tshirt_size_other as unisexTShirtSizeOther"
+        >/ {{ unisexTShirtSizeOther }}</span
+      >
+    </div>
+    <div class="col-3 text-start"><b>Favorite Destination:</b></div>
+    <div class="col-3">{{ funStaffFormDetails.favorite_destination }}</div>
+  </div>
+  <div class="row my-2 px-3">
+    <div class="col-3 text-start"><b>Shoe Size:</b></div>
+    <div class="col-3">{{ funStaffFormDetails.shoe_size }}</div>
+    <div class="col-3 text-start"></div>
+  </div>
+</div>
+
+<ag-shr-modal-window
+  [width]="'50vw'"
+  [height]="'auto'"
+  #sizeModalRef
+  [title]="'Sizes For Fun'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="saveAgentUpdates()"
+  (onPopupClose)="handleClosePopup($event)"
+>
+  <dx-form #sizeFormRef class="mt-2" [formData]="funStaffFormDetails" labelMode="floating">
+    <dxi-item itemType="group" [colCount]="(selectedTShortSize$?.value | otherSize) ? 12 : 6">
+      <dxi-item [dataField]="AgentKeys.p_tshirt_size" [colSpan]="6">
+        <div *dxTemplate>
+          <ag-shr-t-short-size-select-box
+            [label]="'T-Shirt Size'"
+            [(value)]="funStaffFormDetails.p_tshirt_size"
+            (selectedItemChange)="handleTShortSizeSelect($event)"
+          ></ag-shr-t-short-size-select-box>
+        </div>
+      </dxi-item>
+
+      <dxi-item
+        [dataField]="AgentKeys.p_tshirt_size_other"
+        [colSpan]="6"
+        [isRequired]="!!(selectedTShortSize$?.value | otherSize)"
+        [visible]="!!(selectedTShortSize$?.value | otherSize)"
+      >
+        <dxo-label [text]="'T-Shirt Size Other'"></dxo-label>
+      </dxi-item>
+    </dxi-item>
+
+    <dxi-item itemType="group" [colCount]="(selectedUnisexTShortSize$?.value | otherSize) ? 12 : 6">
+      <dxi-item [dataField]="AgentKeys.unisex_tshirt_size" [colSpan]="6">
+        <div *dxTemplate>
+          <ag-shr-t-short-size-select-box
+            [label]="'Unisex T-Shirt Size'"
+            [(value)]="funStaffFormDetails.unisex_tshirt_size"
+            (selectedItemChange)="handleUnisexTShortSizeSelect($event)"
+          ></ag-shr-t-short-size-select-box>
+        </div>
+      </dxi-item>
+
+      <dxi-item
+        [dataField]="AgentKeys.unisex_tshirt_size_other"
+        [colSpan]="6"
+        [isRequired]="!!(selectedUnisexTShortSize$?.value | otherSize)"
+        [visible]="!!(selectedUnisexTShortSize$?.value | otherSize)"
+      >
+        <dxo-label [text]="'Unisex T-Shirt Size Other'"></dxo-label>
+      </dxi-item>
+    </dxi-item>
+
+    <dxi-item itemType="group" [colCount]="12">
+      <dxi-item [dataField]="AgentKeys.shoe_size" [colSpan]="6">
+        <dxo-label [text]="'Shoe Size'"></dxo-label>
+      </dxi-item>
+
+      <dxi-item [dataField]="AgentKeys.favorite_destination" [colSpan]="6">
+        <dxo-label [text]="'Favorite Destination'"></dxo-label>
+      </dxi-item>
+    </dxi-item>
+
+    <dxi-item [dataField]="AgentKeys.hobbies">
+      <dxo-label [text]="'Hobbies'"></dxo-label>
+    </dxi-item>
+  </dx-form>
+</ag-shr-modal-window>

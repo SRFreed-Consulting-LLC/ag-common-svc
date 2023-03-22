@@ -1,0 +1,8 @@
+::ng-deep .phone-numbers {
+  &__icon {
+    &--whatsapp {
+      font-size: 20px;
+      color: #25d366;
+    }
+  }
+}

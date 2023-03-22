@@ -8,6 +8,7 @@
   "dependencies": {
     "tslib": "^2.3.0",
     "date-fns": "^2.28.0",
-    "@ngneat/until-destroy": "^9.2.1"
+    "@ngneat/until-destroy": "^9.2.1",
+    "ngx-image-cropper": "^6.3.2"
   }
 }

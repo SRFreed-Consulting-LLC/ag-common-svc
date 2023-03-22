@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@angular/core';
 import { Association, LookupKeys } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
-import { updateDoc } from 'firebase/firestore';
+import { Timestamp, updateDoc } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
 import { CommonFireStoreDao } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
+import { dateFromTimestamp } from '../utils/date-from-timestamp';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,7 @@ export class AgentAssociationsService {
   private readonly associationCollectionPath = 'associations';
 
   constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp, private toastrService: ToastrService) {
-    this.fsDao = new CommonFireStoreDao<Association>(fireBaseApp, null, null);
+    this.fsDao = new CommonFireStoreDao<Association>(fireBaseApp, AgentAssociationsService.fromFirestore, null);
   }
 
   public getList(agentId: string) {
@@ -36,13 +37,13 @@ export class AgentAssociationsService {
     return this.fsDao
       .create(data, table)
       .then((response) => {
-        this.toastrService.success('Agent Association Successfully Created!');
-        this.lockLookup(data);
+        //this.toastrService.success('Agent Association Successfully Created!');
+
         return response;
       })
 
       .catch((e) => {
-        console.log('e', e);
+        console.log('e', e, agentId, data);
       });
   }
 
@@ -52,8 +53,8 @@ export class AgentAssociationsService {
     return this.fsDao
       .updateFields(updates, documentId, table)
       .then((response) => {
-        this.toastrService.success('Agent Association Successfully Updated!');
-        this.lockLookup(updates);
+        //this.toastrService.success('Agent Association Successfully Updated!');
+
         return response;
       })
 
@@ -61,12 +62,6 @@ export class AgentAssociationsService {
         console.log('e', e);
       });
   }
-
-  public lockLookup = (data: Partial<Association>) => {
-    if (data?.associationTypeRef) {
-      updateDoc(data?.associationTypeRef, { [LookupKeys.isAssigned]: true });
-    }
-  };
 
   public delete(agentId: string, documentId: any) {
     const table = this.getCollectionPath(agentId);
@@ -80,4 +75,10 @@ export class AgentAssociationsService {
   private getCollectionPath(agentId: string) {
     return [this.agentCollectionPath, agentId, this.associationCollectionPath].join('/');
   }
+
+  static readonly fromFirestore = (data): Association => {
+    return Object.assign({}, data, {
+      dob: dateFromTimestamp(data?.dob as Timestamp)
+    });
+  };
 }

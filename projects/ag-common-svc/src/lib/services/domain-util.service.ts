@@ -74,6 +74,7 @@ export class DomainUtilService {
       case 'T':
       case 't':
       case 'YES':
+      case 'Yes':
       case 'yes':
       case 'Y':
       case 'y':

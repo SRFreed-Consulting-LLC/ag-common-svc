@@ -1,0 +1,19 @@
+<dx-select-box
+  [dataSource]="dietaryConsiderationTypesLookup$ | async"
+  [(value)]="value"
+  (valueChange)="valueChange.emit($event)"
+  (selectedItemChange)="selectedItemChange.emit($event)"
+  [readOnly]="readOnly"
+  [disabled]="disabled"
+  [label]="label"
+  [labelMode]="labelMode"
+  [placeholder]="placeholder"
+  [displayExpr]="LookupKeys.description"
+  [valueExpr]="BaseModelKeys.dbId"
+  [searchEnabled]="true"
+  [showClearButton]="true"
+>
+  <dx-validator #validatorRef [validationGroup]="validationGroup">
+    <dxi-validation-rule *ngIf="isRequired" type="required" message="Required field"> </dxi-validation-rule>
+  </dx-validator>
+</dx-select-box>

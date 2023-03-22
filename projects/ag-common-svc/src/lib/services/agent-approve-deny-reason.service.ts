@@ -4,6 +4,7 @@ import { FirebaseApp } from 'firebase/app';
 import { ToastrService } from 'ngx-toastr';
 import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
+import { dateFromTimestamp } from '../utils/date-from-timestamp';
 
 @Injectable({
   providedIn: 'root'

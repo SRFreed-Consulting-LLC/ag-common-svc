@@ -5,6 +5,7 @@ import {
   PrimaryFieldRule
 } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
 import {
+  ActiveLookup,
   Agent,
   AgentKeys,
   BUSINESS_PERSONAL_TYPE,
@@ -79,7 +80,7 @@ export class DomainEmailService {
     return addresses;
   }
 
-  updateEmailAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[]) {
+  updateEmailAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[], lookup: ActiveLookup[]) {
     let incoming_emails: EmailAddress[] = this.extractEmailAddresses(data);
 
     //security measure to make sure is_login is NEVER updated
@@ -102,11 +103,12 @@ export class DomainEmailService {
 
         if (matching_email) {
           if (incoming_email.email_type) {
+            let val = lookup.find((val) => val.value.toLowerCase() == incoming_email.email_type.toLowerCase());
             this.domainUtilService.updateField(
               selectedRuleSet[ImportRuleSetKeys.email_address_email_type],
               matching_email,
               'email_type',
-              incoming_email.email_type
+              val.dbId
             );
           }
           if (incoming_email.is_primary && required_to_update_primary) {

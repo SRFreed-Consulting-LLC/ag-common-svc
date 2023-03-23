@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
 import { AgentEmailAddressesService } from '../../../../services/agent-email-addresses.service';
-import { ActiveLookup } from 'ag-common-lib/public-api';
+import { ActiveLookup, EmailTemplates } from 'ag-common-lib/public-api';
 import { CloudFunctionsService } from '../../../../services/cloud-functions.service';
 import { OtpService } from '../../../../services/otp.service';
 import { SetLoginEmailForm, SetLoginEmailModalSteps } from './set-login-email-modal.model';
@@ -181,7 +181,7 @@ export class SetLoginEmailModalService {
     const isValid = await this.validateOneField('emailAddress', formComponent);
 
     if (isValid) {
-      await this.otpService.sendOtp(this.formData?.emailAddress?.description);
+      await this.otpService.sendOtp(this.formData?.emailAddress?.description, EmailTemplates.confirmEmailUpdateTmp);
       // TODO check possible errors
       this._selectedStep$.next(SetLoginEmailModalSteps.confirmEmail);
     }

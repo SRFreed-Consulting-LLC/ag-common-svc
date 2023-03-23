@@ -1,5 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-import { ActiveLookup } from 'ag-common-lib/public-api';
+import { ActiveLookup, EmailTemplates } from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
 import { AuthService } from '../../../../services/auth.service';
 import { Observable } from 'rxjs';
@@ -54,7 +54,8 @@ export class SetLoginEmailModalComponent {
     return this.setLoginEmailModalService.emailAddressAsyncValidation(item?.value as ActiveLookup);
   };
 
-  public sendOtp = () => this.otpService.sendOtp(this.formData?.emailAddress?.description);
+  public sendOtp = () =>
+    this.otpService.sendOtp(this.formData?.emailAddress?.description, EmailTemplates.confirmEmailUpdateTmp);
 
   public otpAsyncValidation = (item) => this.setLoginEmailModalService.otpAsyncValidation(item?.value);
 

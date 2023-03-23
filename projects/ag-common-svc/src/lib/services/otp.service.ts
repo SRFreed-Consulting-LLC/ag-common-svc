@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
+import { EmailTemplates } from 'ag-common-lib/public-api';
 import { differenceInSeconds, isFuture } from 'date-fns';
 import { FirebaseApp } from 'firebase/app';
 import { Timestamp } from 'firebase/firestore';
@@ -51,13 +52,17 @@ export class OtpService {
     });
   };
 
-  public sendOtp = async (email, duration: 5 | 120 = 5) => {
+  public sendOtp = async (
+    email,
+    emailTemplate: EmailTemplates.confirmEmailUpdateTmp | EmailTemplates.confirmRegisterEmailTmp,
+    duration: 5 | 120 = 5,
+  ) => {
     try {
       this._isOTPSended$.next(false);
       this._isSendOTPInProgress$.next(true);
       this._isResendAvailable$.next(false);
       await this.cloudFunctionsService
-        .sendOTP({ email, duration })
+        .sendOTP({ email, duration, emailTemplate })
         .then((data) => {
           this.startCountdown();
           this._isOTPSended$.next(true);

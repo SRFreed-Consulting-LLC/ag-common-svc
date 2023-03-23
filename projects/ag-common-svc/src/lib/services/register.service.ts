@@ -75,7 +75,10 @@ export class RegisterService {
       [PhoneNumberKeys.is_primary]: true,
       [PhoneNumberKeys.phone_type]: PhoneNumberType.Mobile,
     });
-    const conferenceGoal: Goal = Object.assign({}, new Goal(), { year: new Date().getFullYear(), amount: 9000 });
+    const conferenceGoal: Goal = Object.assign({}, new Goal(new Date().getFullYear(), 11500), {
+      year: new Date().getFullYear(),
+      amount: 9000,
+    });
 
     const agentData: Agent = Object.assign({}, new Agent(), {
       [AgentKeys.p_agent_first_name]: registerUser.firstName,
@@ -158,7 +161,10 @@ export class RegisterService {
     const isCurrentYearGoalExist = agentConferenceGoals?.some((goal) => `${goal.year}` === `${currentYear}`);
 
     if (!isCurrentYearGoalExist) {
-      const conferenceGoal: Goal = Object.assign({}, new Goal(), { year: new Date().getFullYear(), amount: 9000 });
+      const conferenceGoal: Goal = Object.assign({}, new Goal(new Date().getFullYear(), 11500), {
+        year: new Date().getFullYear(),
+        amount: 9000,
+      });
 
       Object.assign(agentData, {
         [AgentKeys.conference_goals]: [...agentConferenceGoals, conferenceGoal],

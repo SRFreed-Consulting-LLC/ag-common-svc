@@ -1,11 +1,11 @@
 import { Inject, Injectable, Optional } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
 import { BaseModelKeys, NeedToKnow, NeedToKnowKeys, NeedToKnowVisibilityLevel } from 'ag-common-lib/public-api';
 import { map, take } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
-import { LOGGED_IN_USER_EMAIL } from '../../../agent-editor.model';
 import { AgentNeedToKnowService } from '../../../../../services/agent-need-to-know.service';
+import { AuthService } from 'ag-common-svc/public-api';
 
 @Injectable()
 export class NeedToKnowModalService {
@@ -16,22 +16,17 @@ export class NeedToKnowModalService {
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);
 
-  constructor(
-    @Optional() @Inject(LOGGED_IN_USER_EMAIL) private loggedInUserEmail$: Observable<string>,
-    private agentNeedToKnowService: AgentNeedToKnowService
-  ) {
+  constructor(private authService: AuthService, private agentNeedToKnowService: AgentNeedToKnowService) {
     this.inProgress$ = this._inProgress$.asObservable();
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
         return this.formChangesDetector.hasChanges;
-      })
+      }),
     );
   }
 
   public saveNeedToKnow = (agentId) => {
-    return this.formData[BaseModelKeys.dbId]
-      ? this.updateNeedToKnow(agentId)
-      : this.createNeedToKnow(agentId);
+    return this.formData[BaseModelKeys.dbId] ? this.updateNeedToKnow(agentId) : this.createNeedToKnow(agentId);
   };
 
   public onCancelEditNeedToKnow = ({ event, component }) => {
@@ -51,15 +46,15 @@ export class NeedToKnowModalService {
   };
 
   public getFormData = async (association?: Partial<NeedToKnow>) => {
-    const loggedInUserEmail = await this.loggedInUserEmail$.pipe(take(1)).toPromise();
+    const loggedInUserEmail = await firstValueFrom(this.authService.currentUser$.pipe(map((user) => user.email)));
     const initialData = Object.assign(
       {
         [BaseModelKeys.createdDate]: new Date(),
         [BaseModelKeys.createdBy]: loggedInUserEmail,
-        [NeedToKnowKeys.visibilityLevel]: NeedToKnowVisibilityLevel.AllianceGroupLevel
+        [NeedToKnowKeys.visibilityLevel]: NeedToKnowVisibilityLevel.AllianceGroupLevel,
       },
       new NeedToKnow(),
-      association
+      association,
     );
     this.formData = new Proxy(initialData, {
       set: (target, prop, value, receiver) => {
@@ -68,7 +63,7 @@ export class NeedToKnowModalService {
         Reflect.set(target, prop, value, receiver);
 
         return true;
-      }
+      },
     });
 
     return this.formData;

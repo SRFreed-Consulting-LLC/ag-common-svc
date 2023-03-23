@@ -63,16 +63,12 @@
     [sortOrder]="'desc'"
   ></dxi-column>
   <dxi-column [width]="150" [dataField]="NeedToKnowKeys.visibilityLevel">
-    <dxo-lookup
-      [dataSource]="needToKnowVisibilityLevelLookup"
-      valueExpr="value"
-      displayExpr="description"
-    ></dxo-lookup>
+    <dxo-lookup [dataSource]="needToKnowVisibilityLevelLookup" valueExpr="value" displayExpr="description"></dxo-lookup>
   </dxi-column>
   <dxi-column [dataField]="NeedToKnowKeys.needToKnow"> </dxi-column>
 
   <dxi-column type="buttons" [visible]="isEditable">
     <dxi-button icon="edit" [onClick]="showEditPopup"></dxi-button>
-    <dxi-button [visible]="getIsEditingAllowed" name="delete"> </dxi-button>
+    <dxi-button [visible]="getIsEditingAllowed.bind(this, loggedInUserEmail$ | async)" name="delete"> </dxi-button>
   </dxi-column>
 </dx-data-grid>

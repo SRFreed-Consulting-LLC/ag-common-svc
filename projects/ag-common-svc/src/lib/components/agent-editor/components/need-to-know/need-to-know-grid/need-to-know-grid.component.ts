@@ -15,11 +15,11 @@ import DataSource from 'devextreme/data/data_source';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { AgentService } from '../../../../../services/agent.service';
 import { NeedToKnowModalComponent } from '../need-to-know-modal/need-to-know-modal.component';
-import { LOGGED_IN_USER_EMAIL } from '../../../agent-editor.model';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { QueryParam, WhereFilterOperandKeys } from '../../../../../dao/CommonFireStoreDao.dao';
 import { NeedToKnowConfig } from './need-to-know-grid.model';
 import { AgentNeedToKnowService } from '../../../../../services/agent-need-to-know.service';
+import { AuthService } from 'ag-common-svc/public-api';
 
 @UntilDestroy()
 @Component({
@@ -48,19 +48,18 @@ export class NeedToKnowGridComponent {
   public NeedToKnowKeys = NeedToKnowKeys;
   public needToKnowVisibilityLevelLookup = NEED_TO_KNOW_VISIBILITY_LEVEL_LOOKUP;
   public needToKnow$: Observable<DataSource>;
+  public loggedInUserEmail$: Observable<string>;
 
   private readonly agentId$ = new BehaviorSubject<string>(undefined);
-  private loggedInUserEmail = undefined;
+
   private allowedVisibilityLevels$ = new BehaviorSubject<NeedToKnowVisibilityLevel[]>([]);
 
   constructor(
+    authService: AuthService,
     private agentService: AgentService,
     private agentNeedToKnowService: AgentNeedToKnowService,
-    @Optional() @Inject(LOGGED_IN_USER_EMAIL) private loggedInUserEmail$: Observable<string>,
   ) {
-    this.loggedInUserEmail$?.pipe(untilDestroyed(this)).subscribe((loggedInUserEmail) => {
-      this.loggedInUserEmail = loggedInUserEmail;
-    });
+    this.loggedInUserEmail$ = authService.currentUser$.pipe(map((user) => user.email));
     this.needToKnow$ = combineLatest([this.agentId$, this.allowedVisibilityLevels$]).pipe(
       filter(([agentId]) => !!agentId),
       switchMap(([agentId, allowedVisibilityLevels]) => {
@@ -120,7 +119,8 @@ export class NeedToKnowGridComponent {
     this.needToKnowModalComponent.showModal(this.agentId$.value, data);
   };
 
-  public getIsEditingAllowed = ({ row: { data } }) => {
-    return !!this.loggedInUserEmail && this.loggedInUserEmail === data[BaseModelKeys.createdBy];
+  public getIsEditingAllowed = (loggedInUserEmail, { row: { data } }) => {
+    debugger;
+    return !!loggedInUserEmail && loggedInUserEmail === data[BaseModelKeys.createdBy];
   };
 }

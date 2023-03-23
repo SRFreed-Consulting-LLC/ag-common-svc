@@ -63,7 +63,7 @@ export class DomainService implements OnInit {
     private domainWebsiteService: DomainWebsiteService,
     private domainSocialsService: DomainSocialsService,
     private domainAssociationsService: DomainAssociationsService,
-    private domainUtilService: DomainUtilService,
+    private domainUtilService: DomainUtilService
   ) {}
   ngOnInit(): void {}
 
@@ -190,7 +190,7 @@ export class DomainService implements OnInit {
     }
 
     agent[AgentKeys.addresses] = this.domainAddressService.createAddresses(line_data);
-    agent[AgentKeys.email_addresses] = this.domainEmailService.createEmailAddresses(line_data);
+    // agent[AgentKeys.email_addresses] = this.domainEmailService.createEmailAddresses(line_data);
     agent[AgentKeys.phone_numbers] = this.domainPhoneNumberService.createPhoneNumbers(line_data);
     agent[AgentKeys.websites] = this.domainWebsiteService.createWebsites(line_data);
     agent[AgentKeys.socials] = this.domainSocialsService.createSocials(line_data);
@@ -238,7 +238,7 @@ export class DomainService implements OnInit {
 
     this.getAgency(agent, agencies);
 
-    const agentEmailAddresses = agent[AgentKeys.email_addresses];
+    const agentEmailAddresses = []; // agent[AgentKeys.email_addresses];
 
     if (!Array.isArray(agentEmailAddresses) || agentEmailAddresses?.length == 0) {
       this.messages.unshift(
@@ -312,7 +312,7 @@ export class DomainService implements OnInit {
           );
         }
 
-        if (mapping.data_type == 'lookup') {          
+        if (mapping.data_type == 'lookup') {
           let lookupval: string = this.getLookupValue(mapping.values, incoming_value.trim());
 
           this.domainUtilService.updateField(
@@ -334,25 +334,31 @@ export class DomainService implements OnInit {
       }
     });
 
-    if (line_data.has(AgentKeys.approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.approve_deny_reason].valueOf() == 'ADD_TO_LIST') {
-      let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+    if (
+      line_data.has(AgentKeys.approve_deny_reason) &&
+      selectedRuleSet[ImportRuleSetKeys.approve_deny_reason].valueOf() == 'ADD_TO_LIST'
+    ) {
+      let approve_deny_reason: ApproveDenyReason = { ...new ApproveDenyReason() };
       approve_deny_reason.created_by = updatedBy;
       approve_deny_reason.created_date = new Date();
       approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AllianceGroupLevel;
       approve_deny_reason.isDeleted = false;
       approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason).trim();
 
-      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
+      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true);
     }
-    if (line_data.has(AgentKeys.agency_approve_deny_reason) && selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST') {
-      let approve_deny_reason: ApproveDenyReason = {... new ApproveDenyReason()};
+    if (
+      line_data.has(AgentKeys.agency_approve_deny_reason) &&
+      selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST'
+    ) {
+      let approve_deny_reason: ApproveDenyReason = { ...new ApproveDenyReason() };
       approve_deny_reason.created_by = updatedBy;
       approve_deny_reason.created_date = new Date();
       approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AgencyLevel;
       approve_deny_reason.isDeleted = false;
       approve_deny_reason.activity = line_data.get(AgentKeys.agency_approve_deny_reason).trim();
 
-      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true)
+      this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true);
     }
 
     if (line_data.has(AgentKeys.agent_type)) {
@@ -415,9 +421,15 @@ export class DomainService implements OnInit {
 
     this.getAgency(agent, agencies);
 
-    const shouldContinue = [  
+    const shouldContinue = [
       this.domainAddressService.updateAddresses(line_data, agent, selectedRuleSet, this.messages),
-      this.domainEmailService.updateEmailAddresses(line_data, agent, selectedRuleSet, this.messages, this.lookupsMap.get('emailTypeLookup')),
+      this.domainEmailService.updateEmailAddresses(
+        line_data,
+        agent,
+        selectedRuleSet,
+        this.messages,
+        this.lookupsMap.get('emailTypeLookup')
+      ),
       this.domainPhoneNumberService.updatePhoneNumbers(line_data, agent, selectedRuleSet, this.messages),
       this.domainSocialsService.updateSocials(line_data, agent, selectedRuleSet, this.messages),
       this.domainWebsiteService.updateWebsites(line_data, agent, selectedRuleSet, this.messages)
@@ -438,7 +450,7 @@ export class DomainService implements OnInit {
     agent_or_invitees: Map<string, string>[],
     selectedRuleSet: ImportRuleSet,
     messages: string[],
-    id_key: string, 
+    id_key: string,
     lookupsMap: Map<string, ActiveLookup[]>
   ) {
     this.lookupsMap = lookupsMap;
@@ -447,7 +459,14 @@ export class DomainService implements OnInit {
       let invitees = agents.filter((a) => a.p_email == agent_or_invitee.get('invitee_email'));
 
       if (invitees.length == 1) {
-        this.domainAssociationsService.updateAssociations(agent_or_invitee, invitees[0], selectedRuleSet, messages, id_key, this.lookupsMap);
+        this.domainAssociationsService.updateAssociations(
+          agent_or_invitee,
+          invitees[0],
+          selectedRuleSet,
+          messages,
+          id_key,
+          this.lookupsMap
+        );
       }
     });
   }
@@ -477,10 +496,14 @@ export class DomainService implements OnInit {
 
       let p = this.registrantsService.getAllByValue(qp).then(async (invitees) => {
         //check for existing agent record
-        let agent: LegacyAgent = agents.find((agent) => agent.p_email == invitee_map.get('invitee_email').toLowerCase().trim());
+        let agent: LegacyAgent = agents.find(
+          (agent) => agent.p_email == invitee_map.get('invitee_email').toLowerCase().trim()
+        );
 
         if (!agent) {
-          console.log("Can't create Registration. No agent found for " + invitee_map.get('invitee_email').toLowerCase().trim());
+          console.log(
+            "Can't create Registration. No agent found for " + invitee_map.get('invitee_email').toLowerCase().trim()
+          );
           return null;
         }
 
@@ -490,10 +513,10 @@ export class DomainService implements OnInit {
 
           //get any data from agent record and copy to registrant record
           importMappings.forEach(async (mapping) => {
-            if (agent[mapping.field_name_agent] && agent[mapping.field_name_agent] != '') {              
+            if (agent[mapping.field_name_agent] && agent[mapping.field_name_agent] != '') {
               invitee[mapping.field_name_registrant] = agent[mapping.field_name_agent];
             }
-          })
+          });
 
           this.getInviteeAddressesFromProfile(invitee, agent);
           this.getInviteeEmailsFromProfile(invitee, agent);
@@ -505,16 +528,16 @@ export class DomainService implements OnInit {
 
           return null;
         }
-        
+
         let qp2: QueryParam[] = [];
         qp2.push(new QueryParam('invitee_email', WhereFilterOperandKeys.equal, invitee_email));
-        qp2.push(new QueryParam('invitee_guest', WhereFilterOperandKeys.equal, "Guest"));
+        qp2.push(new QueryParam('invitee_guest', WhereFilterOperandKeys.equal, 'Guest'));
 
-        await this.registrantsService.getAllByValue(qp2).then(guests => {
-          guests.forEach(async guest => {
+        await this.registrantsService.getAllByValue(qp2).then((guests) => {
+          guests.forEach(async (guest) => {
             await this.registrantsService.delete(guest['dbId']);
-          })
-        })
+          });
+        });
 
         invitee.invitee_guest = invitee_guest;
         invitee.invitee_email = invitee_email;
@@ -540,8 +563,7 @@ export class DomainService implements OnInit {
         //iterate through mappings - set data in registration from file
         importMappings.forEach(async (mapping) => {
           //if mapping has field_name_registrant, it is not blank, and doesn't start with "guest"
-          if (invitee_map.has(mapping.field_name_registrant) 
-              && !mapping.field_name_registrant.startsWith("guest")) {
+          if (invitee_map.has(mapping.field_name_registrant) && !mapping.field_name_registrant.startsWith('guest')) {
             let incoming_value: string = invitee_map.get(mapping.field_name_registrant);
 
             if (mapping.data_type == 'string' || mapping.data_type == 'select') {
@@ -663,7 +685,7 @@ export class DomainService implements OnInit {
 
         if (k.startsWith(key_split[0] + '.' + key_split[1])) {
           guest_vals.set(key_split[key_split.length - 1], v);
-          
+
           individual_guest_maps.set(key_split[0] + '.' + key_split[1], guest_vals);
         }
       });
@@ -671,7 +693,7 @@ export class DomainService implements OnInit {
       //create registrant for each guest map
       individual_guest_maps.forEach(async (guest_map) => {
         if (guest_map.has('first_name') && guest_map.has('last_name')) {
-          let guest: Registrant = { ...new Registrant() };;
+          let guest: Registrant = { ...new Registrant() };
 
           guest.invitee_guest = invitee_guest;
           guest.invitee_email = invitee_email;
@@ -706,11 +728,11 @@ export class DomainService implements OnInit {
             if (parentInvitee.upline) {
               guest.upline = parentInvitee.upline;
             }
-    
+
             if (parentInvitee.updated_at) {
               guest.updated_at = parentInvitee.updated_at;
             }
-    
+
             if (parentInvitee.registered_at) {
               guest.registered_at = parentInvitee.registered_at;
             }
@@ -775,7 +797,7 @@ export class DomainService implements OnInit {
           }
 
           importMappings.forEach(async (mapping) => {
-            if ((guest_map.has(mapping.field_name_registrant) && guest_map.get(mapping.field_name_registrant) != '')) {
+            if (guest_map.has(mapping.field_name_registrant) && guest_map.get(mapping.field_name_registrant) != '') {
               if (mapping.data_type == 'string' || mapping.data_type == 'select') {
                 guest[mapping.field_name_registrant] = guest_map.get(mapping.field_name_registrant);
               }
@@ -835,15 +857,13 @@ export class DomainService implements OnInit {
   }
 
   getAgency(agent: Agent, agencies: Agency[]) {
-
     if (agent.p_agency_id) {
       let a: Agency[] = agencies.filter((agency) => agency.agency_id == agent.p_agency_id);
 
       if (a.length != 1) {
-
-        this.messages.push(
-          agent.email_addresses[0].address + ' has an value set for Agency Id that does not match an existing Agency!'
-        );
+        // this.messages.push(
+        //   agent.email_addresses[0].address + ' has an value set for Agency Id that does not match an existing Agency!'
+        // );
       }
     }
 
@@ -851,120 +871,129 @@ export class DomainService implements OnInit {
       let a: Agency[] = agencies.filter((agency) => agency.agency_id == agent.p_mga_id);
 
       if (a.length != 1) {
-        this.messages.push(
-          agent.email_addresses[0].address + ' has an value set for MGA Id that does not match an existing Agency!'
-        );
+        // this.messages.push(
+        //   agent.email_addresses[0].address + ' has an value set for MGA Id that does not match an existing Agency!'
+        // );
       }
     }
   }
 
-  private getInviteePhoneNumbersFromProfile(invitee: Registrant, agent: Agent){
-    let agent_mobile_number: PhoneNumber = agent.phone_numbers.find((phone) => phone.phone_type == PhoneNumberType.Mobile);
+  private getInviteePhoneNumbersFromProfile(invitee: Registrant, agent: Agent) {
+    let agent_mobile_number: PhoneNumber = agent.phone_numbers.find(
+      (phone) => phone.phone_type == PhoneNumberType.Mobile
+    );
 
     if (agent_mobile_number) {
       invitee.mobile_phone = { ...agent_mobile_number };
     }
 
-    let agent_secondary_phone_number: PhoneNumber[] = agent.phone_numbers.filter((phone) => phone.phone_type != PhoneNumberType.Mobile);
+    let agent_secondary_phone_number: PhoneNumber[] = agent.phone_numbers.filter(
+      (phone) => phone.phone_type != PhoneNumberType.Mobile
+    );
 
     if (agent_secondary_phone_number.length > 0) {
       invitee.secondary_phone = agent_secondary_phone_number[0];
-    } 
+    }
   }
 
-  private getInviteePhoneNumbersFromFile(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent){
+  private getInviteePhoneNumbersFromFile(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent) {
     let incoming_phone_numbers: PhoneNumber[] = this.domainPhoneNumberService.extractPhoneNumbers(invitee_map);
-        
-    let incoming_mobile_number: PhoneNumber = incoming_phone_numbers.find((phone) => phone.phone_type == PhoneNumberType.Mobile);
+
+    let incoming_mobile_number: PhoneNumber = incoming_phone_numbers.find(
+      (phone) => phone.phone_type == PhoneNumberType.Mobile
+    );
 
     if (incoming_mobile_number) {
-      invitee.mobile_phone = {...incoming_mobile_number };
+      invitee.mobile_phone = { ...incoming_mobile_number };
     } else {
-      let agent_mobile_number: PhoneNumber = agent.phone_numbers.find((phone) => phone.phone_type == PhoneNumberType.Mobile);
+      let agent_mobile_number: PhoneNumber = agent.phone_numbers.find(
+        (phone) => phone.phone_type == PhoneNumberType.Mobile
+      );
 
       if (agent_mobile_number) {
         invitee.mobile_phone = { ...agent_mobile_number };
       }
     }
 
-    let incoming_secondary_number: PhoneNumber[] = incoming_phone_numbers.filter((phone) => phone.number != incoming_mobile_number?.number);
+    let incoming_secondary_number: PhoneNumber[] = incoming_phone_numbers.filter(
+      (phone) => phone.number != incoming_mobile_number?.number
+    );
 
-    if (incoming_secondary_number.length > 0 ) {
-      invitee.secondary_phone = {...incoming_secondary_number[0]};
+    if (incoming_secondary_number.length > 0) {
+      invitee.secondary_phone = { ...incoming_secondary_number[0] };
     } else {
-      let agent_secondary_phone_number: PhoneNumber[] = agent.phone_numbers.filter((phone) => phone.phone_type != PhoneNumberType.Mobile);
+      let agent_secondary_phone_number: PhoneNumber[] = agent.phone_numbers.filter(
+        (phone) => phone.phone_type != PhoneNumberType.Mobile
+      );
 
       if (agent_secondary_phone_number.length > 0) {
         invitee.secondary_phone = agent_secondary_phone_number[0];
-      } 
-    }
-  }
-
-  private getInviteeEmailsFromFile(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent){
-    let incoming_emails: EmailAddress[] = this.domainEmailService.extractEmailAddresses(invitee_map);
-
-    let incoming_login_email: EmailAddress = incoming_emails.find((email) => email.is_login == true);
-
-    if (incoming_login_email) {
-      invitee.primary_email_address = {...incoming_login_email };
-    } else {
-      let agent_primary_email: EmailAddress = agent.email_addresses.find((email) => email.is_login == true);
-
-      if (agent_primary_email) {
-        invitee.primary_email_address = { ...agent_primary_email };
-      }
-    }
-
-    let incoming_secondary_email: EmailAddress[] = incoming_emails.filter((email) => email.is_login == false);
-
-    if (incoming_secondary_email.length > 0 ) {
-      invitee.secondary_email_address = {...incoming_secondary_email[0]};
-    } else {
-      let agent_secondary_email: EmailAddress[] = agent.email_addresses.filter((email) => email.is_login == false);
-
-      if (agent_secondary_email.length > 0) {
-        invitee.secondary_email_address = agent_secondary_email[0];
       }
     }
   }
 
-  private getInviteeEmailsFromProfile(invitee: Registrant, agent: Agent){
-    let agent_primary_email: EmailAddress = agent.email_addresses.find((email) => email.is_login == true);
-
-    if (agent_primary_email) {
-      invitee.primary_email_address = { ...agent_primary_email };
-    }
-    
-    let agent_secondary_email: EmailAddress[] = agent.email_addresses.filter((email) => email.is_login == false);
-
-    if (agent_secondary_email.length > 0) {
-      invitee.secondary_email_address = agent_secondary_email[0];
-    }
+  private getInviteeEmailsFromFile(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent) {
+    // TODO auth-update
+    // let incoming_emails: EmailAddress[] = this.domainEmailService.extractEmailAddresses(invitee_map);
+    // let incoming_login_email: EmailAddress = incoming_emails.find((email) => email.is_login == true);
+    // if (incoming_login_email) {
+    //   invitee.primary_email_address = {...incoming_login_email };
+    // } else {
+    //   let agent_primary_email: EmailAddress = agent.email_addresses.find((email) => email.is_login == true);
+    //   if (agent_primary_email) {
+    //     invitee.primary_email_address = { ...agent_primary_email };
+    //   }
+    // }
+    // let incoming_secondary_email: EmailAddress[] = incoming_emails.filter((email) => email.is_login == false);
+    // if (incoming_secondary_email.length > 0 ) {
+    //   invitee.secondary_email_address = {...incoming_secondary_email[0]};
+    // } else {
+    //   let agent_secondary_email: EmailAddress[] = agent.email_addresses.filter((email) => email.is_login == false);
+    //   if (agent_secondary_email.length > 0) {
+    //     invitee.secondary_email_address = agent_secondary_email[0];
+    //   }
+    // }
   }
 
-  private getInviteeAddressesFromFile(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent){
+  private getInviteeEmailsFromProfile(invitee: Registrant, agent: Agent) {
+    // TODO auth-update
+    // let agent_primary_email: EmailAddress = agent.email_addresses.find((email) => email.is_login == true);
+    // if (agent_primary_email) {
+    //   invitee.primary_email_address = { ...agent_primary_email };
+    // }
+    // let agent_secondary_email: EmailAddress[] = agent.email_addresses.filter((email) => email.is_login == false);
+    // if (agent_secondary_email.length > 0) {
+    //   invitee.secondary_email_address = agent_secondary_email[0];
+    // }
+  }
+
+  private getInviteeAddressesFromFile(invitee_map: Map<string, string>, invitee: Registrant, agent: Agent) {
     let incoming_addresses: Address[] = this.domainAddressService.extractAddresses(invitee_map);
 
-    let incoming_primary_billing_address: Address = incoming_addresses.find((address) => address.is_primary_billing == true);
+    let incoming_primary_billing_address: Address = incoming_addresses.find(
+      (address) => address.is_primary_billing == true
+    );
 
     if (incoming_primary_billing_address) {
       invitee.primary_billing_address = { ...incoming_primary_billing_address };
-    } 
+    }
 
-    let incoming_primary_shipping_address: Address = incoming_addresses.find((address) => address.is_primary_shipping == true);
+    let incoming_primary_shipping_address: Address = incoming_addresses.find(
+      (address) => address.is_primary_shipping == true
+    );
 
     if (incoming_primary_shipping_address) {
       invitee.primary_shipping_address = { ...incoming_primary_shipping_address };
-    } 
+    }
   }
 
-  private getInviteeAddressesFromProfile(invitee: Registrant, agent: Agent){
+  private getInviteeAddressesFromProfile(invitee: Registrant, agent: Agent) {
     let agent_billing_address: Address = agent.addresses.find((address) => address.is_primary_billing == true);
 
     if (agent_billing_address) {
       invitee.primary_billing_address = { ...agent_billing_address };
     }
-  
+
     let agent_shippinging_address: Address = agent.addresses.find((address) => address.is_primary_shipping == true);
 
     if (agent_shippinging_address) {
@@ -972,18 +1001,20 @@ export class DomainService implements OnInit {
     }
   }
 
-  getLookupValue(lookupName: string, matchVal: string):string {
+  getLookupValue(lookupName: string, matchVal: string): string {
     if (!this.lookupsMap.has(lookupName)) {
       console.log("Couldn't find lookups for ", lookupName);
       return '';
     }
 
-    if(!matchVal){
-      console.log("Requested MatchVal for lookup was blank: ", matchVal);
+    if (!matchVal) {
+      console.log('Requested MatchVal for lookup was blank: ', matchVal);
       return '';
     }
 
-    let lookup: ActiveLookup = this.lookupsMap.get(lookupName).find((val) => val.value?.toLowerCase() == matchVal?.toLowerCase());
+    let lookup: ActiveLookup = this.lookupsMap
+      .get(lookupName)
+      .find((val) => val.value?.toLowerCase() == matchVal?.toLowerCase());
 
     if (lookup) {
       return lookup.dbId;
@@ -991,5 +1022,5 @@ export class DomainService implements OnInit {
       console.log("Couldn't find lookup value for ", lookupName, matchVal);
       return '';
     }
-  };
+  }
 }

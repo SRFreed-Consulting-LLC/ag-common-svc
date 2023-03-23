@@ -13,7 +13,7 @@ import {
   Observable,
   of,
   shareReplay,
-  tap,
+  tap
 } from 'rxjs';
 import { AgentService } from './agent.service';
 import { FIREBASE_APP } from '../injections/firebase-app';
@@ -31,7 +31,7 @@ import {
   signOut,
   User,
   UserCredential,
-  verifyPasswordResetCode,
+  verifyPasswordResetCode
 } from 'firebase/auth';
 import { UserPermissionService } from './user-permissions.service';
 import { LoggerService } from './logger.service';
@@ -40,7 +40,7 @@ export const DOMAIN = new InjectionToken<string>('DOMAIN');
 export const SESSION_EXPIRATION = new InjectionToken<number>('SESSION_EXPIRATION');
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class AuthService {
   private auth: Auth;
@@ -63,7 +63,7 @@ export class AuthService {
     private route: ActivatedRoute,
     private agentService: AgentService,
     private loggerService: LoggerService,
-    private userPermissionService: UserPermissionService,
+    private userPermissionService: UserPermissionService
   ) {
     this.auth = getAuth(fireBaseApp);
 
@@ -71,7 +71,7 @@ export class AuthService {
       (handler) => this.auth.onAuthStateChanged(handler),
       (_handler, unsubscribe) => {
         unsubscribe();
-      },
+      }
     );
 
     this.loggedInAgent$ = this.currentUser$.pipe(
@@ -91,7 +91,7 @@ export class AuthService {
             mergeMap((id) => {
               console.log('getById');
               return this.agentService.getDocument(id).pipe(map((doc) => doc.data()));
-            }),
+            })
           ),
           of(null).pipe(
             mergeMap(() => {
@@ -99,22 +99,22 @@ export class AuthService {
 
               return this.router.navigate(['auth/login']);
             }),
-            map(() => null),
-          ),
+            map(() => null)
+          )
         );
       }),
       tap((agent) => {
         // TODO temp solution
         this.currentAgent$.next(agent);
       }),
-      shareReplay(1),
+      shareReplay(1)
     );
 
     this.userPermissions$ = this.loggedInAgent$.pipe(
       filter(Boolean),
       mergeMap((agent) => {
         return this.userPermissionService.getList(agent[BaseModelKeys.dbId]);
-      }),
+      })
     );
   }
 
@@ -129,7 +129,7 @@ export class AuthService {
         return;
       }
       const agent = await firstValueFrom(
-        this.loggedInAgent$.pipe(filter((agent) => agent?.uid === userData?.user?.uid)),
+        this.loggedInAgent$.pipe(filter((agent) => agent?.uid === userData?.user?.uid))
       );
 
       if (!agent) {
@@ -139,7 +139,7 @@ export class AuthService {
           'An Agent record matching that Email Address could not be found. Please contact Alliance Group for Assistance with this code:' +
             ec,
           'Login Error',
-          { disableTimeOut: true },
+          { disableTimeOut: true }
         );
         await this.logOut();
         return;
@@ -147,7 +147,7 @@ export class AuthService {
 
       if (agent.agent_status !== AGENT_STATUS.APPROVED) {
         const ec = await this.logMessage('LOGIN', userData?.user?.email, 'User exists but not green lighted. ', [
-          { ...agent[0] },
+          { ...agent[0] }
         ]);
         this.ngZone.run(() => {
           this.router.navigate(['auth', 'agent-under-review']);
@@ -161,13 +161,13 @@ export class AuthService {
       switch (error.code) {
         case 'auth/wrong-password':
           this.logMessage('LOGIN', email, 'You have entered an incorrect password for this email address.', [
-            { ...error },
+            { ...error }
           ]).then((ec) => {
             this.toster.error(
               'You have entered an incorrect password for this email address. If you have forgotten your password, enter your Email Address and press the "Forgot Password" button. If the problem continues, please contact Alliance Group for assistance with this code: ' +
                 ec,
               'Login Error',
-              { disableTimeOut: true },
+              { disableTimeOut: true }
             );
           });
           break;
@@ -181,21 +181,21 @@ export class AuthService {
                   ') is not recognized. Correct the Email Address and Try again. If the problem continues, please contact Alliance Group for assistance with this code: ' +
                   ec,
                 'Login Error',
-                { disableTimeOut: true },
+                { disableTimeOut: true }
               );
-            },
+            }
           );
           break;
 
         case 'auth/too-many-requests':
           this.logMessage('LOGIN', email, 'Too many failed attempts. The account is temporarily locked.', [
-            { ...error },
+            { ...error }
           ]).then((ec) => {
             this.toster.error(
               'There have been too many failed logins to this account. Please reset your password by going to the login screen, entering your password, and pressing the "Forgot Password" button. If the problem continues, please contact Alliance Group for assistance with this code: ' +
                 ec,
               'Login Error',
-              { disableTimeOut: true },
+              { disableTimeOut: true }
             );
           });
           break;
@@ -205,13 +205,13 @@ export class AuthService {
             'LOGIN',
             email,
             'Unknown Error loggin in with the email address (' + email + '). Check Error details for more information',
-            [{ ...error }],
+            [{ ...error }]
           ).then((ec) => {
             this.toster.error(
               'There was an Error accessing your account. Please contact Alliance Group for Assistance with this code: ' +
                 ec,
               'Login Error',
-              { disableTimeOut: true },
+              { disableTimeOut: true }
             );
           });
           break;
@@ -233,13 +233,13 @@ export class AuthService {
     }
     const updates = {
       [AgentKeys.login_count]: Number.isInteger(agent?.login_count) ? agent?.login_count + 1 : 1,
-      [AgentKeys.last_login_date]: new Date(),
+      [AgentKeys.last_login_date]: new Date()
     };
 
     if (!agent.logged_in) {
       Object.assign(updates, {
         [AgentKeys.logged_in]: true,
-        [AgentKeys.first_login_date]: new Date(),
+        [AgentKeys.first_login_date]: new Date()
       });
     }
 
@@ -308,7 +308,7 @@ export class AuthService {
       let ec = this.generateErrorCode();
 
       let logMessage: LogMessage = {
-        ...new LogMessage(type, created_by, message, ec, data),
+        ...new LogMessage(type, created_by, message, ec, data)
       };
 
       console.warn('logMessage', logMessage);

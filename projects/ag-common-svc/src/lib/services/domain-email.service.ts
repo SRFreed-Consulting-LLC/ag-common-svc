@@ -4,13 +4,7 @@ import {
   ImportRuleSetKeys,
   PrimaryFieldRule
 } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
-import {
-  ActiveLookup,
-  Agent,
-  AgentKeys,
-  BUSINESS_PERSONAL_TYPE,
-  EmailAddress
-} from 'ag-common-lib/public-api';
+import { ActiveLookup, Agent, AgentKeys, BUSINESS_PERSONAL_TYPE, EmailAddress } from 'ag-common-lib/public-api';
 import { DomainUtilService } from './domain-util.service';
 
 @Injectable({
@@ -37,7 +31,10 @@ export class DomainEmailService {
     a.id = this.domainUtilService.generateId();
 
     if (invals.has('email_addresses.' + key + '.address'))
-      a.address = invals.get('email_addresses.' + key + '.address').toLowerCase().trim();
+      a.address = invals
+        .get('email_addresses.' + key + '.address')
+        .toLowerCase()
+        .trim();
     if (invals.has('email_addresses.' + key + '.email_type'))
       a.email_type = BUSINESS_PERSONAL_TYPE[invals.get('email_addresses.' + key + '.email_type').toUpperCase()];
 
@@ -65,41 +62,43 @@ export class DomainEmailService {
   createEmailAddresses(invals: Map<string, string>): EmailAddress[] {
     let addresses = this.extractEmailAddresses(invals);
 
-    let primary_addresses = addresses.filter(email => email.is_primary == true)
+    let primary_addresses = addresses.filter((email) => email.is_primary == true);
 
-    if(addresses.length > 0 && primary_addresses.length == 0){
-      addresses[0].is_primary = true
+    if (addresses.length > 0 && primary_addresses.length == 0) {
+      addresses[0].is_primary = true;
     }
 
-    let login_addresses = addresses.filter(email => email.is_login == true)
+    let login_addresses = addresses.filter((email) => email.is_login == true);
 
-    if(addresses.length > 0 && login_addresses.length == 0){
-      addresses[0].is_login = true
+    if (addresses.length > 0 && login_addresses.length == 0) {
+      addresses[0].is_login = true;
     }
 
     return addresses;
   }
 
-  updateEmailAddresses(data: Map<string, string>, agent: Agent, selectedRuleSet: ImportRuleSet, messages: string[], lookup: ActiveLookup[]) {
+  updateEmailAddresses(
+    data: Map<string, string>,
+    agent: Agent,
+    selectedRuleSet: ImportRuleSet,
+    messages: string[],
+    lookup: ActiveLookup[]
+  ) {
     let incoming_emails: EmailAddress[] = this.extractEmailAddresses(data);
 
     //security measure to make sure is_login is NEVER updated
     incoming_emails.forEach((email) => (email.is_login = false));
 
     if (incoming_emails.length > 0 && this.validateEmail(incoming_emails, selectedRuleSet, agent, messages)) {
-      if (!agent[AgentKeys.email_addresses]) {
-        agent[AgentKeys.email_addresses] = [];
-      }
-
       let email_rule = selectedRuleSet[ImportRuleSetKeys.primary_email_address];
 
       let required_to_update_primary = PrimaryFieldRule[email_rule] == PrimaryFieldRule.UPDATE_PRIMARY_VALUE;
 
       //look at each incoming and update if matching or add to list
       incoming_emails.forEach((incoming_email) => {
-        let matching_email: EmailAddress = agent[AgentKeys.email_addresses].find(
+        let matching_email: EmailAddress = null; /* agent[AgentKeys.email_addresses].find(
           (email) => email.address.toLowerCase().trim() == incoming_email.address.toLowerCase().trim()
-        );
+        ); */
 
         if (matching_email) {
           if (incoming_email.email_type) {
@@ -123,18 +122,18 @@ export class DomainEmailService {
           if (!required_to_update_primary) {
             incoming_email.is_primary = false;
           }
-          agent[AgentKeys.email_addresses].push(incoming_email);
+          // agent[AgentKeys.email_addresses].push(incoming_email);
         }
       });
 
       //after creating new list, check for a primary
-      let is_primary_set = agent[AgentKeys.email_addresses].filter((a) => a.is_primary)?.length > 0;
+      // let is_primary_set = agent[AgentKeys.email_addresses].filter((a) => a.is_primary)?.length > 0;
 
       //if no primary set, set first email to primary
-      if (!is_primary_set && agent[AgentKeys.email_addresses].length > 0) {
-        agent[AgentKeys.email_addresses][0].is_primary = true;
-      }
-    } 
+      // if (!is_primary_set && agent[AgentKeys.email_addresses].length > 0) {
+      //   agent[AgentKeys.email_addresses][0].is_primary = true;
+      // }
+    }
 
     return true;
   }
@@ -154,7 +153,7 @@ export class DomainEmailService {
         ) + ' or change the import rule.';
         return false;
       } else if (incoming_has_primary.length == 1) {
-        agent.email_addresses.forEach((add) => (add.is_primary = false));
+        // agent.email_addresses.forEach((add) => (add.is_primary = false));
         return true;
       } else if (incoming_has_primary.length == 2) {
         messages.push(

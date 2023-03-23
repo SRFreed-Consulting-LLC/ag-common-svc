@@ -209,22 +209,16 @@ export class DomainService implements OnInit {
     }
 
     agent[AgentKeys.personal_goals] = [];
-    let goal1: Goal = { ...new Goal() };
-    goal1.year = new Date().getFullYear();
-    goal1.amount = 90000;
+    let goal1: Goal = { ...new Goal(new Date().getFullYear(), 11500) };
     agent[AgentKeys.personal_goals].push(goal1);
 
     agent[AgentKeys.conference_goals] = [];
-    let goal2: Goal = { ...new Goal() };
-    goal2.year = new Date().getFullYear();
-    goal2.amount = 90000;
+    let goal2: Goal = { ...new Goal(new Date().getFullYear(), 11500) };
     agent[AgentKeys.conference_goals].push(goal2);
 
     if (agent[AgentKeys.is_manager]) {
       agent[AgentKeys.manager_goals] = [];
-      let goal3: Goal = { ...new Goal() };
-      goal3.year = new Date().getFullYear();
-      goal3.amount = 90000;
+      let goal3: Goal = { ...new Goal(new Date().getFullYear(), 75000) };
       agent[AgentKeys.manager_goals].push(goal3);
     }
 
@@ -242,9 +236,7 @@ export class DomainService implements OnInit {
     agent[AgentKeys.is_rmd] = false;
     agent[AgentKeys.is_credited] = false;
 
-    if (!this.validateAgency(agent, agencies)) {
-      return null;
-    }
+    this.getAgency(agent, agencies);
 
     const agentEmailAddresses = agent[AgentKeys.email_addresses];
 
@@ -421,8 +413,9 @@ export class DomainService implements OnInit {
       agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_name] + ' ' + agent[AgentKeys.p_agent_last_name];
     }
 
-    const shouldContinue = [
-      this.validateAgency(agent, agencies),
+    this.getAgency(agent, agencies);
+
+    const shouldContinue = [  
       this.domainAddressService.updateAddresses(line_data, agent, selectedRuleSet, this.messages),
       this.domainEmailService.updateEmailAddresses(line_data, agent, selectedRuleSet, this.messages, this.lookupsMap.get('emailTypeLookup')),
       this.domainPhoneNumberService.updatePhoneNumbers(line_data, agent, selectedRuleSet, this.messages),
@@ -678,20 +671,6 @@ export class DomainService implements OnInit {
       //create registrant for each guest map
       individual_guest_maps.forEach(async (guest_map) => {
         if (guest_map.has('first_name') && guest_map.has('last_name')) {
-          //create unique id for quest for future searches
-          let unique_id =
-            selectedConference.event_id.toLowerCase() +
-            '_' +
-            invitee_guest.toLowerCase() +
-            '-' +
-            invitee_email.toLowerCase() +
-            guest_map.get('first_name').toLowerCase() +
-            '_' +
-            guest_map.get('last_name').toLowerCase();
-
-          let qp: QueryParam[] = [];
-          qp.push(new QueryParam('unique_id', WhereFilterOperandKeys.equal, unique_id));
-
           let guest: Registrant = { ...new Registrant() };;
 
           guest.invitee_guest = invitee_guest;
@@ -855,14 +834,12 @@ export class DomainService implements OnInit {
     return promises;
   }
 
-  validateAgency(agent: Agent, agencies: Agency[]): boolean {
-    let retval: boolean = true;
+  getAgency(agent: Agent, agencies: Agency[]) {
 
     if (agent.p_agency_id) {
       let a: Agency[] = agencies.filter((agency) => agency.agency_id == agent.p_agency_id);
 
       if (a.length != 1) {
-        retval = false;
 
         this.messages.push(
           agent.email_addresses[0].address + ' has an value set for Agency Id that does not match an existing Agency!'
@@ -874,15 +851,11 @@ export class DomainService implements OnInit {
       let a: Agency[] = agencies.filter((agency) => agency.agency_id == agent.p_mga_id);
 
       if (a.length != 1) {
-        retval = false;
-
         this.messages.push(
           agent.email_addresses[0].address + ' has an value set for MGA Id that does not match an existing Agency!'
         );
       }
     }
-
-    return retval;
   }
 
   private getInviteePhoneNumbersFromProfile(invitee: Registrant, agent: Agent){
@@ -1005,7 +978,12 @@ export class DomainService implements OnInit {
       return '';
     }
 
-    let lookup: ActiveLookup = this.lookupsMap.get(lookupName).find((val) => val.value.toLowerCase() == matchVal.toLowerCase());
+    if(!matchVal){
+      console.log("Requested MatchVal for lookup was blank: ", matchVal);
+      return '';
+    }
+
+    let lookup: ActiveLookup = this.lookupsMap.get(lookupName).find((val) => val.value?.toLowerCase() == matchVal?.toLowerCase());
 
     if (lookup) {
       return lookup.dbId;

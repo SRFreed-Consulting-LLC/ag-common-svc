@@ -1,8 +1,7 @@
-import { Inject, Injectable, InjectionToken, NgZone } from '@angular/core';
+import { Inject, Injectable, InjectionToken, NgZone, Optional } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Agent, AgentKeys, AGENT_STATUS, BaseModelKeys, LogMessage, UserPermission } from 'ag-common-lib/public-api';
-
 import { AgentService } from './agent.service';
 import { FIREBASE_APP } from '../injections/firebase-app';
 import { FirebaseApp } from 'firebase/app';
@@ -28,6 +27,9 @@ import { mergeMap, map, tap, shareReplay, filter } from 'rxjs/operators';
 
 export const DOMAIN = new InjectionToken<string>('DOMAIN');
 export const SESSION_EXPIRATION = new InjectionToken<number>('SESSION_EXPIRATION');
+export const AGENT_PORTAL_URL = new InjectionToken<string>('AGENT_PORTAL_URL');
+export const AFTER_LOGIN_REDIRECT_PATH = new InjectionToken<string>('AFTER_LOGIN_REDIRECT_PATH');
+export const AFTER_LOGOUT_REDIRECT_PATH = new InjectionToken<string>('AFTER_LOGOUT_REDIRECT_PATH');
 
 @Injectable({
   providedIn: 'root'
@@ -47,6 +49,9 @@ export class AuthService {
   constructor(
     @Inject(FIREBASE_APP) fireBaseApp: FirebaseApp,
     @Inject(SESSION_EXPIRATION) private sessionExpiration: number,
+    @Optional() @Inject(AFTER_LOGIN_REDIRECT_PATH) private afterLoginRedirectPath: string,
+    @Optional() @Inject(AFTER_LOGOUT_REDIRECT_PATH) private afterLogoutRedirectPath: string,
+    @Optional() @Inject(AGENT_PORTAL_URL) private agentPortalUrl: string,
     public router: Router,
     public ngZone: NgZone,
     public toster: ToastrService,
@@ -68,31 +73,19 @@ export class AuthService {
       mergeMap((user: User) => user?.getIdTokenResult()),
       map((idTokenResult: IdTokenResult) => {
         const claims = idTokenResult?.claims;
-        console.log('claims', claims);
 
         return claims?.agentDbId;
       }),
-      mergeMap((agentId: string) => {
-        console.log('agentId', agentId);
-
-        return iif(
+      mergeMap((agentId: string) =>
+        iif(
           () => !!agentId,
-          of(agentId).pipe(
-            mergeMap((id) => {
-              console.log('getById');
-              return this.agentService.getDocument(id).pipe(map((doc) => doc.data()));
-            })
-          ),
+          of(agentId).pipe(mergeMap((id) => this.agentService.getDocument(id).pipe(map((doc) => doc.data())))),
           of(null).pipe(
-            mergeMap(() => {
-              console.log('navigate');
-
-              return this.router.navigate(['auth/login']);
-            }),
+            mergeMap(() => this.router.navigate([this.afterLogoutRedirectPath ?? 'auth/login'])),
             map(() => null)
           )
-        );
-      }),
+        )
+      ),
       tap((agent) => {
         // TODO temp solution
         this.currentAgent$.next(agent);
@@ -113,9 +106,7 @@ export class AuthService {
       const userData = await this.signIn(email, password);
 
       if (!userData?.user?.emailVerified) {
-        this.ngZone.run(() => {
-          this.router.navigate(['auth', 'register-landing']);
-        });
+        this.navigateRegisterLanding();
         return;
       }
       const agent = await firstValueFrom(
@@ -136,12 +127,9 @@ export class AuthService {
       }
 
       if (agent.agent_status !== AGENT_STATUS.APPROVED) {
-        const ec = await this.logMessage('LOGIN', userData?.user?.email, 'User exists but not green lighted. ', [
-          { ...agent[0] }
-        ]);
-        this.ngZone.run(() => {
-          this.router.navigate(['auth', 'agent-under-review']);
-        });
+        await this.logMessage('LOGIN', userData?.user?.email, 'User exists but not green lighted. ', [{ ...agent[0] }]);
+
+        this.navigateAgentUnderReview();
 
         return;
       }
@@ -235,7 +223,8 @@ export class AuthService {
 
     this.agentService.updateFields(agent?.dbId, updates);
 
-    let destination: string = 'dashboard';
+    let destination: string = this.afterLoginRedirectPath ?? 'dashboard';
+
     if (this.route.snapshot.queryParamMap.has('returnUrl')) {
       destination = this.route.snapshot.queryParamMap.get('returnUrl');
     }
@@ -251,7 +240,7 @@ export class AuthService {
     };
     try {
       if (withRedirect) {
-        await this.router.navigate(['auth', 'login']);
+        await this.router.navigate([this.afterLogoutRedirectPath ?? 'auth/login']);
       }
       await signOut(this.auth);
     } catch (error) {
@@ -311,6 +300,29 @@ export class AuthService {
       return null;
     }
   }
+
+  private navigateRegisterLanding = () => {
+    if (this.agentPortalUrl) {
+      // TODO check on environments does guards works correct
+      window.open(`${this.agentPortalUrl}/auth/register-landing`, '_blank');
+      return;
+    }
+
+    this.ngZone.run(() => {
+      this.router.navigate(['auth', 'register-landing']);
+    });
+  };
+
+  private navigateAgentUnderReview = () => {
+    if (this.agentPortalUrl) {
+      // TODO check on environments does guards works correct
+      window.open(`${this.agentPortalUrl}/auth/agent-under-review`, '_blank');
+      return;
+    }
+    this.ngZone.run(() => {
+      this.router.navigate(['auth', 'agent-under-review']);
+    });
+  };
 
   private generateErrorCode() {
     return 'xxxxxxxx'.replace(/[xy]/g, function (c) {

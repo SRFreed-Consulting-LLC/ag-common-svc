@@ -9,7 +9,6 @@ import {
   Association,
   BUSINESS_PERSONAL_TYPE,
   COUNTRIES,
-  EmailAddress,
   languages,
   ListManager,
   PhoneNumber,
@@ -153,42 +152,6 @@ export class AgentEditorService {
   //      }
   // }
   // where xxxxxxxxxx is the email address
-  setPrimaryEmailAddress(e, agent: Agent) {
-    if (e?.selectedItem?.address) {
-      agent.email_addresses.forEach((address) => {
-        address.is_primary = false;
-      });
-
-      let selected: EmailAddress[] = agent.email_addresses.filter(
-        (address) => address.address == e.selectedItem.address
-      );
-
-      if (selected.length == 1) {
-        selected[0].is_primary = true;
-      } else {
-        console.log('more than 1');
-      }
-    } else {
-      console.log('Could not set Primary Email Address. First value must contain "e.selectedItem.address"', e);
-    }
-  }
-
-  getPrimaryEmailAddress(agent: Agent) {
-    let emails: EmailAddress[] = agent.email_addresses.filter((address) => address.is_primary == true);
-
-    if (emails.length == 1) {
-      return emails[0].address;
-    } else {
-      return '';
-    }
-  }
-
-  validateEmailAddresses(agent: Agent) {
-    if (agent.email_addresses.length == 1) {
-      agent.email_addresses[0].is_primary = true;
-      agent.email_addresses[0].is_login = true;
-    }
-  }
 
   getPrimaryShippingAddress(agent: Agent) {
     if (agent.addresses) {

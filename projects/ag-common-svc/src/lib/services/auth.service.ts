@@ -2,19 +2,7 @@ import { Inject, Injectable, InjectionToken, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Agent, AgentKeys, AGENT_STATUS, BaseModelKeys, LogMessage, UserPermission } from 'ag-common-lib/public-api';
-import {
-  BehaviorSubject,
-  filter,
-  firstValueFrom,
-  fromEventPattern,
-  iif,
-  map,
-  mergeMap,
-  Observable,
-  of,
-  shareReplay,
-  tap
-} from 'rxjs';
+
 import { AgentService } from './agent.service';
 import { FIREBASE_APP } from '../injections/firebase-app';
 import { FirebaseApp } from 'firebase/app';
@@ -35,6 +23,8 @@ import {
 } from 'firebase/auth';
 import { UserPermissionService } from './user-permissions.service';
 import { LoggerService } from './logger.service';
+import { BehaviorSubject, firstValueFrom, fromEventPattern, iif, Observable, of } from 'rxjs';
+import { mergeMap, map, tap, shareReplay, filter } from 'rxjs/operators';
 
 export const DOMAIN = new InjectionToken<string>('DOMAIN');
 export const SESSION_EXPIRATION = new InjectionToken<number>('SESSION_EXPIRATION');

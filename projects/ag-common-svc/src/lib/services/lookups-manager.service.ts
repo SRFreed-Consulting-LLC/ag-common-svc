@@ -64,7 +64,7 @@ export class LookupsManagerService {
   public delete = (lookupId: Lookups, documentId: string) => {
     const path = this.getPath(lookupId);
 
-    return this.fsDao.delete(path, documentId);
+    return this.fsDao.delete(documentId, path);
   };
 
   private uncheckDefault = async (lookupId: Lookups, lookupItems$?: Observable<Lookup[]>) => {

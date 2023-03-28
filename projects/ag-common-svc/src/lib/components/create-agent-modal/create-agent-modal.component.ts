@@ -1,5 +1,5 @@
 import { Component, EventEmitter, HostBinding, Output, ViewChild } from '@angular/core';
-import { Agent, EmailAddress, RelatedEmailAddress } from 'ag-common-lib/public-api';
+import { RelatedEmailAddress } from 'ag-common-lib/public-api';
 import { DxFormComponent } from 'devextreme-angular';
 import { Observable } from 'rxjs';
 import { ModalWindowComponent } from '../modal-window/modal-window.component';
@@ -10,7 +10,7 @@ import { CreateAgentModalService } from './create-agent-modal.service';
   selector: 'ag-shr-create-agent-modal',
   templateUrl: './create-agent-modal.component.html',
   styleUrls: ['./create-agent-modal.component.scss'],
-  providers: [CreateAgentModalService],
+  providers: [CreateAgentModalService]
 })
 export class CreateAgentModalComponent {
   @HostBinding('class') className = 'create-agent-modal';

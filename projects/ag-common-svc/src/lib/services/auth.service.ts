@@ -70,7 +70,7 @@ export class AuthService {
     );
 
     this.loggedInAgent$ = this.currentUser$.pipe(
-      mergeMap((user: User) => user?.getIdTokenResult()),
+      mergeMap((user: User) => user?.getIdTokenResult(true)),
       map((idTokenResult: IdTokenResult) => {
         const claims = idTokenResult?.claims;
 
@@ -109,6 +109,7 @@ export class AuthService {
         this.navigateRegisterLanding();
         return;
       }
+
       const agent = await firstValueFrom(
         this.loggedInAgent$.pipe(filter((agent) => agent?.uid === userData?.user?.uid))
       );

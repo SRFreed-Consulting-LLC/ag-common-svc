@@ -4,7 +4,6 @@ import { ReportSummary } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
 import { collection, doc, getDocs, limit, query, where, writeBatch } from 'firebase/firestore';
 import { FIREBASE_APP } from '../../public-api';
-import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { DataService } from './data.service';
 
 @Injectable({
@@ -65,11 +64,14 @@ export class SummaryService extends DataService<ReportSummary>{
         await batch.commit().then(() => {            
           summaryCompletionPercentage = formatPercent(summarycount/summaryArrays.length, 'en');
   
-          messages.unshift('sending summary batch ' + summarycount++ +' of ' + summaryArrays.length + ":"  + summaryCompletionPercentage);
+          messages.unshift('sending summary batch ' + summarycount +' of ' + summaryArrays.length + ":"  + summaryCompletionPercentage);
   
           if(summarycount == summaryArrays.length){
             resolve(true)
+          } else {
+            summarycount++; 
           }
+
         }).catch((error) => {
           console.error('Error in Summary Service.', error);
         });

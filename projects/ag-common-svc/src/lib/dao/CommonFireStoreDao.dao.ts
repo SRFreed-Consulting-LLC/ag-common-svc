@@ -147,25 +147,6 @@ export class CommonFireStoreDao<T> {
     return docsData;
   }
 
-  public async getAllllllll(table: string, sortField: string, skip: number): Promise<T[]> {
-    const collectionRef = collection(this.db, table).withConverter({
-      toFirestore: null,
-      fromFirestore: this.convertResponse,
-    });
-
-    const querySnapshot = await getDocs(query(collectionRef, orderBy(sortField), limit(100), startAfter(skip)));
-
-    const docsData = querySnapshot.docs.map((item) => (item.exists() ? item.data() : null));
-
-    if (sortField) {
-      docsData.sort((left, right) =>
-        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions),
-      );
-    }
-
-    return docsData;
-  }
-
   public async getAllFromSubCollection(table: string, record_id: string, subcollection: string): Promise<T[]> {
     const ref = collection(this.db, table, record_id, subcollection).withConverter({
       toFirestore: null,

@@ -3,32 +3,57 @@ import { EmailAddress, RelatedEmailAddress } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
 import { collectionGroup, getDocs, query, QueryConstraint, QuerySnapshot, where } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
+import { map, Observable } from 'rxjs';
 import { CommonFireStoreDao, QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { FIREBASE_APP } from '../injections/firebase-app';
-import { AgentService } from './agent.service';
+
+export interface AgentEmailAddressLookup {
+  agentDbId: string;
+  email: string;
+  description: string;
+}
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class AgentEmailAddressesService {
   public readonly fsDao: CommonFireStoreDao<EmailAddress>;
   private readonly agentCollectionPath = 'agents';
   private readonly emailAddressCollectionPath = 'email-addresses';
 
+  private allAgentEmailAddresses$: Observable<RelatedEmailAddress[]>;
+
   constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp, private toastrService: ToastrService) {
     this.fsDao = new CommonFireStoreDao<EmailAddress>(fireBaseApp, null, null);
+  }
+
+  public getAll(): Observable<RelatedEmailAddress[]> {
+    if (!this.allAgentEmailAddresses$) {
+      this.allAgentEmailAddresses$ = this.fsDao.getCollectionGroupSnapshot(this.emailAddressCollectionPath).pipe(
+        map((snapshot) => {
+          return snapshot.docs.map((doc) => {
+            if (!doc.exists()) {
+              return null;
+            }
+            const data = doc.data();
+            const parentAgent = doc?.ref?.parent?.parent;
+            const parentDbId = parentAgent?.id;
+
+            const result = { data, parentDbId };
+
+            return result;
+          });
+        })
+      );
+    }
+
+    return this.allAgentEmailAddresses$;
   }
 
   public getList(agentId: string) {
     const table = this.getCollectionPath(agentId);
 
     return this.fsDao.getList(table);
-  }
-
-  public getAll(agentId: string): Promise<EmailAddress[]> {
-    const table = this.getCollectionPath(agentId);
-
-    return this.fsDao.getAll(table);
   }
 
   public async create(agentId: string, data: EmailAddress) {
@@ -69,19 +94,19 @@ export class AgentEmailAddressesService {
     const emailAddressQuery = new QueryParam(
       'address',
       WhereFilterOperandKeys.equal,
-      email?.toLocaleLowerCase()?.trim(),
+      email?.toLocaleLowerCase()?.trim()
     );
     const isLoginQuery = new QueryParam('is_login', WhereFilterOperandKeys.equal, true);
 
     queries.push(emailAddressQuery);
 
     const queryConstraints: QueryConstraint[] = queries.map((query) =>
-      where(query.field, query.operation, query.value),
+      where(query.field, query.operation, query.value)
     );
 
     const collectionGroupRef = collectionGroup(this.fsDao.db, this.emailAddressCollectionPath).withConverter({
       toFirestore: null,
-      fromFirestore: this.fsDao.convertResponse,
+      fromFirestore: this.fsDao.convertResponse
     });
 
     const collectionGroupQuery = query(collectionGroupRef, ...queryConstraints);

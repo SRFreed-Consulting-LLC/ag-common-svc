@@ -27,7 +27,7 @@ export class LookupsManagerService {
   public getList = (lookupId: Lookups, queryParams: QueryParam[] = [], includeRef: boolean = true): Observable<any> => {
     const path = this.getPath(lookupId);
 
-    return this.fsDao.getList(path, queryParams, includeRef);
+    return this.fsDao.getList(path, queryParams, { includeRef });
   };
 
   public create = async (lookupId: Lookups, lookup: Lookup, lookupItems$?: Observable<Lookup[]>) => {
@@ -52,7 +52,7 @@ export class LookupsManagerService {
     lookupId: Lookups,
     documentId: string,
     updates: Partial<Lookup>,
-    lookupItems$?: Observable<Lookup[]>,
+    lookupItems$?: Observable<Lookup[]>
   ) => {
     const path = this.getPath(lookupId);
     if (updates?.isDefault) {
@@ -89,7 +89,7 @@ export class LookupsManagerService {
 
   static readonly fromFirestore = (data): Lookup => {
     return Object.assign({}, data, {
-      [LookupKeys.isDefault]: data[LookupKeys.isDefault] ?? false,
+      [LookupKeys.isDefault]: data[LookupKeys.isDefault] ?? false
     });
   };
 }

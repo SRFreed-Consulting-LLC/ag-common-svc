@@ -1,5 +1,5 @@
 import { BaseModel } from 'ag-common-lib/public-api';
-import { CommonFireStoreDao, QueryParam } from '../dao/CommonFireStoreDao.dao';
+import { CommonFireStoreDao, FetchOptions, QueryParam } from '../dao/CommonFireStoreDao.dao';
 import { FirebaseApp } from 'firebase/app';
 import { Observable } from 'rxjs';
 import { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
@@ -10,7 +10,7 @@ export class DataService<T extends BaseModel> {
   constructor(
     fireBaseApp: FirebaseApp,
     fromFirestore: (data: Partial<T>) => T = null,
-    toFirestore: (item: T) => T = null,
+    toFirestore: (item: T) => T = null
   ) {
     this.fsDao = new CommonFireStoreDao<T>(fireBaseApp, fromFirestore, toFirestore);
   }
@@ -33,8 +33,8 @@ export class DataService<T extends BaseModel> {
     return this.fsDao.getAllByQValue(this.collection, qp, sortField);
   }
 
-  public getList(qp: QueryParam[] = [], includeRef: boolean = false, sortField: string = null): Observable<T[]> {
-    return this, this.fsDao.getList(this.collection, qp, includeRef, sortField);
+  public getList(qp: QueryParam[] = [], fetchOptions?: FetchOptions): Observable<T[]> {
+    return this, this.fsDao.getList(this.collection, qp, fetchOptions);
   }
 
   public getAll(sortField?: string): Promise<T[]> {
@@ -56,8 +56,8 @@ export class DataService<T extends BaseModel> {
     return this.fsDao.update(value, value.dbId, this.collection);
   }
 
-  public updateFields(documentId: string, data: Partial<T>) {
-    return this.fsDao.updateFields(data, documentId, this.collection);
+  public updateFields(documentId: string, data: Partial<T>, skipListUpdate?: boolean) {
+    return this.fsDao.updateFields(data, documentId, this.collection, skipListUpdate);
   }
 
   public delete(id: any) {

@@ -19,11 +19,10 @@ export class AgentPermissionService extends DataService<AgentPermission> {
     owner_id: string,
     sortField: AgentPermissionKeys = AgentPermissionKeys.grantedToName
   ): Observable<AgentPermission[]> {
-    return this.getList(
-      [new QueryParam(AgentPermissionKeys.ownerId, WhereFilterOperandKeys.equal, owner_id)],
-      false,
-      sortField
-    );
+    return this.getList([new QueryParam(AgentPermissionKeys.ownerId, WhereFilterOperandKeys.equal, owner_id)], {
+      sortField,
+      includeRef: false
+    });
   }
 
   getAgentPermissonsByGrantedToId(

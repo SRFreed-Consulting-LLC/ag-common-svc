@@ -20,12 +20,18 @@ import {
   SnapshotOptions,
   Timestamp,
   orderBy,
-  QuerySnapshot
+  QuerySnapshot,
+  collectionGroup
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
-import { fromEventPattern, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Auth, getAuth } from 'firebase/auth';
+
+export interface FetchOptions {
+  includeRef?: boolean;
+  sortField?: string;
+}
 
 const localeCompareOptions = {
   numeric: true,
@@ -37,6 +43,8 @@ export class CommonFireStoreDao<T> {
   private readonly auth: Auth;
   private fromFirestore: (documentData: DocumentData) => T = null;
   private toFirestore: (item: T) => T = null;
+
+  private readonly updatesToSkip = new Set();
 
   constructor(
     fireBaseApp: FirebaseApp,
@@ -97,42 +105,105 @@ export class CommonFireStoreDao<T> {
     return this.getById(table, snap.id);
   }
 
-  public getSnapshotList(table, queries: QueryParam[] = []): Observable<QuerySnapshot<T[]>> {
-    const queryConstraints: QueryConstraint[] = queries.map((query) =>
-      where(query.field, query.operation, query.value)
-    );
-    const collectionRef = collection(this.db, table).withConverter({
-      toFirestore: null,
-      fromFirestore: this.convertResponse
-    });
-    const collectionQuery = query(collectionRef, ...queryConstraints);
+  public getCollectionGroupSnapshot(table, queries: QueryParam[] = []): Observable<QuerySnapshot<T>> {
+    return new Observable((observer) => {
+      const queryConstraints: QueryConstraint[] = queries.map((query) =>
+        where(query.field, query.operation, query.value)
+      );
+      const collectionRef = collectionGroup(this.db, table).withConverter({
+        toFirestore: null,
+        fromFirestore: this.convertResponse
+      });
+      const collectionQuery = query(collectionRef, ...queryConstraints);
 
-    return fromEventPattern(
-      (handler) => onSnapshot(collectionQuery, handler),
-      (handler, unsubscribe) => {
-        unsubscribe();
-      }
-    );
+      onSnapshot(
+        collectionQuery,
+        (snapshot) => {
+          if (!snapshot.metadata.fromCache) {
+            observer.next(snapshot);
+          }
+        },
+        (error) => {
+          observer.error(error);
+        },
+        () => {
+          observer.complete();
+        }
+      );
+    });
   }
 
-  public getList(table, queries: QueryParam[] = [], includeRef: boolean = false, sortField?: string): Observable<T[]> {
-    return this.getSnapshotList(table, queries).pipe(
+  public getCollectionSnapshot(table, queries: QueryParam[] = []): Observable<QuerySnapshot<T[]>> {
+    return new Observable((observer) => {
+      const queryConstraints: QueryConstraint[] = queries.map((query) =>
+        where(query.field, query.operation, query.value)
+      );
+      const collectionRef = collection(this.db, table).withConverter({
+        toFirestore: null,
+        fromFirestore: this.convertResponse
+      });
+      const collectionQuery = query(collectionRef, ...queryConstraints);
+
+      onSnapshot(
+        collectionQuery,
+        (snapshot) => {
+          if (snapshot.metadata.fromCache) {
+            return;
+          }
+          observer.next(snapshot);
+          // if (!this.updatesToSkip.size) {
+          //   observer.next(snapshot);
+          //   return;
+          // }
+
+          // const docChanges = snapshot.docChanges();
+          // this.updatesToSkip.forEach(console.log);
+
+          // const skip = docChanges.every((docChange) => {
+          //   return this.updatesToSkip.has(docChange.doc.id);
+          // });
+
+          // if (!skip) {
+          //   observer.next(snapshot);
+          //   return;
+          // }
+
+          // docChanges.forEach((docChange) => {
+          //   return this.updatesToSkip.delete(docChange.doc.id);
+          // });
+        },
+        (error) => {
+          observer.error(error);
+        },
+        () => {
+          observer.complete();
+        }
+      );
+    });
+  }
+
+  public getList(table, queries: QueryParam[] = [], fetchOptions?: FetchOptions): Observable<T[]> {
+    return this.getCollectionSnapshot(table, queries).pipe(
       map((collectionSnapshot: any) => {
         const items = collectionSnapshot.docs.map((document) => {
           if (!document.exists()) {
             return null;
           }
           const data = document.data();
-          if (includeRef) {
+          if (fetchOptions?.includeRef ?? false) {
             Object.assign(data, { [BaseModelKeys.firebaseRef]: document.ref });
           }
 
           return data;
         });
 
-        if (sortField) {
+        if (fetchOptions?.sortField) {
           items.sort((left, right) =>
-            String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions)
+            String(left[fetchOptions?.sortField]).localeCompare(
+              String(right[fetchOptions?.sortField]),
+              'en',
+              localeCompareOptions
+            )
           );
         }
 
@@ -219,14 +290,22 @@ export class CommonFireStoreDao<T> {
   }
 
   public getDocument(table: string, id: string): Observable<any> {
-    const ref = this.getDocReference(table, id);
+    return new Observable((observer) => {
+      const ref = this.getDocReference(table, id);
 
-    return fromEventPattern(
-      (handler) => onSnapshot(ref, handler),
-      (handler, unsubscribe) => {
-        unsubscribe();
-      }
-    );
+      onSnapshot(
+        ref,
+        (snapshot) => {
+          observer.next(snapshot);
+        },
+        (error) => {
+          observer.error(error);
+        },
+        () => {
+          observer.complete();
+        }
+      );
+    });
   }
 
   public async getById(table: string, id: string): Promise<T> {
@@ -270,7 +349,7 @@ export class CommonFireStoreDao<T> {
     return deleteDoc(ref);
   }
 
-  public async updateFields(value, id: string, table: string): Promise<T> {
+  public async updateFields(value, id: string, table: string, skipListUpdate = false): Promise<T> {
     const ref = doc(this.db, table, id).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {
@@ -280,6 +359,10 @@ export class CommonFireStoreDao<T> {
         });
       }
     });
+
+    if (skipListUpdate) {
+      this.updatesToSkip.add(ref.id);
+    }
 
     await setDoc(ref, value, { merge: true });
 

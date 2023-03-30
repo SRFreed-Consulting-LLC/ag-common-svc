@@ -1,6 +1,4 @@
-import { EventEmitter, ViewChild } from '@angular/core';
-import { HostBinding, Input, Output } from '@angular/core';
-import { Component } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
 import { DxPopupComponent } from 'devextreme-angular';
 
 @Component({
@@ -20,7 +18,7 @@ export class ModalWindowComponent {
   @Input() height: string | number = '80vh';
   @Input() extraToolbarItems = [];
   @Output() onSaveClick = new EventEmitter<{ component: DxPopupComponent }>();
-  @Output() onPopupClose = new EventEmitter<any>();
+  @Output() onPopupClose = new EventEmitter<{ event: any;  component: DxPopupComponent }>();
 
   constructor() {}
 

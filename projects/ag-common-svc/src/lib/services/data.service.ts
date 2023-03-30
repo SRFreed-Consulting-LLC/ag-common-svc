@@ -34,7 +34,7 @@ export class DataService<T extends BaseModel> {
   }
 
   public getList(qp: QueryParam[] = [], includeRef: boolean = false, sortField: string = null): Observable<T[]> {
-    return this, this.fsDao.getList(this.collection, qp, includeRef, sortField);
+    return this.fsDao.getList(this.collection, qp, includeRef, sortField);
   }
 
   public getAll(sortField?: string): Promise<T[]> {

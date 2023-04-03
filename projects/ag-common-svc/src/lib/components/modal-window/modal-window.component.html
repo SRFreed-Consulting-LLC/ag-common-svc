@@ -8,6 +8,7 @@
   maxHeight="100vh"
   [fullScreen]="isFullScreen"
   [wrapperAttr]="{ class: 'modal-window__popup' }"
+  (onInitialized)="onInitialized($event)"
   (onHiding)="handleClosePopup($event)"
 >
   <dxi-toolbar-item [visible]="!!title" location="before">
@@ -65,9 +66,11 @@
 
   <div class="modal-window-main-layout">
     <div class="modal-window-main-layout__content modal-window-main-layout__content--modal">
-      <dx-scroll-view height="100%" direction="vertical">
-        <ng-content></ng-content>
+      <dx-scroll-view *ngIf="useScrollView; else content" height="100%" direction="vertical">
+        <ng-container *ngTemplateOutlet="content"> </ng-container>
       </dx-scroll-view>
     </div>
   </div>
 </dx-popup>
+
+<ng-template #content> <ng-content></ng-content> </ng-template>

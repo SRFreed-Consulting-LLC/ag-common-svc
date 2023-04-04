@@ -8,7 +8,7 @@ import { DropZoneComponent } from '../../../drop-zone/drop-zone.component';
 import { PhoneNumberMaskPipe } from '../../../../../shared/pipes/phone-number-mask.pipe';
 import { FullAddressPipe } from '../../../../../shared/pipes/full-address.pipe';
 import { AgentHeaderKeys } from './agent-header.model';
-import { take } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 
 @Component({
   selector: 'ag-shr-agent-header',
@@ -18,9 +18,9 @@ import { take } from 'rxjs/operators';
 })
 export class AgentHeadersComponent {
   @HostBinding('class') className = 'agent-header';
-  @Input('agent') set _agent(value: Agent) {
-    this.agent = value;
-    this.agentHeaderFormDetails = this.agentHeaderService.getFormData(value);
+  @Input('agentId') set _agentId(value: string) {
+    this.agentId = value;
+    this.agent$ = this.agentHeaderService.getAgentById(value).pipe(map((agent) => this.agentHeaderFormDetails = this.agentHeaderService.getFormData(agent)));
   }
   @Output() onFieldsUpdated = new EventEmitter<{ agentId: string; updates: Partial<Agent> }>();
   @ViewChild('agentHeaderModalRef', { static: true }) agentHeaderModalComponent: ModalWindowComponent;
@@ -36,8 +36,9 @@ export class AgentHeadersComponent {
   public selectedAgentHeaderType$: BehaviorSubject<Lookup>;
   public selectedPrefix$: BehaviorSubject<Lookup>;
   public selectedSuffix$: BehaviorSubject<Lookup>;
+  public agent$: Observable<Agent>;
 
-  private agent: Agent;
+  private agentId: string;
 
   constructor(
     private agentHeaderService: AgentHeaderService,
@@ -52,7 +53,7 @@ export class AgentHeadersComponent {
   public saveAgentProfileImagesUpdates = async () => {
     const isImageValid = await this.profilePictureDropZoneComponent.isImageValid$.pipe(take(1)).toPromise();
     if (isImageValid) {
-      this.agentHeaderService.handleSave(this.agent[BaseModelKeys.dbId]).then((data) => {
+      this.agentHeaderService.handleSave(this.agentId).then((data) => {
         this.onFieldsUpdated.emit(data);
         this.agentProfilePictureModalComponent.hideModal();
       });
@@ -63,7 +64,7 @@ export class AgentHeadersComponent {
     const validationResults = this.agentHeaderFormComponent.instance.validate();
 
     if (validationResults.isValid) {
-      this.agentHeaderService.handleSave(this.agent[BaseModelKeys.dbId]).then((data) => {
+      this.agentHeaderService.handleSave(this.agentId).then((data) => {
         this.onFieldsUpdated.emit(data);
         this.agentHeaderModalComponent.hideModal();
       });

@@ -1,11 +1,14 @@
-export const buildSearchableId = (values) => {
-  const params = new URLSearchParams(values);
-  params.sort();
+import { EmailParticipant } from 'ag-common-lib/public-api';
 
-  return params.toString();
+export const buildSearchableId = (values: Partial<EmailParticipant>) => {
+  const params = Object.entries(values);
+  const urlSearchParams = new URLSearchParams(params);
+  urlSearchParams.sort();
+
+  return urlSearchParams.toString();
 };
 
-export const parseSearchableId = (id: string): any => {
+export const parseSearchableId = (id: string): Partial<EmailParticipant> => {
   const params = new URLSearchParams(id);
 
   return Array.from(params.entries()).reduce((acc, [key, value]) => {

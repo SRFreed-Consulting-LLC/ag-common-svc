@@ -104,7 +104,6 @@ export class AgentService extends DataService<Agent> {
     return this.getAllByValue([
       new QueryParam('email_Addresses.address', WhereFilterOperandKeys.arrayContainsAny, email)
     ]).then((agents) => {
-      debugger;
       if (agents.length == 0) {
         return null;
       } else if (agents.length == 1) {

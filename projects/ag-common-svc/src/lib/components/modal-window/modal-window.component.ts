@@ -1,8 +1,8 @@
-import { EventEmitter, OnInit, ViewChild } from '@angular/core';
+import { EventEmitter, ViewChild } from '@angular/core';
 import { HostBinding, Input, Output } from '@angular/core';
 import { Component } from '@angular/core';
 import { DxPopupComponent } from 'devextreme-angular';
-import dxPopup, { HidingEvent, InitializedEvent, Properties } from 'devextreme/ui/popup';
+import dxPopup, { ShowingEvent, HiddenEvent, HidingEvent, InitializedEvent, Properties } from 'devextreme/ui/popup';
 import { OnPopupClosePayload } from './modal-window.models';
 
 @Component({
@@ -30,6 +30,8 @@ export class ModalWindowComponent {
    * @deprecated Use onCloseModal instead
    */
   @Output() onPopupClose = new EventEmitter<OnPopupClosePayload>();
+  @Output() onShowing = new EventEmitter<ShowingEvent>();
+  @Output() onHidden = new EventEmitter<HiddenEvent>();
 
   constructor() {}
 

@@ -10,6 +10,8 @@
   [wrapperAttr]="{ class: 'modal-window__popup' }"
   (onInitialized)="onInitialized($event)"
   (onHiding)="handleClosePopup($event)"
+  (onShowing)="onShowing.emit($event)"
+  (onHidden)="onHidden.emit($event)"
 >
   <dxi-toolbar-item [visible]="!!title" location="before">
     <div *dxTemplate>

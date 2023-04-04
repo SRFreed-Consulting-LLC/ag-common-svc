@@ -139,27 +139,27 @@ export class CommonFireStoreDao<T> {
         if (snapshot.metadata.fromCache) {
           return;
         }
-        observer.next(snapshot);
-        // if (!this.updatesToSkip.size) {
-        //   observer.next(snapshot);
-        //   return;
-        // }
 
-        // const docChanges = snapshot.docChanges();
-        // this.updatesToSkip.forEach(console.log);
+        if (!this.updatesToSkip.size) {
+          observer.next(snapshot);
+          return;
+        }
 
-        // const skip = docChanges.every((docChange) => {
-        //   return this.updatesToSkip.has(docChange.doc.id);
-        // });
+        const docChanges = snapshot.docChanges();
+        this.updatesToSkip.forEach(console.log);
 
-        // if (!skip) {
-        //   observer.next(snapshot);
-        //   return;
-        // }
+        const skip = docChanges.every((docChange) => {
+          return this.updatesToSkip.has(docChange.doc.id);
+        });
 
-        // docChanges.forEach((docChange) => {
-        //   return this.updatesToSkip.delete(docChange.doc.id);
-        // });
+        if (!skip) {
+          observer.next(snapshot);
+          return;
+        }
+
+        docChanges.forEach((docChange) => {
+          return this.updatesToSkip.delete(docChange.doc.id);
+        });
       });
     });
   }

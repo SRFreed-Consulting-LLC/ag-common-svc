@@ -1,0 +1,93 @@
+<div class="mt-2">
+    <div class="row my-2 px-3">
+      <div class="col-12 text-start editToolbar">
+        <dx-toolbar>
+          <dxi-item location="before" widget="dxButton" locateInMenu="never">
+            <div>
+              <div class="toolbar-label"><b>Socials</b></div>
+            </div>
+          </dxi-item>
+          <dxi-item location="after" locateInMenu="never">
+            <div>
+              <dx-button [icon]="'edit'" [stylingMode]="'text'" (onClick)="showSocialsEditorModal()"></dx-button>
+            </div>
+          </dxi-item>
+        </dx-toolbar>
+      </div>
+    </div>
+    <div class="row my-2 px-3 text-center" *ngIf="socials?.length == 0">
+      <div class="col-12" style="text-align: center">
+        <span>No Socials Currently Exist</span>
+      </div>
+    </div>
+    <ng-container *ngFor="let social of socials">
+      <div class="row mb-2 px-3 py-1">
+        <div class="col-5 text-start">
+          <div>{{ social[SocialKeys.url] }}</div>
+        </div>
+        <div class="col-3 text-center">&nbsp;</div>
+        <div class="col-2 text-center">
+          <div>{{ social[SocialKeys.socialType] }}</div>
+        </div>
+        <div class="col-2 text-center">
+          <div>{{ social[SocialKeys.socialMedia] }}</div>
+        </div>
+      </div>
+    </ng-container>
+</div>
+
+<ag-shr-modal-window
+  #socialsEditorModalRef
+  [title]="'Add / Edit Socials'"
+  [inProgress]="inProgress$ | async"
+  [showSaveButton]="false"
+  (onPopupClose)="dataGridRef.instance.cancelEditData()"
+>
+  <dx-data-grid
+    #dataGridRef
+    [dataSource]="socials"
+    [showRowLines]="true"
+    [showBorders]="true"
+    [showColumnLines]="true"
+    [columnAutoWidth]="true"
+    [wordWrapEnabled]="true"
+    [rowAlternationEnabled]="false"
+    (onRowInserting)="onRowInserting($event)"
+    (onRowUpdating)="onRowUpdating($event)"
+    (onRowRemoving)="onRowRemoving($event)"
+  >
+    <dxo-toolbar>
+      <dxi-item location="before">
+        <div>
+          <div class="toolbar-label">
+            <b>Socials</b>
+          </div>
+        </div>
+      </dxi-item>
+
+      <dxi-item name="addRowButton"></dxi-item>
+    </dxo-toolbar>
+
+    <dxo-editing mode="row" [useIcons]="true" [allowUpdating]="true" [allowDeleting]="true" [allowAdding]="true">
+    </dxo-editing>
+    <dxo-paging [enabled]="false"></dxo-paging>
+    <dxo-scrolling [mode]="'virtual'" [showScrollbar]="'always'"></dxo-scrolling>
+
+    <dxi-column [dataField]="SocialKeys.url" [width]="'50%'">
+      <dxi-validation-rule type="required" [message]="'URL Address is Required'"></dxi-validation-rule>
+    </dxi-column>
+    <dxi-column [dataField]="SocialKeys.socialType" caption="Type">
+      <dxo-lookup [dataSource]="agentEditorService.business_personal_types"></dxo-lookup>
+      <dxi-validation-rule type="required"></dxi-validation-rule>
+    </dxi-column>
+    <dxi-column [dataField]="SocialKeys.socialMedia" caption="Social Media">
+      <dxo-lookup [dataSource]="agentEditorService.social_media_type"></dxo-lookup>
+      <dxi-validation-rule type="required"></dxi-validation-rule>
+    </dxi-column>
+
+    <dxi-column type="buttons">
+      <dxi-button name="edit"></dxi-button>
+      <dxi-button name="delete"></dxi-button>
+    </dxi-column>
+  </dx-data-grid>
+</ag-shr-modal-window>

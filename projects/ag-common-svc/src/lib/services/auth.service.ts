@@ -38,6 +38,9 @@ import { LoggerService } from './logger.service';
 
 export const DOMAIN = new InjectionToken<string>('DOMAIN');
 export const SESSION_EXPIRATION = new InjectionToken<number>('SESSION_EXPIRATION');
+export const AGENT_PORTAL_URL = new InjectionToken<string>('AGENT_PORTAL_URL');
+export const AFTER_LOGIN_REDIRECT_PATH = new InjectionToken<string>('AFTER_LOGIN_REDIRECT_PATH');
+export const AFTER_LOGOUT_REDIRECT_PATH = new InjectionToken<string>('AFTER_LOGOUT_REDIRECT_PATH');
 
 @Injectable({
   providedIn: 'root',
@@ -80,7 +83,7 @@ export class AuthService {
         return user && user?.getIdTokenResult
           ? from(user?.getIdTokenResult(true)).pipe(
               map((idTokenResult) => idTokenResult?.claims?.agentDbId),
-              mergeMap((agentId) => {
+              mergeMap((agentId: string) => {
                 if (!agentId) {
                   this.router.navigate(['auth/login']);
                   return of(null);
@@ -90,9 +93,7 @@ export class AuthService {
             )
           : of(null);
       }),
-      tap((agent) => {
-        this.currentAgent$.next(agent);
-      }),
+      tap((agent) => this.currentAgent$.next(agent)),
       shareReplay(1),
     );
 

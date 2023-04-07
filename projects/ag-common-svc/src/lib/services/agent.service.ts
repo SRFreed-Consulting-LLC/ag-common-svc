@@ -8,7 +8,7 @@ import { dateFromTimestamp } from '../utils/date-from-timestamp';
 import { DataService } from './data.service';
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class AgentService extends DataService<Agent> {
   private readonly emailAddressCollectionPath = 'email-addresses';
@@ -28,7 +28,7 @@ export class AgentService extends DataService<Agent> {
     return Object.assign({}, data, {
       [AgentKeys.p_agent_name]: fullName,
       [AgentKeys.registrant_review_level_update_date]: dateFromTimestamp(
-        data?.registrant_review_level_update_date as Timestamp,
+        data?.registrant_review_level_update_date as Timestamp
       ),
       [AgentKeys.prospect_status_update_date]: dateFromTimestamp(data?.prospect_status_update_date as Timestamp),
       [AgentKeys.campaigns_user_since]: dateFromTimestamp(data?.campaigns_user_since as Timestamp),
@@ -37,7 +37,7 @@ export class AgentService extends DataService<Agent> {
       [AgentKeys.last_login_date]: dateFromTimestamp(data?.last_login_date as Timestamp),
       [AgentKeys.registrationDate]: dateFromTimestamp(data?.registrationDate as Timestamp),
       [AgentKeys.personal_goals]: Array.isArray(data?.personal_goals) ? data?.personal_goals : [],
-      [AgentKeys.conference_goals]: Array.isArray(data?.conference_goals) ? data?.conference_goals : [],
+      [AgentKeys.conference_goals]: Array.isArray(data?.conference_goals) ? data?.conference_goals : []
     });
   };
 
@@ -63,12 +63,12 @@ export class AgentService extends DataService<Agent> {
     queries.push(isLoginQuery);
 
     const queryConstraints: QueryConstraint[] = queries.map((query) =>
-      where(query.field, query.operation, query.value),
+      where(query.field, query.operation, query.value)
     );
 
     const collectionGroupRef = collectionGroup(this.fsDao.db, this.emailAddressCollectionPath).withConverter({
       toFirestore: null,
-      fromFirestore: this.fsDao.convertResponse,
+      fromFirestore: this.fsDao.convertResponse
     });
 
     const collectionGroupQuery = query(collectionGroupRef, ...queryConstraints);
@@ -102,9 +102,8 @@ export class AgentService extends DataService<Agent> {
 
   getAgentByAnyEmailIn(email: string[]): Promise<Agent> {
     return this.getAllByValue([
-      new QueryParam('email_Addresses.address', WhereFilterOperandKeys.arrayContainsAny, email),
+      new QueryParam('email_Addresses.address', WhereFilterOperandKeys.arrayContainsAny, email)
     ]).then((agents) => {
-      debugger;
       if (agents.length == 0) {
         return null;
       } else if (agents.length == 1) {

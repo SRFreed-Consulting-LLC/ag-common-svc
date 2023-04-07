@@ -19,3 +19,6 @@ export * from './lib/ag-common-svc.module';
 export * from './lib/injections/firebase-app';
 
 export * from './lib/components';
+
+export * from './lib/utils/date-from-timestamp';
+export * from './lib/utils/searchable-id';

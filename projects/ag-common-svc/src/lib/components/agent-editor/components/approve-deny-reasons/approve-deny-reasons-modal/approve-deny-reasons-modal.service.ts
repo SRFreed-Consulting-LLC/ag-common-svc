@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, Observable } from 'rxjs';
 import { ApproveDenyReasonVisibilityLevel, BaseModelKeys } from 'ag-common-lib/public-api';
 import { map } from 'rxjs/operators';
 import { FormChangesDetector } from '../../../../../../shared/utils';
 import { confirm } from 'devextreme/ui/dialog';
 import { ApproveDenyReason, ApproveDenyReasonKeys } from 'ag-common-lib/lib/models/utils/approve-deny-reason.model';
 import { AgentApproveDenyReasonsService } from '../../../../../services/agent-approve-deny-reason.service';
+import { AuthService } from 'ag-common-svc/public-api';
 
 @Injectable()
 export class ApproveDenyReasonModalService {
@@ -16,12 +17,15 @@ export class ApproveDenyReasonModalService {
   public inProgress$: Observable<boolean>;
   private readonly _inProgress$ = new BehaviorSubject<boolean>(false);
 
-  constructor(private agentApproveDenyReasonsService: AgentApproveDenyReasonsService) {
+  constructor(
+    private agentApproveDenyReasonsService: AgentApproveDenyReasonsService,
+    private authService: AuthService
+  ) {
     this.inProgress$ = this._inProgress$.asObservable();
     this.hasFormChanges$ = this.formChangesDetector.actions$.pipe(
       map(() => {
         return this.formChangesDetector.hasChanges;
-      }),
+      })
     );
   }
 
@@ -48,12 +52,18 @@ export class ApproveDenyReasonModalService {
   };
 
   public getFormData = async (association?: Partial<ApproveDenyReason>) => {
+    const loggedInUserEmail = await firstValueFrom(
+      this.authService.loggedInAgent$.pipe(map((agent) => agent?.p_email))
+    );
+
     const initialData = Object.assign(
       {
-        [ApproveDenyReasonKeys.visibilityLevel]: ApproveDenyReasonVisibilityLevel.AllianceGroupLevel,
+        [BaseModelKeys.createdDate]: new Date(),
+        [BaseModelKeys.createdBy]: loggedInUserEmail,
+        [ApproveDenyReasonKeys.visibilityLevel]: ApproveDenyReasonVisibilityLevel.AllianceGroupLevel
       },
       new ApproveDenyReason(),
-      association,
+      association
     );
     this.formData = new Proxy(initialData, {
       set: (target, prop, value, receiver) => {
@@ -62,7 +72,7 @@ export class ApproveDenyReasonModalService {
         Reflect.set(target, prop, value, receiver);
 
         return true;
-      },
+      }
     });
 
     return this.formData;

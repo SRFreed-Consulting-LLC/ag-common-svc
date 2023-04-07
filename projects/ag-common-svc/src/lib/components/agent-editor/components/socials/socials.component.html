@@ -75,6 +75,10 @@
 
     <dxi-column [dataField]="SocialKeys.url" [width]="'50%'">
       <dxi-validation-rule type="required" [message]="'URL Address is Required'"></dxi-validation-rule>
+      <dxi-validation-rule type="custom"
+                           [validationCallback]="validateUrl"
+                           message="A Valid Website URL is Required">
+      </dxi-validation-rule>
     </dxi-column>
     <dxi-column [dataField]="SocialKeys.socialType" caption="Type">
       <dxo-lookup [dataSource]="agentEditorService.business_personal_types"></dxo-lookup>

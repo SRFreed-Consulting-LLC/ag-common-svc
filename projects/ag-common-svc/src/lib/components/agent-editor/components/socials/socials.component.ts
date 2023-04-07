@@ -81,6 +81,15 @@ export class SocialsComponent implements OnInit {
     e.cancel = this.updateSocials(Socials);
   };
 
+  public validateUrl = (e) => {
+    try {
+      new URL(e.value);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   private checkIsSocialUniq = (data, key?: Social) => {
     return this.socials.every((social) => {
       if (key && social === key) {

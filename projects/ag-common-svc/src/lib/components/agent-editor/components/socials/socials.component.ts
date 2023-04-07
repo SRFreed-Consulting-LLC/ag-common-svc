@@ -9,7 +9,8 @@ import { ModalWindowComponent } from '../../../modal-window/modal-window.compone
 @Component({
   selector: 'ag-shr-socials',
   templateUrl: './socials.component.html',
-  styleUrls: ['./socials.component.scss']
+  styleUrls: ['./socials.component.scss'],
+  providers: [AgentEditorService]
 })
 export class SocialsComponent implements OnInit {
   @Input() agentId: string;

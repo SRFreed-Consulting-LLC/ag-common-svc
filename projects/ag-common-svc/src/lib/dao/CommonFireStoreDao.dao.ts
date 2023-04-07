@@ -21,7 +21,7 @@ import {
   Timestamp,
   orderBy,
   QuerySnapshot,
-  collectionGroup
+  collectionGroup,
 } from 'firebase/firestore';
 import { fromUnixTime, isDate, isValid } from 'date-fns';
 import { Observable } from 'rxjs';
@@ -36,7 +36,7 @@ export interface FetchOptions {
 const localeCompareOptions = {
   numeric: true,
   sensitivity: 'base',
-  ignorePunctuation: true
+  ignorePunctuation: true,
 };
 export class CommonFireStoreDao<T> {
   readonly db: Firestore;
@@ -49,7 +49,7 @@ export class CommonFireStoreDao<T> {
   constructor(
     fireBaseApp: FirebaseApp,
     fromFirestore: (data: Partial<T>) => T = null,
-    toFirestore: (item: T) => T = null
+    toFirestore: (item: T) => T = null,
   ) {
     this.db = getFirestore(fireBaseApp);
     this.auth = getAuth(fireBaseApp);
@@ -63,9 +63,9 @@ export class CommonFireStoreDao<T> {
       toFirestore: (item: T): DocumentData => {
         return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.createdDate]: new Date(),
-          [BaseModelKeys.createdBy]: this.auth?.currentUser?.uid ?? null
+          [BaseModelKeys.createdBy]: this.auth?.currentUser?.uid ?? null,
         });
-      }
+      },
     });
 
     await setDoc(ref, value);
@@ -79,9 +79,9 @@ export class CommonFireStoreDao<T> {
       toFirestore: (item: T): DocumentData => {
         return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.createdDate]: new Date(),
-          [BaseModelKeys.createdBy]: this.auth?.currentUser?.uid ?? null
+          [BaseModelKeys.createdBy]: this.auth?.currentUser?.uid ?? null,
         });
-      }
+      },
     });
 
     const snap = await addDoc(ref, value);
@@ -95,9 +95,9 @@ export class CommonFireStoreDao<T> {
       toFirestore: (item: T): DocumentData => {
         return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.createdDate]: new Date(),
-          [BaseModelKeys.createdBy]: this.auth?.currentUser?.uid ?? null
+          [BaseModelKeys.createdBy]: this.auth?.currentUser?.uid ?? null,
         });
-      }
+      },
     });
 
     const snap = await addDoc(ref, value);
@@ -108,11 +108,11 @@ export class CommonFireStoreDao<T> {
   public getCollectionGroupSnapshot(table, queries: QueryParam[] = []): Observable<QuerySnapshot<T>> {
     return new Observable((observer) => {
       const queryConstraints: QueryConstraint[] = queries.map((query) =>
-        where(query.field, query.operation, query.value)
+        where(query.field, query.operation, query.value),
       );
       const collectionRef = collectionGroup(this.db, table).withConverter({
         toFirestore: null,
-        fromFirestore: this.convertResponse
+        fromFirestore: this.convertResponse,
       });
       const collectionQuery = query(collectionRef, ...queryConstraints);
 
@@ -127,11 +127,11 @@ export class CommonFireStoreDao<T> {
   public getCollectionSnapshot(table, queries: QueryParam[] = []): Observable<QuerySnapshot<T[]>> {
     return new Observable((observer) => {
       const queryConstraints: QueryConstraint[] = queries.map((query) =>
-        where(query.field, query.operation, query.value)
+        where(query.field, query.operation, query.value),
       );
       const collectionRef = collection(this.db, table).withConverter({
         toFirestore: null,
-        fromFirestore: this.convertResponse
+        fromFirestore: this.convertResponse,
       });
       const collectionQuery = query(collectionRef, ...queryConstraints);
 
@@ -184,20 +184,20 @@ export class CommonFireStoreDao<T> {
             String(left[fetchOptions?.sortField]).localeCompare(
               String(right[fetchOptions?.sortField]),
               'en',
-              localeCompareOptions
-            )
+              localeCompareOptions,
+            ),
           );
         }
 
         return items;
-      })
+      }),
     );
   }
 
   public async getAll(table: string, sortField?: string): Promise<T[]> {
     const collectionRef = collection(this.db, table).withConverter({
       toFirestore: null,
-      fromFirestore: this.convertResponse
+      fromFirestore: this.convertResponse,
     });
 
     const querySnapshot = await getDocs(collectionRef);
@@ -206,7 +206,7 @@ export class CommonFireStoreDao<T> {
 
     if (sortField) {
       docsData.sort((left, right) =>
-        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions)
+        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions),
       );
     }
 
@@ -216,7 +216,7 @@ export class CommonFireStoreDao<T> {
   public async getAllFromSubCollection(table: string, record_id: string, subcollection: string): Promise<T[]> {
     const ref = collection(this.db, table, record_id, subcollection).withConverter({
       toFirestore: null,
-      fromFirestore: this.convertResponse
+      fromFirestore: this.convertResponse,
     });
 
     const snap = await getDocs(ref);
@@ -229,7 +229,7 @@ export class CommonFireStoreDao<T> {
   public async getAllOrderBy(table: string, order: string): Promise<T[]> {
     const ref = collection(this.db, table).withConverter({
       toFirestore: null,
-      fromFirestore: this.convertResponse
+      fromFirestore: this.convertResponse,
     });
 
     const snap = await getDocs(ref);
@@ -246,7 +246,7 @@ export class CommonFireStoreDao<T> {
   public async getMostRecentOrderBy(table: string, order: string): Promise<T[]> {
     const ref = collection(this.db, table).withConverter({
       toFirestore: null,
-      fromFirestore: this.convertResponse
+      fromFirestore: this.convertResponse,
     });
 
     const q = query(ref, orderBy(order, 'desc'), limit(1));
@@ -257,7 +257,7 @@ export class CommonFireStoreDao<T> {
 
     if (order) {
       docsData.sort((left, right) =>
-        String(left[order]).localeCompare(String(right[order]), 'en', localeCompareOptions)
+        String(left[order]).localeCompare(String(right[order]), 'en', localeCompareOptions),
       );
     }
 
@@ -267,7 +267,7 @@ export class CommonFireStoreDao<T> {
   public getDocReference(table: string, id: string) {
     return doc(this.db, table, id).withConverter({
       toFirestore: null,
-      fromFirestore: this.convertResponse
+      fromFirestore: this.convertResponse,
     });
   }
 
@@ -299,11 +299,11 @@ export class CommonFireStoreDao<T> {
     field: string,
     value: string,
     operation: WhereFilterOperandKeys,
-    order: string
+    order: string,
   ): Promise<T[]> {
     const ref = collection(this.db, table).withConverter({
       toFirestore: null,
-      fromFirestore: this.convertResponse
+      fromFirestore: this.convertResponse,
     });
     const q = query(ref, where(field, operation, value));
 
@@ -313,7 +313,7 @@ export class CommonFireStoreDao<T> {
 
     if (order) {
       docsData.sort((left, right) =>
-        String(left[order]).localeCompare(String(right[order]), 'en', localeCompareOptions)
+        String(left[order]).localeCompare(String(right[order]), 'en', localeCompareOptions),
       );
     }
 
@@ -332,9 +332,9 @@ export class CommonFireStoreDao<T> {
       toFirestore: (item: T): DocumentData => {
         return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.updatedDate]: new Date(),
-          [BaseModelKeys.updatedBy]: this.auth?.currentUser?.uid ?? null
+          [BaseModelKeys.updatedBy]: this.auth?.currentUser?.uid ?? null,
         });
-      }
+      },
     });
 
     if (skipListUpdate) {
@@ -355,9 +355,9 @@ export class CommonFireStoreDao<T> {
       toFirestore: (item: T): DocumentData => {
         return Object.assign(item, {
           [BaseModelKeys.updatedDate]: new Date(),
-          [BaseModelKeys.updatedBy]: this.auth?.currentUser?.uid ?? null
+          [BaseModelKeys.updatedBy]: this.auth?.currentUser?.uid ?? null,
         });
-      }
+      },
     });
 
     await setDoc(ref, value);
@@ -367,12 +367,12 @@ export class CommonFireStoreDao<T> {
 
   public async getAllByQValue(table: string, queries: QueryParam[], sortField?: string): Promise<T[]> {
     const queryConstraints: QueryConstraint[] = queries.map((query) =>
-      where(query.field, query.operation, query.value)
+      where(query.field, query.operation, query.value),
     );
 
     const ref = collection(this.db, table).withConverter({
       toFirestore: null,
-      fromFirestore: this.convertResponse
+      fromFirestore: this.convertResponse,
     });
 
     const documentQuery = query(ref, ...queryConstraints);
@@ -383,7 +383,7 @@ export class CommonFireStoreDao<T> {
 
     if (sortField) {
       docsData.sort((left, right) =>
-        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions)
+        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions),
       );
     }
 
@@ -395,15 +395,15 @@ export class CommonFireStoreDao<T> {
     record_id: string,
     subcollection: string,
     queries: QueryParam[],
-    sortField?: string
+    sortField?: string,
   ): Promise<T[]> {
     const queryConstraints: QueryConstraint[] = queries.map((query) =>
-      where(query.field, query.operation, query.value)
+      where(query.field, query.operation, query.value),
     );
 
     const ref = collection(this.db, table, record_id, subcollection).withConverter({
       toFirestore: null,
-      fromFirestore: this.convertResponse
+      fromFirestore: this.convertResponse,
     });
 
     const documentQuery = query(ref, ...queryConstraints);
@@ -414,7 +414,7 @@ export class CommonFireStoreDao<T> {
 
     if (sortField) {
       docsData.sort((left, right) =>
-        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions)
+        String(left[sortField]).localeCompare(String(right[sortField]), 'en', localeCompareOptions),
       );
     }
 
@@ -426,16 +426,16 @@ export class CommonFireStoreDao<T> {
     table: string,
     record_id: string,
     subcollection: string,
-    id: string
+    id: string,
   ): Promise<T> {
     const ref = doc(this.db, table, record_id, subcollection, id).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {
         return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.updatedDate]: new Date(),
-          [BaseModelKeys.updatedBy]: this.auth?.currentUser?.uid ?? null
+          [BaseModelKeys.updatedBy]: this.auth?.currentUser?.uid ?? null,
         });
-      }
+      },
     });
 
     await setDoc(ref, value);
@@ -459,7 +459,7 @@ export class CommonFireStoreDao<T> {
     const normalizedData = Object.assign({}, data, {
       dbId: snapshot.id,
       [BaseModelKeys.createdDate]: this.dateFromTimestamp(data[BaseModelKeys.createdDate]),
-      [BaseModelKeys.updatedDate]: this.dateFromTimestamp(data[BaseModelKeys.createdDate])
+      [BaseModelKeys.updatedDate]: this.dateFromTimestamp(data[BaseModelKeys.createdDate]),
     });
 
     return this.fromFirestore ? this.fromFirestore(normalizedData) : normalizedData;
@@ -494,7 +494,7 @@ export enum WhereFilterOperandKeys {
   arrayContains = 'array-contains',
   in = 'in',
   arrayContainsAny = 'array-contains-any',
-  notIn = 'not-in'
+  notIn = 'not-in',
 }
 
 export class QueryParam {

@@ -4,7 +4,7 @@ import { DxFormComponent } from 'devextreme-angular';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AgentHeaderService } from './agent-header.service';
 import { AgentHeaderKeys } from './agent-header.model';
-import { take } from 'rxjs/operators';
+import { map, take } from 'rxjs/operators';
 import { DropZoneComponent } from 'ag-common-svc/lib/components/drop-zone/drop-zone.component';
 import { ModalWindowComponent } from 'ag-common-svc/lib/components/modal-window/modal-window.component';
 import { FullAddressPipe } from 'ag-common-svc/shared/pipes/full-address.pipe';
@@ -18,9 +18,11 @@ import { PhoneNumberMaskPipe } from 'ag-common-svc/shared/pipes/phone-number-mas
 })
 export class AgentHeadersComponent {
   @HostBinding('class') className = 'agent-header';
-  @Input('agent') set _agent(value: Agent) {
-    this.agent = value;
-    this.agentHeaderFormDetails = this.agentHeaderService.getFormData(value);
+  @Input('agentId') set _agentId(value: string) {
+    this.agentId = value;
+    this.agent$ = this.agentHeaderService
+      .getAgentById(value)
+      .pipe(map((agent) => (this.agentHeaderFormDetails = this.agentHeaderService.getFormData(agent))));
   }
   @Output() onFieldsUpdated = new EventEmitter<{ agentId: string; updates: Partial<Agent> }>();
   @ViewChild('agentHeaderModalRef', { static: true }) agentHeaderModalComponent: ModalWindowComponent;
@@ -36,8 +38,9 @@ export class AgentHeadersComponent {
   public selectedAgentHeaderType$: BehaviorSubject<Lookup>;
   public selectedPrefix$: BehaviorSubject<Lookup>;
   public selectedSuffix$: BehaviorSubject<Lookup>;
+  public agent$: Observable<Agent>;
 
-  private agent: Agent;
+  private agentId: string;
 
   constructor(
     private agentHeaderService: AgentHeaderService,
@@ -52,7 +55,7 @@ export class AgentHeadersComponent {
   public saveAgentProfileImagesUpdates = async () => {
     const isImageValid = await this.profilePictureDropZoneComponent.isImageValid$.pipe(take(1)).toPromise();
     if (isImageValid) {
-      this.agentHeaderService.handleSave(this.agent[BaseModelKeys.dbId]).then((data) => {
+      this.agentHeaderService.handleSave(this.agentId).then((data) => {
         this.onFieldsUpdated.emit(data);
         this.agentProfilePictureModalComponent.hideModal();
       });
@@ -63,7 +66,7 @@ export class AgentHeadersComponent {
     const validationResults = this.agentHeaderFormComponent.instance.validate();
 
     if (validationResults.isValid) {
-      this.agentHeaderService.handleSave(this.agent[BaseModelKeys.dbId]).then((data) => {
+      this.agentHeaderService.handleSave(this.agentId).then((data) => {
         this.onFieldsUpdated.emit(data);
         this.agentHeaderModalComponent.hideModal();
       });

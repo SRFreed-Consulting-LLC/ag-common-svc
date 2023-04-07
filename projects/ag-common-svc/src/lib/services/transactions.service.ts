@@ -79,7 +79,7 @@ export class TransactionService extends DataService<PolicyTransaction>{
 
               messages.unshift(
                 'sending transaction batch ' +
-                  transactioncount++ +
+                  transactioncount +
                   ' of ' +
                   transactionArrays.length +
                   ':' +
@@ -88,6 +88,8 @@ export class TransactionService extends DataService<PolicyTransaction>{
 
               if (transactioncount == transactionArrays.length) {
                 resolve(true);
+              } else {
+                transactioncount++;
               }
             })
             .catch((error) => {

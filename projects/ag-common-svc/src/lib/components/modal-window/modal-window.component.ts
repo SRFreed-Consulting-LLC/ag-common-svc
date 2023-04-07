@@ -1,6 +1,4 @@
-import { EventEmitter, ViewChild } from '@angular/core';
-import { HostBinding, Input, Output } from '@angular/core';
-import { Component } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
 import { DxPopupComponent } from 'devextreme-angular';
 import dxPopup, { ShowingEvent, HiddenEvent, HidingEvent, InitializedEvent, Properties } from 'devextreme/ui/popup';
 import { OnPopupClosePayload } from './modal-window.models';
@@ -8,7 +6,7 @@ import { OnPopupClosePayload } from './modal-window.models';
 @Component({
   selector: 'ag-shr-modal-window',
   templateUrl: './modal-window.component.html',
-  styleUrls: ['./modal-window.component.scss']
+  styleUrls: ['./modal-window.component.scss'],
 })
 export class ModalWindowComponent {
   @HostBinding('class') className = 'modal-window';

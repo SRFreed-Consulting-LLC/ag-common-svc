@@ -31,6 +31,12 @@ export class AgentHeaderService {
     );
   }
 
+  public getAgentById = (agentId: string): Observable<Agent> => {
+    return this.agentService.getDocument(agentId).pipe(
+      map((doc) => doc.data())
+    );
+  }
+
   public handleSave = async (agentId) => {
     const updates = {};
     const changes = this.formChangesDetector.getAllChanges();

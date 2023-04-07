@@ -1,0 +1,57 @@
+<dx-popup
+  #popupRef
+  [deferRendering]="true"
+  [showCloseButton]="false"
+  [resizeEnabled]="false"
+  [width]="400"
+  [height]="'auto'"
+  [wrapperAttr]="{ class: 'idle__popup' }"
+>
+  <dxi-toolbar-item location="before">
+    <div *dxTemplate>
+      <span class="modal-window__title">System Message</span>
+    </div>
+  </dxi-toolbar-item>
+  <!--
+  <dxi-toolbar-item
+    widget="dxButton"
+    location="before"
+    toolbar="bottom"
+    [options]="{
+      text: 'LOGOUT',
+      type: 'danger',
+      onClick: handleLogout,
+      elementAttr: {
+        class: 'idle__toolbar-button'
+      }
+    }"
+  >
+  </dxi-toolbar-item> -->
+
+  <dxi-toolbar-item
+    widget="dxButton"
+    location="after"
+    toolbar="bottom"
+    [options]="{
+      text: 'STAY SIGNED IN',
+      type: 'success',
+      onClick: handleStaySighIn,
+      elementAttr: {
+        class: 'idle__toolbar-button'
+      }
+    }"
+  >
+  </dxi-toolbar-item>
+
+  <div *dxTemplate="let data of 'content'">
+    <p>You will be logged out in 15 seconds due to inactivity.</p>
+    <p>Would you like to stay signed in?</p>
+
+    <dx-select-box
+      [(value)]="timeoutDelayMinutes"
+      [items]="idleTimeDelaysLookup"
+      labelMode="floating"
+      label="Timeout Duration"
+    ></dx-select-box>
+  </div>
+</dx-popup>

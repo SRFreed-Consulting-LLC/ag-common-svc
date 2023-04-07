@@ -25,7 +25,6 @@ import {
   checkActionCode,
   createUserWithEmailAndPassword,
   getAuth,
-  IdTokenResult,
   sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
@@ -58,6 +57,7 @@ export class AuthService {
   constructor(
     @Inject(FIREBASE_APP) fireBaseApp: FirebaseApp,
     @Inject(SESSION_EXPIRATION) private sessionExpiration: number,
+
     public router: Router,
     public ngZone: NgZone,
     public toster: ToastrService,
@@ -77,41 +77,6 @@ export class AuthService {
 
     this.loggedInAgent$ = this.currentUser$.pipe(
       mergeMap((user: User) => {
-        if (!user || !user?.getIdTokenResult) {
-          return of(null);
-        }
-        return from(user?.getIdTokenResult(true)).pipe(
-          map((idTokenResult: IdTokenResult) => {
-            const claims = idTokenResult?.claims;
-
-            return claims?.agentDbId;
-          }),
-          mergeMap((agentId: string) => {
-            if (!agentId) {
-              this.router.navigate(['auth/login']);
-              return of(null);
-            }
-            return this.agentService.getDocument(agentId).pipe(
-              map((doc) => doc.data()),
-              catchError(() => {
-                return of(null);
-              }),
-            );
-          }),
-        );
-      }),
-      catchError(() => {
-        return of(null);
-      }),
-      tap((agent) => {
-        // TODO temp solution
-        this.currentAgent$.next(agent);
-      }),
-      shareReplay(1),
-    );
-
-    this.loggedInAgent$ = this.currentUser$.pipe(
-      mergeMap((user: User) => {
         return user && user?.getIdTokenResult
           ? from(user?.getIdTokenResult(true)).pipe(
               map((idTokenResult) => idTokenResult?.claims?.agentDbId),
@@ -125,7 +90,9 @@ export class AuthService {
             )
           : of(null);
       }),
-      tap((agent) => this.currentAgent$.next(agent)),
+      tap((agent) => {
+        this.currentAgent$.next(agent);
+      }),
       shareReplay(1),
     );
 
@@ -140,7 +107,6 @@ export class AuthService {
   public async signInWithEmailAndPassword(email: string, password: string) {
     try {
       const userData = await this.signIn(email, password);
-
       if (!userData?.user?.emailVerified) {
         this.ngZone.run(() => {
           this.router.navigate(['auth', 'register-landing']);

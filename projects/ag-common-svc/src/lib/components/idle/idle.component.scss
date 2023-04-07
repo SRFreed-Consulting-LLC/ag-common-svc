@@ -1,0 +1,20 @@
+::ng-deep .idle {
+  &__title {
+    font-size: 20px;
+    font-weight: 400;
+    line-height: normal;
+  }
+
+  &__popup {
+    .dx-popup-content {
+      padding-bottom: 0;
+    }
+    padding-bottom: 0;
+  }
+
+  &__toolbar-button {
+    &.dx-button {
+      min-width: 150px;
+    }
+  }
+}

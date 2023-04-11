@@ -9,7 +9,7 @@
   (onPopupClose)="handleApproveDenyReasonFormPopupClose($event)"
 >
   <dx-form
-    *ngIf="approveDenyReasonModalRef?.popupComponent?.visible"
+    *ngIf="approveDenyReasonModalRef?.popupComponent?.visible ?? false"
     #approveDenyReasonFormRef
     [formData]="approveDenyReasonFormData"
     labelMode="floating"

@@ -17,7 +17,6 @@ import { DietaryConsiderationTypePipe } from './dietary-consideration-type.pipe'
 import { GenderPipe } from './gender.pipe';
 import { SuffixPipe } from './suffix.pipe';
 import { TShortSizePipe } from './t-short-size.pipe';
-import { PrimaryEmailAddressPipe } from './primary-email-address.pipe';
 import { PrimaryShippingAddressPipe } from './primary-shipping-address.pipe';
 import { PrimaryBillingAddressPipe } from './primary-billing-address.pipe';
 import { AgencyPipe } from './agency.pipe';
@@ -45,13 +44,12 @@ import { AgentNameByDbIdePipe } from './agent.pipe';
     GenderPipe,
     SuffixPipe,
     TShortSizePipe,
-    PrimaryEmailAddressPipe,
     PrimaryShippingAddressPipe,
     PrimaryBillingAddressPipe,
     AgencyPipe,
     LookupDescriptionPipe,
     OtherSizePipe,
-    AgentNameByDbIdePipe,
+    AgentNameByDbIdePipe
   ],
   exports: [
     SafeHTMLPipe,
@@ -72,13 +70,12 @@ import { AgentNameByDbIdePipe } from './agent.pipe';
     GenderPipe,
     SuffixPipe,
     TShortSizePipe,
-    PrimaryEmailAddressPipe,
     PrimaryShippingAddressPipe,
     PrimaryBillingAddressPipe,
     AgencyPipe,
     LookupDescriptionPipe,
     OtherSizePipe,
-    AgentNameByDbIdePipe,
-  ],
+    AgentNameByDbIdePipe
+  ]
 })
 export class PipesModule {}

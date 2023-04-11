@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { EmailAddress, RelatedEmailAddress } from 'ag-common-lib/public-api';
+import { EmailAddress, EmailAddressKeys, RelatedEmailAddress } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
 import { collectionGroup, getDocs, query, QueryConstraint, QuerySnapshot, where } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
@@ -58,9 +58,11 @@ export class AgentEmailAddressesService {
 
   public async create(agentId: string, data: EmailAddress) {
     const table = this.getCollectionPath(agentId);
-    const emailAddress = await this.fsDao.create(data, table).catch((e) => {
-      console.log('e', e);
-    });
+    const emailAddress = await this.fsDao
+      .create(Object.assign(data, { [EmailAddressKeys.agentDbId]: agentId }), table)
+      .catch((e) => {
+        console.log('e', e);
+      });
 
     this.toastrService.success('Agent Email Address Successfully Created!');
 

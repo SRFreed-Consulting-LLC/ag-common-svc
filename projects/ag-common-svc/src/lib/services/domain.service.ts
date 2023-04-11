@@ -10,6 +10,7 @@ import {
   AGENT_STATUS,
   AGENT_TYPE,
   ApproveDenyReason,
+  ApproveDenyReasonKeys,
   ApproveDenyReasonVisibilityLevel,
   Association,
   AssociationKeys,
@@ -23,6 +24,7 @@ import {
   PROSPECT_DISPOSITION,
   PROSPECT_PRIORITY,
   PROSPECT_STATUS,
+  RawEmailAddress,
   Registrant,
   Role
 } from 'ag-common-lib/public-api';
@@ -97,29 +99,23 @@ export class DomainService implements OnInit {
     const promises: Promise<Agent>[] = [];
 
     agents.forEach((data) => {
-      let email_address: string;
-
-      if (data.has(this.PRIMARY_EMAIL_IDENTIFIER)) {
-        email_address = data.get(this.PRIMARY_EMAIL_IDENTIFIER);
-      } else {
-        email_address = data.get('invitee_email');
-      }
-
-      let agent_name = data.get('p_agent_first_name') + ' ' + data.get('p_agent_last_name') + '(' + email_address + ')';
-
-      const promise: Promise<Agent> = this.agentService
-        .getAgentByEmail(email_address.toLowerCase().trim())
-        .then((agent) => {
-          if (!agent) {
-            messages.unshift(agent_name + ' does not currently exist and will be created.');
-            return this.createAgent(data, createdBy, agencies, selectedRuleSet.import_mappings);
-          } else {
-            messages.unshift(agent_name + ' exists and will be updated.');
-            return this.updateAgent(data, agent, selectedRuleSet, agencies, createdBy);
-          }
-        });
-
-      promises.push(promise);
+      const emailAddress = data.get(this.PRIMARY_EMAIL_IDENTIFIER) ?? data.get('invitee_email');
+      const agentName = [
+        data.get('p_agent_first_name'),
+        data.get('p_agent_last_name'),
+        emailAddress && `(${emailAddress})`
+      ].join(' ');
+      debugger;
+      this.agentService.getAgentByEmail(emailAddress?.toLowerCase()?.trim()).then((agent) => {
+        if (!agent) {
+          messages.unshift(agentName + ' does not currently exist and will be created.');
+          promises.push(this.createAgent(data, createdBy, agencies, selectedRuleSet.import_mappings));
+          return;
+        }
+        messages.unshift(agentName + ' exists and will be updated.');
+        // promises.push(this.updateAgent(data, agent, selectedRuleSet, agencies, createdBy));
+        return;
+      });
     });
 
     return Promise.all(promises).then((response) => {
@@ -128,85 +124,74 @@ export class DomainService implements OnInit {
   }
 
   async createAgent(
-    line_data: Map<string, string>,
+    lineDataMap: Map<string, string>,
     createdBy: string,
     agencies: Agency[],
     importMappings: ImportMapping[]
   ): Promise<Agent> {
-    const agent = { ...new Agent() };
+    const agent = Object.assign({}, new Agent());
 
     importMappings.forEach((mapping) => {
-      if (line_data.has(mapping.field_name_agent)) {
+      if (lineDataMap.has(mapping.field_name_agent)) {
         if (mapping.data_type == 'string' || mapping.data_type == 'select') {
-          agent[mapping.field_name_agent] = line_data.get(mapping.field_name_agent);
+          agent[mapping.field_name_agent] = lineDataMap.get(mapping.field_name_agent);
         }
 
         if (mapping.data_type == 'yes-no') {
           agent[mapping.field_name_agent] = this.domainUtilService.getYesNoValue(
-            line_data.get(mapping.field_name_agent).trim()
+            lineDataMap.get(mapping.field_name_agent).trim()
           );
         }
 
         if (mapping.data_type == 'date') {
-          agent[mapping.field_name_agent] = new Date(line_data.get(mapping.field_name_agent));
+          agent[mapping.field_name_agent] = new Date(lineDataMap.get(mapping.field_name_agent));
         }
 
         if (mapping.data_type == 'lookup') {
           agent[mapping.field_name_agent] = this.getLookupValue(
             mapping.values,
-            line_data.get(mapping.field_name_agent)
+            lineDataMap.get(mapping.field_name_agent)
           );
         }
 
         if (mapping.data_type == 'boolean') {
-          agent[mapping.field_name_agent] = this.domainUtilService.getBoolean(line_data.get(mapping.field_name_agent));
+          agent[mapping.field_name_agent] = this.domainUtilService.getBoolean(
+            lineDataMap.get(mapping.field_name_agent)
+          );
         }
       }
     });
 
-    if (line_data.has(AgentKeys.agent_status)) {
-      agent[AgentKeys.agent_status] = AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim().toUpperCase()];
+    if (lineDataMap.has(AgentKeys.agent_status)) {
+      agent[AgentKeys.agent_status] = AGENT_STATUS[lineDataMap.get(AgentKeys.agent_status).trim().toUpperCase()];
     } else {
       agent[AgentKeys.agent_status] = AGENT_STATUS.APPROVED;
     }
 
-    if (line_data.has(AgentKeys.prospect_status)) {
-      agent[AgentKeys.prospect_status] = PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim().toUpperCase()];
+    if (lineDataMap.has(AgentKeys.prospect_status)) {
+      agent[AgentKeys.prospect_status] =
+        PROSPECT_STATUS[lineDataMap.get(AgentKeys.prospect_status).trim().toUpperCase()];
     }
 
-    if (line_data.has(AgentKeys.prospect_priority)) {
+    if (lineDataMap.has(AgentKeys.prospect_priority)) {
       agent[AgentKeys.prospect_priority] =
-        PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim().toUpperCase()];
+        PROSPECT_PRIORITY[lineDataMap.get(AgentKeys.prospect_priority).trim().toUpperCase()];
     }
-    if (line_data.has(AgentKeys.prospect_disposition)) {
+    if (lineDataMap.has(AgentKeys.prospect_disposition)) {
       agent[AgentKeys.prospect_disposition] =
-        PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim().toUpperCase()];
+        PROSPECT_DISPOSITION[lineDataMap.get(AgentKeys.prospect_disposition).trim().toUpperCase()];
     }
 
-    if (line_data.has(AgentKeys.agent_type)) {
-      agent[AgentKeys.agent_type] = AGENT_TYPE[line_data.get(AgentKeys.agent_type).trim().toUpperCase()];
+    if (lineDataMap.has(AgentKeys.agent_type)) {
+      agent[AgentKeys.agent_type] = AGENT_TYPE[lineDataMap.get(AgentKeys.agent_type).trim().toUpperCase()];
     } else {
       agent[AgentKeys.agent_type] = AGENT_TYPE.GENERAL_AGENT;
     }
 
-    agent[AgentKeys.addresses] = this.domainAddressService.createAddresses(line_data);
-    // agent[AgentKeys.email_addresses] = this.domainEmailService.createEmailAddresses(line_data);
-    agent[AgentKeys.phone_numbers] = this.domainPhoneNumberService.createPhoneNumbers(line_data);
-    agent[AgentKeys.websites] = this.domainWebsiteService.createWebsites(line_data);
-    agent[AgentKeys.socials] = this.domainSocialsService.createSocials(line_data);
-
-    //calculate p_agent_name
-    if (agent[AgentKeys.p_agent_first_name]) {
-      agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_first_name];
-    }
-
-    if (agent[AgentKeys.p_agent_middle_name]) {
-      agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_name] + ' ' + agent[AgentKeys.p_agent_middle_name];
-    }
-
-    if (agent[AgentKeys.p_agent_last_name]) {
-      agent[AgentKeys.p_agent_name] = agent[AgentKeys.p_agent_name] + ' ' + agent[AgentKeys.p_agent_last_name];
-    }
+    agent[AgentKeys.addresses] = this.domainAddressService.createAddresses(lineDataMap);
+    agent[AgentKeys.phone_numbers] = this.domainPhoneNumberService.createPhoneNumbers(lineDataMap);
+    agent[AgentKeys.websites] = this.domainWebsiteService.createWebsites(lineDataMap);
+    agent[AgentKeys.socials] = this.domainSocialsService.createSocials(lineDataMap);
 
     agent[AgentKeys.personal_goals] = [];
     let goal1: Goal = { ...new Goal(new Date().getFullYear(), 11500) };
@@ -238,11 +223,11 @@ export class DomainService implements OnInit {
 
     this.getAgency(agent, agencies);
 
-    const agentEmailAddresses = []; // agent[AgentKeys.email_addresses];
+    const agentEmailAddresses = this.domainEmailService.extractRawEmailAddressesData(lineDataMap);
 
     if (!Array.isArray(agentEmailAddresses) || agentEmailAddresses?.length == 0) {
       this.messages.unshift(
-        'No Email Addresses were set for this agent. Not Importing ' + agent[AgentKeys.p_agent_name]
+        `No Email Addresses were set for this agent. Not Importing ${agent[AgentKeys.p_agent_name]}`
       );
       return null;
     }
@@ -252,25 +237,40 @@ export class DomainService implements OnInit {
     if (!loginAddress) {
       agentEmailAddresses[0].is_login = true;
       loginAddress = agentEmailAddresses[0];
+      this.messages.unshift(
+        `No Email Addresses were set as Login for this ${agent[AgentKeys.p_agent_name]} agent. Set ${
+          loginAddress?.address
+        } as Login`
+      );
     }
 
     agent[AgentKeys.p_email] = loginAddress.address;
 
-    return this.agentService.create(agent).then((new_agent) => {
-      if (line_data.has(AgentKeys.approve_deny_reason)) {
-        let approve_deny_reason: ApproveDenyReason = { ...new ApproveDenyReason() };
-        approve_deny_reason.created_by = createdBy;
-        approve_deny_reason.created_date = new Date();
-        approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AllianceGroupLevel;
-        approve_deny_reason.isDeleted = false;
-        approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason);
+    return this.agentService.create(agent).then((createdAgent) => {
+      debugger;
+      const promises = [];
+      if (lineDataMap.has(AgentKeys.approve_deny_reason)) {
+        const approveDenyReason: ApproveDenyReason = Object.assign({}, new ApproveDenyReason(), {
+          [BaseModelKeys.isDeleted]: false,
+          [ApproveDenyReasonKeys.visibilityLevel]: ApproveDenyReasonVisibilityLevel.AllianceGroupLevel,
+          [ApproveDenyReasonKeys.activity]: lineDataMap.get(AgentKeys.approve_deny_reason)
+        });
 
-        this.approveDenyReasonService.create(new_agent[BaseModelKeys.dbId], approve_deny_reason, true);
+        promises.push(this.approveDenyReasonService.create(createdAgent[BaseModelKeys.dbId], approveDenyReason, true));
       }
 
-      this.messages.unshift(`Agent ${new_agent.p_email} was created`);
+      const emailAddressesPromises = this.domainEmailService.createEmailAddresses(
+        createdAgent[BaseModelKeys.dbId],
+        agentEmailAddresses,
+        this.messages
+      );
+      debugger;
+      promises.push(...emailAddressesPromises);
 
-      return new_agent;
+      return Promise.all(promises).then(() => {
+        this.messages.unshift(`Agent ${createdAgent.p_email} was created`);
+        return createdAgent;
+      });
     });
   }
 
@@ -421,21 +421,24 @@ export class DomainService implements OnInit {
 
     this.getAgency(agent, agencies);
 
-    const shouldContinue = [
-      this.domainAddressService.updateAddresses(line_data, agent, selectedRuleSet, this.messages),
+    const allAsyncUpdatesDoneSuccessfully = await Promise.all([
       this.domainEmailService.updateEmailAddresses(
         line_data,
         agent,
         selectedRuleSet,
         this.messages,
         this.lookupsMap.get('emailTypeLookup')
-      ),
+      )
+    ]).then((updates) => updates.every(Boolean));
+
+    const allSyncUpdatesDoneSuccessfully = [
+      this.domainAddressService.updateAddresses(line_data, agent, selectedRuleSet, this.messages),
       this.domainPhoneNumberService.updatePhoneNumbers(line_data, agent, selectedRuleSet, this.messages),
       this.domainSocialsService.updateSocials(line_data, agent, selectedRuleSet, this.messages),
       this.domainWebsiteService.updateWebsites(line_data, agent, selectedRuleSet, this.messages)
     ].every(Boolean);
 
-    if (!shouldContinue) {
+    if (!allSyncUpdatesDoneSuccessfully || !allAsyncUpdatesDoneSuccessfully) {
       return null;
     }
 

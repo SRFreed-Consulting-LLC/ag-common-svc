@@ -68,8 +68,10 @@
   (onPopupClose)="handleClosePopup($event)"
 >
   <ag-shr-drop-zone
+    *ngIf="agentProfilePictureModalRef?.popupComponent?.visible ?? false"
     #profilePictureDropZoneRef
-    [(profilePictureUrl)]="agentHeaderFormDetails.p_headshot_link"
+    [profilePictureUrl]="agentHeaderFormDetails?.p_headshot_link"
+    (profilePictureUrlChange)="agentHeaderFormDetails.p_headshot_link = $event"
   ></ag-shr-drop-zone>
 </ag-shr-modal-window>
 
@@ -103,7 +105,8 @@
       <dxo-label [text]="'Prefix'"></dxo-label>
       <div *dxTemplate>
         <ag-shr-prefix-select-box
-          [(value)]="agentHeaderFormDetails.p_prefix"
+          [value]="agentHeaderFormDetails?.p_prefix"
+          (valueChange)="agentHeaderFormDetails.p_prefix = $event"
           (selectedItemChange)="handlePrefixSelect($event)"
         ></ag-shr-prefix-select-box>
       </div>
@@ -121,7 +124,8 @@
       <dxo-label [text]="'Suffix'"></dxo-label>
       <div *dxTemplate>
         <ag-shr-suffix-select-box
-          [(value)]="agentHeaderFormDetails.p_suffix"
+          [value]="agentHeaderFormDetails?.p_suffix"
+          (valueChange)="agentHeaderFormDetails.p_suffix = $event"
           (selectedItemChange)="handleSuffixSelect($event)"
         ></ag-shr-suffix-select-box>
       </div>
@@ -140,7 +144,7 @@
       editorType="dxSelectBox"
       [dataField]="AgentHeaderKeys.primaryEmailAddress"
       [editorOptions]="{
-        items: agentHeaderFormDetails.email_addresses,
+        items: agentHeaderFormDetails?.email_addresses,
         displayExpr: 'address',
         searchEnabled: true,
         placeholder: ''
@@ -154,7 +158,7 @@
       editorType="dxSelectBox"
       [dataField]="AgentHeaderKeys.primaryPhoneNumber"
       [editorOptions]="{
-        items: agentHeaderFormDetails.phone_numbers,
+        items: agentHeaderFormDetails?.phone_numbers,
         displayExpr: phoneNumberDisplayExpr,
         searchEnabled: true,
         placeholder: ''
@@ -168,7 +172,7 @@
       editorType="dxSelectBox"
       [dataField]="AgentHeaderKeys.primaryBillingAddress"
       [editorOptions]="{
-        items: agentHeaderFormDetails.addresses,
+        items: agentHeaderFormDetails?.addresses,
         displayExpr: fullAddressPipe.transform,
         searchEnabled: true,
         placeholder: ''
@@ -182,7 +186,7 @@
       editorType="dxSelectBox"
       [dataField]="AgentHeaderKeys.primaryShippingAddress"
       [editorOptions]="{
-        items: agentHeaderFormDetails.addresses,
+        items: agentHeaderFormDetails?.addresses,
         displayExpr: fullAddressPipe.transform,
         searchEnabled: true,
         placeholder: ''

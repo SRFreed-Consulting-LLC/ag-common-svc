@@ -81,13 +81,9 @@ export class SocialsComponent implements OnInit {
     e.cancel = this.updateSocials(Socials);
   };
 
-  public validateUrl = (e) => {
-    try {
-      new URL(e.value);
-      return true;
-    } catch (e) {
-      return false;
-    }
+  public validateUrlWithOrWithoutProtocol = (e) => {
+    const re = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+    return re.test(e.value);
   }
 
   private checkIsSocialUniq = (data, key?: Social) => {

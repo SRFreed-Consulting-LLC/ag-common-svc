@@ -9,7 +9,7 @@ import {
   UpdateUserLoginEmail,
 } from 'ag-common-lib/public-api';
 import { FirebaseApp } from 'firebase/app';
-import { Functions, getFunctions, httpsCallable } from 'firebase/functions';
+import { Functions, getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import { FIREBASE_APP } from '../injections/firebase-app';
 
 @Injectable({
@@ -20,6 +20,7 @@ export class CloudFunctionsService {
 
   constructor(@Inject(FIREBASE_APP) fireBaseApp: FirebaseApp) {
     this.functions = getFunctions(fireBaseApp);
+    connectFunctionsEmulator(this.functions, "localhost", 5001);
   }
 
   public sendOTP = (payload: SendOTP): Promise<any> => httpsCallable(this.functions, FunctionsNames.sendOTP)(payload);
@@ -54,4 +55,8 @@ export class CloudFunctionsService {
 
   public updateUserLoginEmail = (payload: UpdateUserLoginEmail): Promise<any> =>
     httpsCallable(this.functions, FunctionsNames.updateUserLoginEmail)(payload);
+
+  public updateAgents = (agentDbId: string): Promise<any> => {
+    return httpsCallable(this.functions, FunctionsNames.updateAgentsGoals)(agentDbId);
+  };
 }

@@ -1,7 +1,14 @@
 import { Injectable } from '@angular/core';
-import { ImportMapping } from 'ag-common-lib/lib/models/import-rules/import-mapping.model';
+import { ImportMapping, ImportMappingKeys } from 'ag-common-lib/lib/models/import-rules/import-mapping.model';
 import { ImportRuleSet } from 'ag-common-lib/lib/models/import-rules/import-ruleset-model';
-import { Address, AgentKeys, EmailAddress, PhoneNumber } from 'ag-common-lib/public-api';
+import {
+  Address,
+  AgentKeys,
+  EmailAddress,
+  EmailAddressKeys,
+  PhoneNumber,
+  RawEmailAddress
+} from 'ag-common-lib/public-api';
 import { AgentService } from './agent.service';
 import { DomainAddressService } from './domain-address.service';
 import { DomainEmailService } from './domain-email.service';
@@ -23,14 +30,14 @@ export class ImportService {
     private domainUtilService: DomainUtilService
   ) {}
 
-  public importFileToString(file: File): Promise<string | ArrayBuffer> {
+  public importFileToString(file: File): Promise<string> {
     return new Promise((resolve) => {
       try {
         const reader = new FileReader();
         reader.readAsText(file);
         reader.onload = () => {
           let text = reader.result;
-          resolve(text);
+          resolve(text as string);
         };
       } catch (err) {
         console.error(err);
@@ -47,69 +54,79 @@ export class ImportService {
   //      check to see 'mapped_to' field == 'Set Default Value' and default value exists
   //      if exists
   //        set 'field_value' to 'default value'
-  public createInviteeMap(csvText, import_mappings: ImportMapping[]): Map<string, string>[] {
-    let retval: Map<string, string>[] = [];
-    let lines: string[] = csvText.split('\n');
-    let headers: string[] = lines[0].split(',');
+  public createInviteeMap(csvText, importMappings: ImportMapping[]): Map<string, string>[] {
+    const normalizeRowData = (incomingDataMap: Map<string, string>) => {
+      const data: Map<string, string> = new Map<string, string>();
 
-    let incoming_data_maps: Map<string, string>[] = [];
+      for (const importMapping of importMappings) {
+        const {
+          [ImportMappingKeys.mappedTo]: mappedTo,
+          [ImportMappingKeys.fieldNameRegistrant]: fieldNameRegistrant,
+          [ImportMappingKeys.fieldNameAgent]: fieldNameAgent,
+          [ImportMappingKeys.customValue]: defaultValue
+        } = importMapping;
 
-    for (var i = 1; i < lines.length - 1; i++) {
-      let incoming_data: Map<string, string> = new Map<string, string>();
+        const hasMappedTo = incomingDataMap.has(mappedTo);
+        const value = hasMappedTo ? incomingDataMap.get(mappedTo) : null;
 
-      for (var j = 0; j < headers.length; j++) {
-        let line: string = lines[i];
-
-        let val = line.split(',')[j];
-
-        if (val && val != '') {
-          let mapped_header: string = headers[j];
-
-          incoming_data.set(mapped_header, val);
+        if (hasMappedTo && fieldNameRegistrant) {
+          data.set(fieldNameRegistrant, value);
+        }
+        if (hasMappedTo && fieldNameAgent) {
+          data.set(fieldNameAgent, value);
+        }
+        if (!hasMappedTo && mappedTo === 'Set Default Value' && defaultValue) {
+          if (fieldNameRegistrant) {
+            data.set(fieldNameRegistrant, defaultValue);
+          }
+          if (fieldNameAgent) {
+            data.set(fieldNameAgent, defaultValue);
+          }
         }
       }
 
-      incoming_data_maps.push(incoming_data);
-    }
-
-    incoming_data_maps.forEach((incoming_data_map) => {
-      let data: Map<string, string> = new Map<string, string>();
-
-      import_mappings.forEach((import_mapping) => {
-        if (incoming_data_map.has(import_mapping.mapped_to)) {
-          if (import_mapping.field_name_registrant) {
-            data.set(import_mapping.field_name_registrant, incoming_data_map.get(import_mapping.mapped_to));
-          }
-          if (import_mapping.field_name_agent) {
-            data.set(import_mapping.field_name_agent, incoming_data_map.get(import_mapping.mapped_to));
-          }
-        } else {
-          if (import_mapping.mapped_to == 'Set Default Value' && import_mapping.default_value) {
-            if (import_mapping.field_name_registrant) {
-              data.set(import_mapping.field_name_registrant, import_mapping.default_value);
-            }
-            if (import_mapping.field_name_agent) {
-              data.set(import_mapping.field_name_agent, import_mapping.default_value);
-            }
-          }
-        }
-      });
-
       data.set('invitee_guest', 'Invitee');
 
-      retval.push(data);
+      return data;
+    };
+
+    const columnsNamesMap = new Map<number, string>();
+    const rows: string[] = csvText.split('\n');
+    const rowsMaps: Map<string, string>[] = [];
+    const headersRow = rows[0].split(',');
+
+    headersRow.forEach((columnName, index) => {
+      columnsNamesMap.set(index, columnName);
     });
 
-    return retval;
+    for (var i = 1; i < rows.length; i++) {
+      const rowCells = rows[i].split(',');
+
+      if (rowCells?.filter(Boolean)?.length) {
+        const incomingDataMap: Map<string, string> = new Map<string, string>();
+
+        rowCells.forEach((cellData, index) => {
+          const cellKey = columnsNamesMap.get(index);
+
+          if (cellData && cellData !== '') {
+            incomingDataMap.set(cellKey, cellData);
+          }
+        });
+
+        rowsMaps.push(normalizeRowData(incomingDataMap));
+      }
+    }
+
+    return rowsMaps;
   }
 
-  validateFile(csvText, messages: String[], import_type: string, import_mappings: ImportMapping[]): Promise<boolean> {
+  validateFile(csvText, messages: String[], import_type: string, importMappings: ImportMapping[]): Promise<boolean> {
     let lines: string[] = csvText.split('\n');
     let headers: string[] = lines[0].split(',');
 
     let numOfFields = headers.length;
 
-    for (var i = 1; i < lines.length - 1; i++) {
+    for (var i = 1; i < lines.length; i++) {
       let count = lines[i].split(',').length;
 
       if (count != numOfFields) {
@@ -118,7 +135,7 @@ export class ImportService {
     }
 
     if (import_type == 'registration') {
-      let email_mapping: ImportMapping = import_mappings.find(
+      let email_mapping: ImportMapping = importMappings.find(
         (mapping) => mapping.field_name_registrant == 'invitee_email'
       );
 
@@ -130,7 +147,7 @@ export class ImportService {
         }
       }
 
-      // let is_login_mapping: ImportMapping = import_mappings.find(mapping => mapping.field_name_registrant == 'invitee_email_is_login');
+      // let is_login_mapping: ImportMapping = importMappings.find(mapping => mapping.field_name_registrant == 'invitee_email_is_login');
 
       // if(is_login_mapping){
       //   let invitee_is_login_exist = headers.filter(h => h == is_login_mapping.mapped_to).length > 0;
@@ -140,7 +157,7 @@ export class ImportService {
       //   }
       // }
     } else {
-      let email_mapping: ImportMapping = import_mappings.find(
+      let email_mapping: ImportMapping = importMappings.find(
         (mapping) => mapping.field_name_agent == this.PRIMARY_EMAIL_IDENTIFIER
       );
 
@@ -152,7 +169,7 @@ export class ImportService {
         }
       }
 
-      let is_login_mapping: ImportMapping = import_mappings.find(
+      let is_login_mapping: ImportMapping = importMappings.find(
         (mapping) => mapping.field_name_agent == 'email_addresses.1.is_login'
       );
 
@@ -247,12 +264,12 @@ export class ImportService {
       isValid = false;
     }
 
-    // let emailAddresses: EmailAddress[] = this.domainEmailService.extractEmailAddresses(invitee);
-
-    // if(emailAddresses.filter(email => email.is_primary == true).length > 1){
-    //   messages.push('ERROR: Invitee ' + agent_name + ' has more than 1 Primary Email listed');
-    //   isValid = false;
-    // }
+    const emailAddresses: RawEmailAddress[] = this.domainEmailService.extractRawEmailAddressesData(invitee);
+    const toManyLoginAddresses = emailAddresses.filter((email) => email[EmailAddressKeys.isLogin]).length > 1;
+    if (toManyLoginAddresses) {
+      messages.push('ERROR: Invitee ' + agent_name + ' has more than 1 Login Email listed');
+      isValid = false;
+    }
 
     return isValid;
   }

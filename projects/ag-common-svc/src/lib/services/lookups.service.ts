@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ActiveLookup, Lookups, LookupKeys, Lookup, BaseModelKeys } from 'ag-common-lib/public-api';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, shareReplay, tap } from 'rxjs/operators';
 import { QueryParam, WhereFilterOperandKeys } from '../../public-api';
 import { LookupsManagerService } from './lookups-manager.service';
@@ -54,6 +54,33 @@ export class LookupsService {
       shareReplay(1)
     );
   }
+
+  public getLookupByName = (lookup: Lookups) => {
+    switch (lookup) {
+      case Lookups.States:
+        return this.statesLookup$;
+      case Lookups.EmailTypes:
+        return this.emailTypeLookup$;
+      case Lookups.Genders:
+        return this.gendersLookup$;
+      case Lookups.Suffixes:
+        return this.suffixesLookup$;
+      case Lookups.Prefixes:
+        return this.prefixesLookup$;
+      case Lookups.TaskCategory:
+        return this.taskCategoryLookup$;
+      case Lookups.TaskSubcategory:
+        return this.taskSubcategoryLookup$;
+      case Lookups.AssociationType:
+        return this.associationTypeLookup$;
+      case Lookups.TShirtSize:
+        return this.tShortSizesLookup$;
+      case Lookups.DietaryConsiderationType:
+        return this.dietaryConsiderationTypesLookup$;
+      default:
+        return of([]);
+    }
+  };
 
   public getTaskSubcategoryLookup = (taskCategoryDbId) => {
     if (!taskCategoryDbId) {

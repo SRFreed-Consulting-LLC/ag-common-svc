@@ -50,10 +50,10 @@ export class AgentEmailAddressesService {
     return this.allAgentEmailAddresses$;
   }
 
-  public getList(agentId: string) {
+  public getList(agentId: string, qp: QueryParam[] = []) {
     const table = this.getCollectionPath(agentId);
 
-    return this.fsDao.getList(table);
+    return this.fsDao.getList(table, qp);
   }
 
   public async create(agentId: string, data: EmailAddress) {

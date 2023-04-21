@@ -16,7 +16,6 @@ import {
   AssociationKeys,
   BaseModelKeys,
   Conference,
-  EmailAddress,
   Goal,
   LegacyAgent,
   PhoneNumber,
@@ -24,12 +23,9 @@ import {
   PROSPECT_DISPOSITION,
   PROSPECT_PRIORITY,
   PROSPECT_STATUS,
-  RawEmailAddress,
   Registrant,
   Role
 } from 'ag-common-lib/public-api';
-import { Observable } from 'rxjs';
-import { take } from 'rxjs/operators';
 import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { AgentApproveDenyReasonsService } from './agent-approve-deny-reason.service';
 import { AgentAssociationsService } from './agent-associations.service';
@@ -41,7 +37,6 @@ import { DomainPhoneNumberService } from './domain-phone-number.service';
 import { DomainSocialsService } from './domain-socials.service';
 import { DomainUtilService } from './domain-util.service';
 import { DomainWebsiteService } from './domain-website.service';
-import { LookupsService } from './lookups.service';
 import { RegistrantsService } from './registrants.service';
 
 @Injectable({
@@ -105,7 +100,7 @@ export class DomainService implements OnInit {
         data.get('p_agent_last_name'),
         emailAddress && `(${emailAddress})`
       ].join(' ');
-      debugger;
+
       this.agentService.getAgentByEmail(emailAddress?.toLowerCase()?.trim()).then((agent) => {
         if (!agent) {
           messages.unshift(agentName + ' does not currently exist and will be created.');
@@ -113,7 +108,7 @@ export class DomainService implements OnInit {
           return;
         }
         messages.unshift(agentName + ' exists and will be updated.');
-        // promises.push(this.updateAgent(data, agent, selectedRuleSet, agencies, createdBy));
+        promises.push(this.updateAgent(data, agent, selectedRuleSet, agencies, createdBy));
         return;
       });
     });
@@ -132,6 +127,8 @@ export class DomainService implements OnInit {
     const agent = Object.assign({}, new Agent());
 
     importMappings.forEach((mapping) => {
+      console.log('mapping', mapping);
+      debugger;
       if (lineDataMap.has(mapping.field_name_agent)) {
         if (mapping.data_type == 'string' || mapping.data_type == 'select') {
           agent[mapping.field_name_agent] = lineDataMap.get(mapping.field_name_agent);
@@ -161,7 +158,7 @@ export class DomainService implements OnInit {
         }
       }
     });
-
+    debugger;
     if (lineDataMap.has(AgentKeys.agent_status)) {
       agent[AgentKeys.agent_status] = AGENT_STATUS[lineDataMap.get(AgentKeys.agent_status).trim().toUpperCase()];
     } else {
@@ -237,6 +234,7 @@ export class DomainService implements OnInit {
     if (!loginAddress) {
       agentEmailAddresses[0].is_login = true;
       loginAddress = agentEmailAddresses[0];
+      debugger;
       this.messages.unshift(
         `No Email Addresses were set as Login for this ${agent[AgentKeys.p_agent_name]} agent. Set ${
           loginAddress?.address
@@ -264,7 +262,7 @@ export class DomainService implements OnInit {
         agentEmailAddresses,
         this.messages
       );
-      debugger;
+
       promises.push(...emailAddressesPromises);
 
       return Promise.all(promises).then(() => {
@@ -275,16 +273,16 @@ export class DomainService implements OnInit {
   }
 
   async updateAgent(
-    line_data: Map<string, string>,
+    lineDataMap: Map<string, string>,
     agent: Agent,
     selectedRuleSet: ImportRuleSet,
     agencies: Agency[],
     updatedBy: string
   ): Promise<Agent> {
     selectedRuleSet.import_mappings.forEach(async (mapping) => {
-      let incoming_value = line_data.get(mapping.field_name_agent);
+      let incoming_value = lineDataMap.get(mapping.field_name_agent);
 
-      if (line_data.has(mapping.field_name_agent)) {
+      if (lineDataMap.has(mapping.field_name_agent)) {
         if (mapping.data_type == 'string' || mapping.data_type == 'select') {
           this.domainUtilService.updateField(
             selectedRuleSet[mapping.field_name_agent],
@@ -335,7 +333,7 @@ export class DomainService implements OnInit {
     });
 
     if (
-      line_data.has(AgentKeys.approve_deny_reason) &&
+      lineDataMap.has(AgentKeys.approve_deny_reason) &&
       selectedRuleSet[ImportRuleSetKeys.approve_deny_reason].valueOf() == 'ADD_TO_LIST'
     ) {
       let approve_deny_reason: ApproveDenyReason = { ...new ApproveDenyReason() };
@@ -343,12 +341,12 @@ export class DomainService implements OnInit {
       approve_deny_reason.created_date = new Date();
       approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AllianceGroupLevel;
       approve_deny_reason.isDeleted = false;
-      approve_deny_reason.activity = line_data.get(AgentKeys.approve_deny_reason).trim();
+      approve_deny_reason.activity = lineDataMap.get(AgentKeys.approve_deny_reason).trim();
 
       this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true);
     }
     if (
-      line_data.has(AgentKeys.agency_approve_deny_reason) &&
+      lineDataMap.has(AgentKeys.agency_approve_deny_reason) &&
       selectedRuleSet[ImportRuleSetKeys.agency_approve_deny_reason].valueOf() == 'ADD_TO_LIST'
     ) {
       let approve_deny_reason: ApproveDenyReason = { ...new ApproveDenyReason() };
@@ -356,53 +354,53 @@ export class DomainService implements OnInit {
       approve_deny_reason.created_date = new Date();
       approve_deny_reason.visibilityLevel = ApproveDenyReasonVisibilityLevel.AgencyLevel;
       approve_deny_reason.isDeleted = false;
-      approve_deny_reason.activity = line_data.get(AgentKeys.agency_approve_deny_reason).trim();
+      approve_deny_reason.activity = lineDataMap.get(AgentKeys.agency_approve_deny_reason).trim();
 
       this.approveDenyReasonService.create(agent[BaseModelKeys.dbId], approve_deny_reason, true);
     }
 
-    if (line_data.has(AgentKeys.agent_type)) {
+    if (lineDataMap.has(AgentKeys.agent_type)) {
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.agent_type],
         agent,
         AgentKeys.agent_type,
-        AGENT_TYPE[line_data.get(AgentKeys.agent_type).trim().toUpperCase()]
+        AGENT_TYPE[lineDataMap.get(AgentKeys.agent_type).trim().toUpperCase()]
       );
     }
 
-    if (line_data.has(AgentKeys.agent_status)) {
+    if (lineDataMap.has(AgentKeys.agent_status)) {
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.agent_status],
         agent,
         AgentKeys.agent_status,
-        AGENT_STATUS[line_data.get(AgentKeys.agent_status).trim().toUpperCase()]
+        AGENT_STATUS[lineDataMap.get(AgentKeys.agent_status).trim().toUpperCase()]
       );
     }
 
-    if (line_data.has(AgentKeys.prospect_status)) {
+    if (lineDataMap.has(AgentKeys.prospect_status)) {
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.prospect_status],
         agent,
         AgentKeys.prospect_status,
-        PROSPECT_STATUS[line_data.get(AgentKeys.prospect_status).trim().toUpperCase()]
+        PROSPECT_STATUS[lineDataMap.get(AgentKeys.prospect_status).trim().toUpperCase()]
       );
     }
 
-    if (line_data.has(AgentKeys.prospect_priority)) {
+    if (lineDataMap.has(AgentKeys.prospect_priority)) {
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.prospect_priority],
         agent,
         AgentKeys.prospect_priority,
-        PROSPECT_PRIORITY[line_data.get(AgentKeys.prospect_priority).trim().toUpperCase()]
+        PROSPECT_PRIORITY[lineDataMap.get(AgentKeys.prospect_priority).trim().toUpperCase()]
       );
     }
 
-    if (line_data.has(AgentKeys.prospect_disposition)) {
+    if (lineDataMap.has(AgentKeys.prospect_disposition)) {
       this.domainUtilService.updateField(
         selectedRuleSet[ImportRuleSetKeys.prospect_disposition],
         agent,
         AgentKeys.prospect_disposition,
-        PROSPECT_DISPOSITION[line_data.get(AgentKeys.prospect_disposition).trim().toUpperCase()]
+        PROSPECT_DISPOSITION[lineDataMap.get(AgentKeys.prospect_disposition).trim().toUpperCase()]
       );
     }
 
@@ -423,7 +421,7 @@ export class DomainService implements OnInit {
 
     const allAsyncUpdatesDoneSuccessfully = await Promise.all([
       this.domainEmailService.updateEmailAddresses(
-        line_data,
+        lineDataMap,
         agent,
         selectedRuleSet,
         this.messages,
@@ -432,15 +430,17 @@ export class DomainService implements OnInit {
     ]).then((updates) => updates.every(Boolean));
 
     const allSyncUpdatesDoneSuccessfully = [
-      this.domainAddressService.updateAddresses(line_data, agent, selectedRuleSet, this.messages),
-      this.domainPhoneNumberService.updatePhoneNumbers(line_data, agent, selectedRuleSet, this.messages),
-      this.domainSocialsService.updateSocials(line_data, agent, selectedRuleSet, this.messages),
-      this.domainWebsiteService.updateWebsites(line_data, agent, selectedRuleSet, this.messages)
+      this.domainAddressService.updateAddresses(lineDataMap, agent, selectedRuleSet, this.messages),
+      this.domainPhoneNumberService.updatePhoneNumbers(lineDataMap, agent, selectedRuleSet, this.messages),
+      this.domainSocialsService.updateSocials(lineDataMap, agent, selectedRuleSet, this.messages),
+      this.domainWebsiteService.updateWebsites(lineDataMap, agent, selectedRuleSet, this.messages)
     ].every(Boolean);
 
     if (!allSyncUpdatesDoneSuccessfully || !allAsyncUpdatesDoneSuccessfully) {
       return null;
     }
+    debugger;
+    return null;
 
     return this.agentService.updateFields(agent[BaseModelKeys.dbId], agent).then((updatedAgent) => {
       this.messages.unshift(`Agent ${agent.p_email} was updated`);

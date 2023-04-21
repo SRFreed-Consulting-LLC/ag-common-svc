@@ -8,11 +8,14 @@ import {
   ActiveLookup,
   Agent,
   AgentKeys,
+  BaseModel,
+  BaseModelKeys,
   EmailAddress,
   EmailAddressKeys,
   RawEmailAddress
 } from 'ag-common-lib/public-api';
 import { firstValueFrom, Observable, tap } from 'rxjs';
+import { QueryParam, WhereFilterOperandKeys } from '../dao/CommonFireStoreDao.dao';
 import { AgentEmailAddressesService } from './agent-email-addresses.service';
 import { DomainUtilService } from './domain-util.service';
 import { LookupsService } from './lookups.service';
@@ -109,14 +112,29 @@ export class DomainEmailService {
   }
 
   public async updateEmailAddresses(
-    data: Map<string, string>,
+    dataMap: Map<string, string>,
     agent: Agent,
     selectedRuleSet: ImportRuleSet,
     messages: string[],
     lookup: ActiveLookup[]
   ) {
-    // const incomingEmails: EmailAddress[] = this.extractEmailAddresses(data);
+    const incomingEmails: EmailAddress[] = this.extractRawEmailAddressesData(dataMap);
 
+    if (!incomingEmails?.length) {
+      return true;
+    }
+
+    const incomingEmailsQp = new QueryParam(
+      EmailAddressKeys.address,
+      WhereFilterOperandKeys.in,
+      incomingEmails.map((rawEmailAddress) => rawEmailAddress.address)
+    );
+
+    const existingEmailAddresses = await firstValueFrom(
+      this.agentEmailAddressesService.getList(agent[BaseModelKeys.dbId], [incomingEmailsQp])
+    );
+    debugger;
+    return false;
     // //security measure to make sure is_login is NEVER updated
     // incoming_emails.forEach((email) => (email.is_login = false));
 

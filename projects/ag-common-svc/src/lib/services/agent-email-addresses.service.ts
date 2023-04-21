@@ -14,7 +14,7 @@ export interface AgentEmailAddressLookup {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AgentEmailAddressesService {
   public readonly fsDao: CommonFireStoreDao<EmailAddress>;
@@ -43,7 +43,7 @@ export class AgentEmailAddressesService {
 
             return result;
           });
-        })
+        }),
       );
     }
 
@@ -96,19 +96,19 @@ export class AgentEmailAddressesService {
     const emailAddressQuery = new QueryParam(
       'address',
       WhereFilterOperandKeys.equal,
-      email?.toLocaleLowerCase()?.trim()
+      email?.toLocaleLowerCase()?.trim(),
     );
     const isLoginQuery = new QueryParam('is_login', WhereFilterOperandKeys.equal, true);
 
     queries.push(emailAddressQuery);
 
     const queryConstraints: QueryConstraint[] = queries.map((query) =>
-      where(query.field, query.operation, query.value)
+      where(query.field, query.operation, query.value),
     );
 
     const collectionGroupRef = collectionGroup(this.fsDao.db, this.emailAddressCollectionPath).withConverter({
       toFirestore: null,
-      fromFirestore: this.fsDao.convertResponse
+      fromFirestore: this.fsDao.convertResponse,
     });
 
     const collectionGroupQuery = query(collectionGroupRef, ...queryConstraints);

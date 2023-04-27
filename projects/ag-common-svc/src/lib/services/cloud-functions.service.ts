@@ -12,6 +12,7 @@ import {
 import { FirebaseApp } from 'firebase/app';
 import { connectFunctionsEmulator, Functions, getFunctions, httpsCallable } from 'firebase/functions';
 import { FIREBASE_APP } from '../injections/firebase-app';
+import { UpdateAgentGoalsPayload } from 'ag-common-lib/lib/models/functions/update-agents-goals.model';
 
 @Injectable({
   providedIn: 'root',
@@ -57,7 +58,7 @@ export class CloudFunctionsService {
   public updateUserLoginEmail = (payload: UpdateUserLoginEmail): Promise<any> =>
     httpsCallable(this.functions, FunctionsNames.updateUserLoginEmail)(payload);
 
-  public updateSalesGoals = (payload: Partial<Agent[]>): Promise<any> => {
+  public updateSalesGoals = (payload: UpdateAgentGoalsPayload[]): Promise<any> => {
     return httpsCallable(this.functions, FunctionsNames.updateSalesGoals)(payload);
   };
 }

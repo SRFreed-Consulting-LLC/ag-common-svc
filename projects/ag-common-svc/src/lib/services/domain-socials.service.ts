@@ -8,9 +8,9 @@ import {
   AgentKeys,
   BUSINESS_PERSONAL_TYPE,
   Social,
-  SOCIAL_MEDIA,
 } from 'ag-common-lib/public-api';
 import { DomainUtilService } from './domain-util.service';
+import { SOCIAL_MEDIA } from 'ag-common-lib/lib/lists/social-media-types.enum';
 
 @Injectable({
   providedIn: 'root'

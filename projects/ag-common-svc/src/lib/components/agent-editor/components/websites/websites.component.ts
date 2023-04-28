@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { AgentEditorService } from '../../agent-editor.service';
 import { ToastrService } from 'ngx-toastr';
 import { AgentService } from '../../../../services/agent.service';
+import { BUSINESS_PERSONAL_TYPE_LOOKUP } from 'ag-common-lib/lib/lists/business-personal-type.list';
 
 @Component({
   selector: 'ag-shr-websites',
@@ -24,9 +25,9 @@ export class WebsitesComponent implements OnInit {
 
   protected readonly BaseModelKeys = BaseModelKeys;
   protected readonly WebsiteKeys = WebsiteKeys;
+  protected readonly BUSINESS_PERSONAL_TYPE_LOOKUP = BUSINESS_PERSONAL_TYPE_LOOKUP;
 
-  constructor(public agentEditorService: AgentEditorService,
-              private toastrService: ToastrService,
+  constructor(private toastrService: ToastrService,
               private agentService: AgentService) {}
 
   ngOnInit(): void {

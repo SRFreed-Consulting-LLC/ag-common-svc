@@ -77,7 +77,7 @@
       </dxi-validation-rule>
     </dxi-column>
     <dxi-column [dataField]="WebsiteKeys.websiteType" caption="Type">
-      <dxo-lookup [dataSource]="agentEditorService.business_personal_types"></dxo-lookup>
+      <dxo-lookup [dataSource]="BUSINESS_PERSONAL_TYPE_LOOKUP" displayExpr='description' valueExpr='value'></dxo-lookup>
       <dxi-validation-rule type="required"></dxi-validation-rule>
     </dxi-column>
 

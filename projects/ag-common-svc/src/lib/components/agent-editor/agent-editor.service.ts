@@ -14,8 +14,7 @@ import {
   ListManager,
   PhoneNumber,
   Prospect,
-  PROSPECT_STATUS,
-  SOCIAL_MEDIA
+  PROSPECT_STATUS
 } from 'ag-common-lib/public-api';
 import { Timestamp } from 'firebase/firestore';
 import { ToastrService } from 'ngx-toastr';
@@ -27,17 +26,8 @@ export class AgentEditorService {
   public countries = COUNTRIES;
   public languages = languages;
 
-  public business_personal_types: BUSINESS_PERSONAL_TYPE[] = [
-    BUSINESS_PERSONAL_TYPE.BUSINESS,
-    BUSINESS_PERSONAL_TYPE.PERSONAL
-  ];
-
-  public social_media_type: SOCIAL_MEDIA[] = [SOCIAL_MEDIA.FB, SOCIAL_MEDIA.IG, SOCIAL_MEDIA.LI, SOCIAL_MEDIA.TW];
-
   individualCorpTypes: string[] = ['Individual', 'Corp'];
   lineOfBusinessTypes: string[] = ['Life', 'Annuity'];
-
-  residencyTypes: string[] = ['Resident', 'Non-Resident'];
 
   public prospectStatuses: PROSPECT_STATUS[] = [];
   public agentStatuses: AGENT_STATUS[] = [];

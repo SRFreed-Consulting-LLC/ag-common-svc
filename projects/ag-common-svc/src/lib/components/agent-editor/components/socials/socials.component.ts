@@ -5,6 +5,8 @@ import { ToastrService } from 'ngx-toastr';
 import { AgentService } from '../../../../services/agent.service';
 import { AgentEditorService } from '../../agent-editor.service';
 import { ModalWindowComponent } from '../../../modal-window/modal-window.component';
+import { BUSINESS_PERSONAL_TYPE_LOOKUP } from 'ag-common-lib/lib/lists/business-personal-type.list';
+import { SOCIAL_MEDIA_LOOKUP } from 'ag-common-lib/lib/lists/social-media-types.list';
 
 @Component({
   selector: 'ag-shr-socials',
@@ -25,10 +27,11 @@ export class SocialsComponent implements OnInit {
   protected readonly SocialKeys = SocialKeys;
   protected readonly LookupKeys = LookupKeys;
   protected readonly BaseModelKeys = BaseModelKeys;
+  protected readonly BUSINESS_PERSONAL_TYPE_LOOKUP = BUSINESS_PERSONAL_TYPE_LOOKUP;
+  protected readonly SOCIAL_MEDIA_LOOKUP = SOCIAL_MEDIA_LOOKUP;
 
   constructor(private agentService: AgentService,
-              private toastrService: ToastrService,
-              public agentEditorService: AgentEditorService) {}
+              private toastrService: ToastrService) {}
 
   ngOnInit(): void {
   }
@@ -81,13 +84,9 @@ export class SocialsComponent implements OnInit {
     e.cancel = this.updateSocials(Socials);
   };
 
-  public validateUrl = (e) => {
-    try {
-      new URL(e.value);
-      return true;
-    } catch (e) {
-      return false;
-    }
+  public validateUrlWithOrWithoutProtocol = (e) => {
+    const re = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+    return re.test(e.value);
   }
 
   private checkIsSocialUniq = (data, key?: Social) => {

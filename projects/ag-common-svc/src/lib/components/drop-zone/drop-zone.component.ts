@@ -1,5 +1,5 @@
-import { Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
-import { DxTextAreaComponent, DxValidatorComponent } from 'devextreme-angular';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { DxTextAreaComponent } from 'devextreme-angular';
 import { ImageCroppedEvent } from 'ngx-image-cropper';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ModalWindowComponent } from '../modal-window/modal-window.component';
@@ -14,10 +14,10 @@ export class DropZoneComponent {
   @ViewChild('imageCropModalRef', { static: true }) imageCropModalModalComponent: ModalWindowComponent;
   @ViewChild('fileInput', { static: false }) fileInputComponent: ElementRef<HTMLInputElement>;
   @Input() set profilePictureUrl(data: string) {
-    this._isImageValid$.next(true);
+    this._isImageValid$.next(!!data);
     this.imagePreviewUrl = data;
   }
-  @Output() profilePictureUrlChange = new EventEmitter<ImageCroppedEvent | null>();
+  @Output() profilePictureUrlChange = new EventEmitter<string | null>();
 
   public imagePreviewUrl: string;
   public imageChangedEvent: any = '';

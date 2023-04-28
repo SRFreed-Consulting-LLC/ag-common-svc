@@ -1,5 +1,4 @@
-import { CommonModule } from '@angular/common';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { NgModule } from '@angular/core';
 import {
   DxButtonModule,
@@ -8,7 +7,6 @@ import {
   DxTextBoxModule,
   DxValidatorModule
 } from 'devextreme-angular';
-import dxTextBox from 'devextreme/ui/text_box';
 import { ImageCropperModule } from 'ngx-image-cropper';
 import { ModalWindowModule } from '../modal-window/modal-window.module';
 import { DropZoneComponent } from './drop-zone.component';
@@ -22,7 +20,8 @@ import { DropZoneComponent } from './drop-zone.component';
     ModalWindowModule,
     DxButtonModule,
     DxTextBoxModule,
-    DxValidatorModule
+    DxValidatorModule,
+    NgOptimizedImage
   ],
   declarations: [DropZoneComponent],
   exports: [DropZoneComponent]

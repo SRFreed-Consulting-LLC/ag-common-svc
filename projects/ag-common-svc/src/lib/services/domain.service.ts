@@ -104,7 +104,7 @@ export class DomainService implements OnInit {
       this.agentService.getAgentByEmail(emailAddress?.toLowerCase()?.trim()).then((agent) => {
         if (!agent) {
           messages.unshift(agentName + ' does not currently exist and will be created.');
-          promises.push(this.createAgent(data, createdBy, agencies, selectedRuleSet.import_mappings));
+          // promises.push(this.createAgent(data, createdBy, agencies, selectedRuleSet.import_mappings));
           return;
         }
         messages.unshift(agentName + ' exists and will be updated.');
@@ -279,58 +279,58 @@ export class DomainService implements OnInit {
     agencies: Agency[],
     updatedBy: string
   ): Promise<Agent> {
-    selectedRuleSet.import_mappings.forEach(async (mapping) => {
-      let incoming_value = lineDataMap.get(mapping.field_name_agent);
+    // selectedRuleSet.import_mappings.forEach(async (mapping) => {
+    //   let incoming_value = lineDataMap.get(mapping.field_name_agent);
 
-      if (lineDataMap.has(mapping.field_name_agent)) {
-        if (mapping.data_type == 'string' || mapping.data_type == 'select') {
-          this.domainUtilService.updateField(
-            selectedRuleSet[mapping.field_name_agent],
-            agent,
-            mapping.field_name_agent,
-            incoming_value.trim()
-          );
-        }
+    //   if (lineDataMap.has(mapping.field_name_agent)) {
+    //     if (mapping.data_type == 'string' || mapping.data_type == 'select') {
+    //       this.domainUtilService.updateField(
+    //         selectedRuleSet[mapping.field_name_agent],
+    //         agent,
+    //         mapping.field_name_agent,
+    //         incoming_value.trim()
+    //       );
+    //     }
 
-        if (mapping.data_type == 'yes-no') {
-          this.domainUtilService.updateField(
-            selectedRuleSet[mapping.field_name_agent],
-            agent,
-            mapping.field_name_agent,
-            this.domainUtilService.getYesNoValue(incoming_value.trim())
-          );
-        }
+    //     if (mapping.data_type == 'yes-no') {
+    //       this.domainUtilService.updateField(
+    //         selectedRuleSet[mapping.field_name_agent],
+    //         agent,
+    //         mapping.field_name_agent,
+    //         this.domainUtilService.getYesNoValue(incoming_value.trim())
+    //       );
+    //     }
 
-        if (mapping.data_type == 'date') {
-          this.domainUtilService.updateField(
-            selectedRuleSet[mapping.field_name_agent],
-            agent,
-            mapping.field_name_agent,
-            new Date(incoming_value.trim())
-          );
-        }
+    //     if (mapping.data_type == 'date') {
+    //       this.domainUtilService.updateField(
+    //         selectedRuleSet[mapping.field_name_agent],
+    //         agent,
+    //         mapping.field_name_agent,
+    //         new Date(incoming_value.trim())
+    //       );
+    //     }
 
-        if (mapping.data_type == 'lookup') {
-          let lookupval: string = this.getLookupValue(mapping.values, incoming_value.trim());
+    //     if (mapping.data_type == 'lookup') {
+    //       let lookupval: string = this.getLookupValue(mapping.values, incoming_value.trim());
 
-          this.domainUtilService.updateField(
-            selectedRuleSet[mapping.field_name_agent],
-            agent,
-            mapping.field_name_agent,
-            lookupval.trim()
-          );
-        }
+    //       this.domainUtilService.updateField(
+    //         selectedRuleSet[mapping.field_name_agent],
+    //         agent,
+    //         mapping.field_name_agent,
+    //         lookupval.trim()
+    //       );
+    //     }
 
-        if (mapping.data_type == 'boolean') {
-          this.domainUtilService.updateField(
-            selectedRuleSet[mapping.field_name_agent],
-            agent,
-            mapping.field_name_agent,
-            this.domainUtilService.getBoolean(incoming_value.trim())
-          );
-        }
-      }
-    });
+    //     if (mapping.data_type == 'boolean') {
+    //       this.domainUtilService.updateField(
+    //         selectedRuleSet[mapping.field_name_agent],
+    //         agent,
+    //         mapping.field_name_agent,
+    //         this.domainUtilService.getBoolean(incoming_value.trim())
+    //       );
+    //     }
+    //   }
+    // });
 
     if (
       lineDataMap.has(AgentKeys.approve_deny_reason) &&

@@ -10,6 +10,7 @@ import {
   collection,
   getDocs,
   setDoc,
+  updateDoc,
   onSnapshot,
   deleteDoc,
   limit,
@@ -55,6 +56,7 @@ export class CommonFireStoreDao<T> {
     toFirestore: (item: T) => T = null
   ) {
     this.db = getFirestore(fireBaseApp);
+
     this.auth = getAuth(fireBaseApp);
     this.fromFirestore = fromFirestore ?? null;
     this.toFirestore = toFirestore ?? null;
@@ -333,10 +335,12 @@ export class CommonFireStoreDao<T> {
     const ref = doc(this.db, table, id).withConverter({
       fromFirestore: null,
       toFirestore: (item: T): DocumentData => {
-        return Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
+        const data = Object.assign(this.toFirestore ? this.toFirestore(item) : item, {
           [BaseModelKeys.updatedDate]: new Date(),
           [BaseModelKeys.updatedBy]: this.auth?.currentUser?.uid ?? null
         });
+
+        return data;
       }
     });
 

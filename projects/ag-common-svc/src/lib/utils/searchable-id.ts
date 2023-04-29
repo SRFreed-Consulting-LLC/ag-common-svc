@@ -1,6 +1,6 @@
 import { EmailParticipant } from 'ag-common-lib/public-api';
 
-export const buildSearchableId = (values: Partial<EmailParticipant>) => {
+export const buildSearchableId = (values: { [key: string]: string }) => {
   const params = Object.entries(values);
   const urlSearchParams = new URLSearchParams(params);
   urlSearchParams.sort();

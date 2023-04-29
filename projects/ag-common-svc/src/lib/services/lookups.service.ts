@@ -55,7 +55,7 @@ export class LookupsService {
     );
   }
 
-  public getLookupByName = (lookup: Lookups) => {
+  public getLookupByName = (lookup: Lookups): Observable<ActiveLookup[]> => {
     switch (lookup) {
       case Lookups.States:
         return this.statesLookup$;

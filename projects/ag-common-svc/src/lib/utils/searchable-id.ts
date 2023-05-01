@@ -8,7 +8,7 @@ export const buildSearchableId = (values: { [key: string]: string }) => {
   return urlSearchParams.toString();
 };
 
-export const parseSearchableId = (id: string): Partial<EmailParticipant> => {
+export const parseSearchableId = (id: string): Partial<EmailParticipant> | { [key: string]: string } => {
   const params = new URLSearchParams(id);
 
   return Array.from(params.entries()).reduce((acc, [key, value]) => {

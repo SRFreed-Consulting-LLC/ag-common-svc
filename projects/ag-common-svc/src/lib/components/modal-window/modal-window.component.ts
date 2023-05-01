@@ -6,7 +6,7 @@ import { OnPopupClosePayload } from './modal-window.models';
 @Component({
   selector: 'ag-shr-modal-window',
   templateUrl: './modal-window.component.html',
-  styleUrls: ['./modal-window.component.scss'],
+  styleUrls: ['./modal-window.component.scss']
 })
 export class ModalWindowComponent {
   @HostBinding('class') className = 'modal-window';
@@ -17,6 +17,9 @@ export class ModalWindowComponent {
   @Input() actionTitle: string = 'SAVE';
   @Input() useScrollView = true;
   @Input() showSaveButton = true;
+  @Input() showCancelButton = true;
+  @Input() showCloseButton = true;
+  @Input() closeOnEscapeButton = true;
   @Input() saveButtonDisabled = false;
   @Input() width: string | number = '80vw';
   @Input() height: string | number = '80vh';
@@ -36,6 +39,12 @@ export class ModalWindowComponent {
   onInitialized = (e: InitializedEvent) => {
     if (this.onCloseModal) {
       e.component.instance().on('hiding', this.onClosePopup);
+    }
+
+    if (!this.closeOnEscapeButton) {
+      e.component.registerKeyHandler('escape', function (event) {
+        event.stopPropagation();
+      });
     }
   };
 

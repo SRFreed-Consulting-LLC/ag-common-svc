@@ -1,0 +1,71 @@
+<dx-data-grid #agentsGoalsGrid
+              id="agentsGoalsGrid"
+              [dataSource]="agentsDataSource$ | async"
+              [showBorders]="true"
+              [renderAsync]="true"
+              [allowColumnReordering]="true"
+              [allowColumnResizing]="true"
+              [columnAutoWidth]="true" >
+
+  <dxo-toolbar>
+    <dxi-item location="before">
+      <div *dxTemplate>
+        <dx-select-box
+          class='ml-3 mr-3'
+          [items]="years"
+          [(value)]="selectedYear"
+          (selectedItemChange)="selectedYearChanged$.next($event.value)"
+        ></dx-select-box>
+      </div>
+    </dxi-item>
+    <dxi-item location="after">
+      <div *dxTemplate>
+        <dx-button
+          *ngFor='let goalType of GOALS_TYPES_LOOKUP'
+          class='ml-2 mr-2'
+          [text]="'Set ' + goalType.description + ' Goals'"
+          [disabled]="goalType.value === GOALS_TYPES.MANAGER ? !(agentsGoalsGrid | isManagersSelected) : agentsGoalsGrid.selectedRowKeys.length === 0"
+          [stylingMode]="'contained'"
+          [hint]="goalType.value !== GOALS_TYPES.MANAGER || (agentsGoalsGrid | isManagersSelected) ? '' : 'Please, select at least one manager'"
+          (onClick)="showSalesGoalsModal(goalType.value)"
+        ></dx-button>
+      </div>
+    </dxi-item>
+  </dxo-toolbar>
+  <dxo-selection mode="multiple" [allowSelectAll]="true"></dxo-selection>
+  <dxo-column-chooser [enabled]="true"></dxo-column-chooser>
+  <dxo-filter-row [visible]="true"></dxo-filter-row>
+  <dxo-header-filter [visible]="true"></dxo-header-filter>
+  <dxo-search-panel [visible]="true" [width]="240" placeholder="Search..."></dxo-search-panel>
+  <dxo-load-panel [enabled]="true"></dxo-load-panel>
+  <dxo-scrolling mode="virtual"></dxo-scrolling>
+  <dxi-column dataField="description"></dxi-column>
+  <dxi-column dataField="currentPersonalGoals"></dxi-column>
+  <dxi-column dataField="currentConferenceGoals"></dxi-column>
+  <dxi-column dataField="currentManagerGoals"></dxi-column>
+</dx-data-grid>
+
+<ag-shr-modal-window
+  #salesGoalsModalRef
+  [width]="'500px'"
+  [height]="'auto'"
+  [title]="'Edit ' + modalLabelMap.get(salesGoalsFormData?.goalsType) + ' Goal - ' + selectedYear"
+  [actionTitle]="'SAVE'"
+  [inProgress]="inProgress$ | async"
+  (onSaveClick)="updateSalesGoals()"
+>
+  <dx-form
+    *ngIf="salesGoalsModalRef?.popupComponent?.visible"
+    #salesGoalsFormRef
+    [formData]="salesGoalsFormData"
+    labelMode="floating"
+  >
+    <dxi-item
+      [dataField]="'salesGoal'"
+      [label]="{ text: modalLabelMap.get(salesGoalsFormData.goalsType) + ' Goal' }"
+      editorType="dxNumberBox"
+      [editorOptions]="{format: {type:'currency',currency:'USD', precision: 2}}"
+    ></dxi-item>
+  </dx-form>
+</ag-shr-modal-window>
+
